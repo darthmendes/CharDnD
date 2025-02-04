@@ -1,0 +1,10 @@
+DnD Character Tracker Implementation Goals:
+
+- able to create a Character
+- able to manage inventory
+- able to level up
+- able to manage ability scores
+- able to display character info
+- able to multiclass
+- able to manage spell list
+- able to save and load dif character data

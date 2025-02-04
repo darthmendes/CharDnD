@@ -3,19 +3,30 @@ level_up_xp = [0,300,900,2700,6500,14000,23000,34000,48000,64000,85000,100000,12
 
 # Character Sheet Information and Updates
 class Character_sheet : 
-    def __init__(self, name, level, xp, race, class_, background, alignment, ability_scores, skills, equipment, features, languages):
+    def __init__(self, name, level,  race, class_, background, alignment, ability_scores, skills, features, languages):
         self.name = name
         self.level = level
-        self.xp = xp
+        self.xp = level_up_xp[level]
         self.race = race
         self.class_ = class_
         self.background = background
         self.alignment = alignment
         self.ability_scores = ability_scores
         self.skills = skills
-        self.equipment = equipment
+        self.inventory = []
         self.features = features
         self.languages = languages
+        
+        self.proficiency_bonus = self.proficiency_bonus_calc()
+        self.hitpoints = self.hitpoint_calc()
+        self.speed = self.speed_calc()
+        self.initiative = self.initiative_calc()
+        self.armor_class = self.ac
+
+
+
+
+
 
     def add_xp (self, xp):
         self.xp += xp
@@ -31,17 +42,16 @@ class Character_sheet :
     def add_language (self, language):
         self.languages.append(language)
 
-    def add_equipment (self, equipment):
-        self.equipment.append(equipment)
+    def add_inventory (self, inventory):
+        self.inventory.append(inventory)
     
-    def remove_equipment (self, equipment):
-        self.equipment.remove(equipment)
+    def remove_inventory (self, inventory):
+        self.inventory.remove(inventory)
     
     # carrying weight in Kgs
     def carrying_capacity(self):
         return self.ability_scores['Strenght'] * 15 * 0.4536
     
-        
 
 # Class that deals with ability scores operations         
 class ability_scores :
@@ -75,4 +85,14 @@ class ability_scores :
                 self.__dict__[ability] = 1
 
 
+# Class that controls the different classes
+# TODO add subclass and class features
+# dif presets for them all 
+class class_:
+    def __init__(self, name, level):
+        self.name = name
+        self.level = level
+    
+    def level_up(self, amount):
+        self.level += amount
 
