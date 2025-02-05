@@ -35,6 +35,7 @@ Future Features:
     - make it an online app? (preference for offline because lack of internet in the room)
     - Save data in the cloud !
     - Change Gaming system 
+    - Creature Creater
 
 
     FRONT END:
