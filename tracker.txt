@@ -1,6 +1,13 @@
 DnD Character Tracker Implementation Goals:
 
 - able to create a Character
+    - Edit Name
+    - Edit Class
+    - Edit Level
+    - Edit Experience Points
+    - Image
+
+
 - able to manage inventory
 - able to level up
 - able to manage ability scores
@@ -8,3 +15,30 @@ DnD Character Tracker Implementation Goals:
 - able to multiclass
 - able to manage spell list
 - able to save and load dif character data
+
+Future Features:
+    BACK END: 
+    - Ability to add new classes or spells
+    - Needs custom Item Creator
+    - Integration with Coin converters
+    - Integration with Dice Rollers
+    - Auto score increase and changes to Ac, attack, spell slots, etc when levelling up or equipping stuff
+    - Clear definition of what is equipped/attuned
+    - Needs to have list of spells per class, level; 
+    - List of classes and class Features
+    - List of items and item features
+    - List of Backgrounds
+    - List of Feats
+    - List of Equipment
+    - Load/save different characters
+    - Add new races and classes
+    - make it an online app? (preference for offline because lack of internet in the room)
+    - Save data in the cloud !
+    - Change Gaming system 
+
+
+    FRONT END:
+    - Hovering expands definitions or explains stuff
+    - Clicking allows more detail or editing
+    - Change Ui styles
+    - Need capacity Tracker/Indicator

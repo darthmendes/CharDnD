@@ -5,16 +5,19 @@
 # date: 2025-02-04
 # version: 1.0.0
 #
-from PyQt5 import QtWidgets, uic
-import sys
 
-ui_path = 'ui'
-class Ui(QtWidgets.QMainWindow):
-    def __init__(self):
-        super(Ui, self).__init__()
-        uic.loadUi(ui_path + '/' + 'main_window.ui', self)
-        self.show()
+from src.character import Character_sheet
 
-app = QtWidgets.QApplication(sys.argv)
-window = Ui()
-app.exec_()
+new_character = Character_sheet("Legolas Tester",
+                                1,
+                                "Elf",
+                                "Ranger",
+                                "Noble",
+                                "Neutral Good",
+                                [10,10,10,11,11,11],
+                                "None",
+                                "None",
+                                [])
+
+new_character.add_language("Dwarvish")
+new_character.show_sheet()
