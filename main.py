@@ -21,9 +21,10 @@ new_character = Character_sheet(name = "Legolas Tester",
                                 base_class = druid_class,
                                 background="Noble",
                                 alignment="Neutral Good",
-                                ability_scores=Ability_scores(strength=10, dexterity=14,constitution=10,charisma=10,wisdom=10,intelligence=10),
+                                ability_scores=Ability_scores(STR=10, DEX=14,CON=10,CHA=10,WIS=8,INT=10),
                                 skills=["Arcana", "Nature", "Animal Handling"]
                                 )
 
+new_character.list_all_skills()
 new_character.show_sheet()
 
