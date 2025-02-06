@@ -7,8 +7,9 @@
 #
 
 from flask import Flask, render_template
-from character_v1 import Character_sheet, Ability_scores
+from src.character_v1 import Character
 from src.char_class import Char_Class
+
 
 html_path = r'C:\Users\user\Desktop\my stuff\CharDnD\ui\html'
 
@@ -48,6 +49,13 @@ def new_character_form():
     return render_template(character_html_path + '/' +'new_character_form.html')
 
 
+# if __name__ == "__main__":
+#     # initiating server
+#     app.run(host='0.0.0.0', port=8000, debug=True)
+
+# Example usage
 if __name__ == "__main__":
-    # initiating server
-    app.run(host='0.0.0.0', port=8000, debug=True)
+    print(Character.new("Aragorn", "Human", "Fighter", 5))
+    print(Character.get("Aragorn"))
+    print(Character.update("Aragorn", level=6))
+    print(Character.delete("Aragorn"))
