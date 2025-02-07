@@ -54,8 +54,6 @@ class Character_sheet :
         self.armor_class = 10 + ability_scores.get_score_modifier('DEX')
         self.passive_perception = 10 + ability_scores.get_score_modifier('WIS') # needs to add prof bonus if proficient
 
-
-
     # print all skills with the correct modifiers based on proficiency
     def list_all_skills(self):
         for i in all_skills:
@@ -126,7 +124,6 @@ class Character_sheet :
     def decrease_ability (self, ability, amount):
         self.ability_scores.decrease(ability, amount)
 
-    
     # Prints the entire sheet to console
     def show_sheet(self):
         print(f"\nName: {self.name}")

@@ -9,7 +9,7 @@
 from flask import Flask, render_template
 from src.character_v1 import Character
 from src.char_class import Char_Class
-
+import json
 
 html_path = r'C:\Users\user\Desktop\my stuff\CharDnD\ui\html'
 
@@ -55,7 +55,11 @@ def new_character_form():
 
 # Example usage
 if __name__ == "__main__":
-    print(Character.new("Aragorn", "Human", "Fighter", 5))
+    ab_scores = json.dumps({"STR":10,"CON":10,"DEX":10,"INT":10, "WIS":10,"CHA":10})
+    hp = json.dumps({"actual":8, "tmp":10,"max":16})
+    equipment = json.dumps(["Boots", "Helm", "Plate"])
+
+    print(Character.new(name="Aragorn", race="Human", char_class="Ranger", level=5, xp=300, hp=hp, ability_scores=ab_scores, equipment=equipment))
     print(Character.get("Aragorn"))
     print(Character.update("Aragorn", level=6))
     print(Character.delete("Aragorn"))
