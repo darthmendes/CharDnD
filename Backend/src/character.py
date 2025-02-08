@@ -15,15 +15,16 @@ class Character(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, unique=True, nullable=False)
     species = Column(String, nullable=False)
-    char_class = Column(String, nullable=False)
+    char_class = Column(String, nullable=False) # {class1: level, class2,level}
     level = Column(Integer, default=1)
     xp = Column(Integer, default=300)
-    hp = Column(String)
-    ability_scores = Column(String, nullable=False)
-    skills = Column(String)
-    equipment = Column(String)
-    languages = Column(String)
-    background = Column(String)
+    hp = Column(String) # {actual:0, max:0, tmp:0}
+    ability_scores = Column(String, nullable=False) # {STR:10, WIS: 10 ... }
+    skills = Column(String) # list [skill1, skill2 ... ]
+    equipment = Column(String) # list
+    spells = Column(String) # ? understand better how to show known/prepared spells or if able to retrieve from other srcs
+    languages = Column(String) # list
+    background = Column(String) 
     alignment = Column(String)
 
     def __repr__(self):
@@ -40,6 +41,7 @@ class Character(Base):
             'ability_scores': self.ability_scores,
             'skills': self.skills,
             'equipment': self.equipment,
+            'spells': self.spells,
             'languages': self.languages,
             'background': self.background,
             'alignment': self.alignment,

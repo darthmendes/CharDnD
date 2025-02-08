@@ -14,11 +14,13 @@ class Species(Base):
     __tablename__ = "species"
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, unique=True, nullable=False)
-    ability_score_increase = Column(String) #format {STR:1,DEX:1} where you add bonus to the specific ability score
-    size = Column(String)
+    ability_bonuses = Column(String) #format {STR:1,DEX:1} where you add bonus to the specific ability score
+    size = Column(String) 
     speed = Column(Integer)
-    traits = Column(String)
-    languages = Column(String)
+    traits = Column(String) # list 
+    starting_proficiencies = Column(String) # list
+    starting_proficiencies_options = Column(String) # {choose:1, list:[op1,op2,op3]}
+    languages = Column(String) # list
 
     # Starting CRUD funtions
     def new(**kwargs):
