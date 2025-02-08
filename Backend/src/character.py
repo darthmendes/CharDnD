@@ -14,7 +14,7 @@ class Character(Base):
     __tablename__ = "characters"
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, unique=True, nullable=False)
-    race = Column(String, nullable=False)
+    species = Column(String, nullable=False)
     char_class = Column(String, nullable=False)
     level = Column(Integer, default=1)
     xp = Column(Integer, default=300)
@@ -25,15 +25,14 @@ class Character(Base):
     languages = Column(String)
     background = Column(String)
     alignment = Column(String)
-    features = Column(String)
 
     def __repr__(self):
-        return f"Character('{self.name}', '{self.race}', '{self.char_class}', '{self.level}'"
+        return f"Character('{self.name}', '{self.species}', '{self.char_class}', '{self.level}'"
     
     def to_dict(self):
         return {
             'name': self.name,
-            'race': self.race,
+            'species': self.species,
             'char_class': self.char_class,
             'level': self.level,
             'xp': self.xp,
@@ -44,21 +43,22 @@ class Character(Base):
             'languages': self.languages,
             'background': self.background,
             'alignment': self.alignment,
-            'features': self.features
             }
 
     # CRUD operations
-    def new(name, race, char_class, level, ability_scores, xp = 300, hp = '', skills='', equipment='',languages='',background='',alignment='',features=''):
-        new_char = Character(name=name, race=race, char_class=char_class, level=level, xp=xp, hp=hp, 
-                             ability_scores=ability_scores, skills = skills, equipment=equipment,
-                             languages=languages, background=background, alignment=alignment, features=features)
+    def new(**kwargs):
+        if not Character.is_valid(kwargs):
+            return -1
+        
+        if Character.get(kwargs['name']):
+            return -2
+        
+        new_char = Character()
+        for key, value in kwargs.items():
+            setattr(new_char, key, value)
         session.add(new_char)
         session.commit()
-        return {"message": "Character created successfully", "id": new_char.id}
-
-    def save(self):
-        session.add(self)
-        session.commit()
+        return 1
 
     def get(name):
         char = session.query(Character).filter_by(name=name).first()
@@ -87,13 +87,13 @@ class Character(Base):
     
     # upon receiving a dataDict verifies if is is valid
     def is_valid(dataDict):
-        if 'name' not in dataDict or 'race' not in dataDict or 'class' not in dataDict or 'level' not in dataDict:
+        if 'name' not in dataDict or 'species' not in dataDict or 'class' not in dataDict or 'level' not in dataDict:
             return False
         if 'ability_scores' not in dataDict:
             return False
 
         # check if all fields are filled correctly
-        if not dataDict['name'] or not dataDict['race'] or not dataDict['class'] or not dataDict['level'] or not dataDict['ability_scores']:
+        if not dataDict['name'] or not dataDict['species'] or not dataDict['class'] or not dataDict['level'] or not dataDict['ability_scores']:
             return False
         
         return True

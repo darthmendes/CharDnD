@@ -26,39 +26,13 @@ app = Flask(__name__)
 def create_character():
     dataDict = json.loads(request.json)
 
-    if not Character.is_valid(dataDict):
-        return {'error': 'Invalid character data'}, BAD_REQUEST
-    
-    # extract all values from dataDict and load into the Character Creator while handling missing inputs
-    character = Character()
-    for key, value in dataDict.items():
-        if key == 'name':
-            character.name = value
-        elif key == 'race':
-            character.race = value
-        elif key == 'class':
-            character.char_class = value
-        elif key == 'level':
-            character.level = value
-        elif key == 'xp':
-            character.xp = value
-        elif key == 'hp':
-            character.hp = value
-        elif key == 'ability_scores':
-            character.ability_scores = value
-        elif key == 'skills':
-            character.skills = value
-        elif key == 'equipment':
-            character.equipment = value
-        elif key == 'languages':
-            character.languages = value
-        elif key == 'alignment':
-            character.alignment = value
-        elif key == 'features':
-            character.features = value
+    res = Character.new(dataDict)
+    if res == -1:
+        return {'error':'Invalid character data'}, BAD_REQUEST
 
-    character.save()
-    return "Created New Character", CREATED
+    if res == -2:
+        return {'error':'Character already exists'}, NOT_ACCEPTABLE
+    return {'message':'Character created'}, CREATED
 
 # Character Deletion
 @app.route('/API/characters/<path:name>', methods=['DELETE'])
@@ -83,7 +57,7 @@ def get_character(name):
 # List Characters
 @app.route('/API/characters', methods=['GET'])
 def list_characters():
-    characters = Character.list()
+    characters = Character.get_all()
     return jsonify([character.to_dict() for character in characters]), OK
     
 
