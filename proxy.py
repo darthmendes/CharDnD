@@ -25,8 +25,11 @@ app = Flask(__name__)
 @app.route('/API/characters/creator', methods=['POST'])
 def create_character():
     dataDict = json.loads(request.json)
-
+    if 'name' not in dataDict:
+        return {'error':'Invalid character data'}, BAD_REQUEST
+    
     res = Character.new(dataDict)
+    
     if res == -1:
         return {'error':'Invalid character data'}, BAD_REQUEST
 
@@ -50,7 +53,7 @@ def delete_character(name):
 def get_character(name):
     character = Character.get(name=name)
     if character:
-        return jsonify(character.to_dict()), OK
+        return jsonify(character.to_dict())
     else:
         return "Character Not Found", NOT_FOUND
 

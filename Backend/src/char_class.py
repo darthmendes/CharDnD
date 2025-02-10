@@ -27,13 +27,30 @@ class_prerequisites = {
             "Wizard": {"Intelligence": 13},
         }
 
-class Char_Class:
+class Char_Class():
     def __init__(self, name, hit_dice, prerequisites=None, spellcasting = False, features=None):
         self.name = name
         self.hit_dice = hit_dice
-        self.prerequisites = prerequisites
-        self.spellcasting = spellcasting
-        self.features = features or []
+        self.prerequisites = prerequisites # {STR: 10, WIS:13}
+        self.features = features or [] 
+         
+        self.proficiencies = {} # default : [op1, op2, ... ]
+                                # choices : {"choose": 2,
+                                            #"type": "proficiencies",
+                                            #"from": [op1, op2, ... ]
+        self.saving_throws = [] # [STR, WIS, ... ]
+        self.starting_equipment = {} # { default : { option:quantity, op2:quant2,...}
+                                        #choices : [{a:{op:quant}, b:[]}
+                                                #   {a:[], b:[]}, ... ]
+        self.class_levels = {}
+        self.subclasses = {}
+        self.multiclassing = {} # {prerequisites : {score:value}, 
+                                #  proficiencies : [op1, op2, op3]}
+
+        self.spellcasting = {}  #{  level : val,
+                                #   spellcasting_ability : [INT, WIS ?],
+                                #   spells : {} }
+
 
     def __str__(self):
         return f"{self.name} - {self.hit_dice}d{self.hit_dice} - {', '.join(f'{key}: {value}' for key, value in self.prerequisites.items())}"

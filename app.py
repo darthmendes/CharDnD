@@ -2,6 +2,11 @@
 # App To create a DnD Character
 # This part will be replaced by a frontend engine and is only used here for testing 
 #
+#   TODO:
+#       Fixing Character Creation to a specific user
+#       Fixing character ALteration to the user that created it
+#       Make calls for character id and not name?
+#
 # author: darthmendes
 # date: 2025-02-04
 # version: 1.0.0
@@ -29,9 +34,25 @@ def index():
 #   Updating
 
 character_html_path = 'Character'
+
+# Character Home Page 
 @app.route("/characters")
 def character_home():
     return render_template(character_html_path + '/' +'home.html')
+
+# Retrieve Character List for specific Character Name 
+# Try to just print on the HTML 
+# then move to request info from Specific DBs to get more details
+@app.route("/characters/character-sheet/<path:name>", methods =['GET'])
+def character_sheet(name):
+    res = requests.get(PROXY_URL + '/API/characters/' + name, timeout=5)
+    if res.status_code != OK:
+        return "Error: " + str(res.status_code)
+    
+
+    print(res.json())
+    ab_scores = json.loads(res.json()['ability_scores'])
+    return render_template(character_html_path + '/' + 'characterSheet.html', name = res.json()['name'], str = ab_scores['STR'])
 
 @app.route("/characters/creator", methods=["GET"])
 def character_creator():
@@ -41,7 +62,7 @@ def character_creator():
 def new_character():
 
     name = request.form['name']
-    race = request.form['race']
+    species = request.form['race']
     char_class = request.form['char_class']
     level = request.form['level']
     
@@ -63,8 +84,8 @@ def new_character():
 
     data = json.dumps({
         "name": name,
-        "race": race,
-        "class": char_class,
+        "species": species,
+        "char_class": char_class,
         "level": level,
         "ability_scores": str(ability_scores)
         })

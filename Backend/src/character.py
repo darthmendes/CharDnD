@@ -48,7 +48,8 @@ class Character(Base):
             }
 
     # CRUD operations
-    def new(**kwargs):
+    def new(kwargs):
+        print(kwargs)
         if not Character.is_valid(kwargs):
             return -1
         
@@ -89,13 +90,13 @@ class Character(Base):
     
     # upon receiving a dataDict verifies if is is valid
     def is_valid(dataDict):
-        if 'name' not in dataDict or 'species' not in dataDict or 'class' not in dataDict or 'level' not in dataDict:
+        if 'name' not in dataDict or 'species' not in dataDict or 'char_class' not in dataDict or 'level' not in dataDict:
             return False
         if 'ability_scores' not in dataDict:
             return False
 
         # check if all fields are filled correctly
-        if not dataDict['name'] or not dataDict['species'] or not dataDict['class'] or not dataDict['level'] or not dataDict['ability_scores']:
+        if not dataDict['name'] or not dataDict['species'] or not dataDict['char_class'] or not dataDict['level'] or not dataDict['ability_scores']:
             return False
         
         return True
