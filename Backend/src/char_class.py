@@ -1,3 +1,15 @@
+from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+
+from Backend.src.config import DATABASES_PATH
+DB_NAME = 'ClassesDB.sqlite'
+Base = declarative_base()
+
+# Initialize database
+engine = create_engine('sqlite:///%s'%(DATABASES_PATH + '\\' + DB_NAME), echo=False, connect_args={'check_same_thread': False})
+
+
 class_hit_dice = {
             "Barbarian": 12,
             "Bard": 8,
@@ -27,30 +39,85 @@ class_prerequisites = {
             "Wizard": {"Intelligence": 13},
         }
 
-class Char_Class():
-    def __init__(self, name, hit_dice, prerequisites=None, spellcasting = False, features=None):
-        self.name = name
-        self.hit_dice = hit_dice
-        self.prerequisites = prerequisites # {STR: 10, WIS:13}
-        self.features = features or [] 
-         
-        self.proficiencies = {} # default : [op1, op2, ... ]
-                                # choices : {"choose": 2,
-                                            #"type": "proficiencies",
-                                            #"from": [op1, op2, ... ]
-        self.saving_throws = [] # [STR, WIS, ... ]
-        self.starting_equipment = {} # { default : { option:quantity, op2:quant2,...}
-                                        #choices : [{a:{op:quant}, b:[]}
-                                                #   {a:[], b:[]}, ... ]
-        self.class_levels = {}
-        self.subclasses = {}
-        self.multiclassing = {} # {prerequisites : {score:value}, 
-                                #  proficiencies : [op1, op2, op3]}
+class Char_Class(Base):
+    __tablename__ = "classes"    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String, unique=True, nullable=False)
+    hit_dice = Column(String) 
+    prerequisites = Column(String) # {STR: 10, WIS:13}
 
-        self.spellcasting = {}  #{  level : val,
-                                #   spellcasting_ability : [INT, WIS ?],
-                                #   spells : {} }
+    features = Column(String) # list 
 
+    proficiencies = Column(String)  # default : [op1, op2, ... ]
+                                    # choices : {"choose": 2,
+                                        #"type": "proficiencies",
+                                        #"from": [op1, op2, ... ]
 
-    def __str__(self):
-        return f"{self.name} - {self.hit_dice}d{self.hit_dice} - {', '.join(f'{key}: {value}' for key, value in self.prerequisites.items())}"
+    saving_throws = Column(String)  # [STR, WIS, ... ]
+
+    starting_equipment = Column(String) # { default : { option:quantity, op2:quant2,...}
+                                        #   choices : [ {a:{op:quant}, b:[]}
+                                        #               {a:[], b:[]}, ... ]
+    class_levels = Column(String)   
+    subclasses = Column(String)
+    multiclassing = Column(String)  # {prerequisites : {score:value}, 
+                                    #  proficiencies : [op1, op2, op3]}
+
+    spellcasting = Column(String)   #{  level : val,
+                                    #   spellcasting_ability : [INT, WIS ?],
+                                    #   spells : {} }
+    
+        # Starting CRUD funtions
+    def new(self,**kwargs):
+        if not self.is_valid(kwargs):
+            return -1
+        
+        if self.get(kwargs['name']):
+            return -2
+        
+        new_ = Char_Class()
+        for key, value in kwargs.items():
+            setattr(new_, key, value)
+        session.add(new_)
+        session.commit()
+        return 1
+    
+    def update(name, **kwargs):
+        species = session.query(Char_Class).filter_by(name=name).first()
+        if species:
+            for key, value in kwargs.items():
+                setattr(species, key, value)
+            session.commit()
+            return {"message": "Class updated successfully", "id": species.id}
+        return {"message": "Class not found", "id": None}
+    
+    def get(name):
+        char = session.query(Char_Class).filter_by(name=name).first()
+        return char
+    
+    
+    def delete(name):
+        char = session.query(Char_Class).filter_by(name=name).first()
+        if char:
+            session.delete(char)
+            session.commit()
+            return {"message": "Class deleted successfully"}
+        return {"error": "Class not found"}
+
+    def get_all():
+        return session.query(Char_Class).all()
+    
+    # upon receiving a dataDict verifies if is is valid
+    def is_valid(dataDict):
+        if 'name' not in dataDict:
+            return False
+
+        # check if all fields are filled correctly
+        if not dataDict['name']:
+            return False
+        
+        return True
+
+Base.metadata.create_all(engine)
+Session = sessionmaker(bind=engine)
+session = Session()
