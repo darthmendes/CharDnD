@@ -10,6 +10,7 @@
 
 from http.client import BAD_REQUEST, CREATED, NOT_ACCEPTABLE, NOT_FOUND, OK
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import requests
 from Backend.src.character import Character
 from Backend.src.species import Species
@@ -18,6 +19,7 @@ import json
 
 
 app = Flask(__name__)
+cors = CORS(app, origins='*')
 
 ##################################################################################################################################################
 #
@@ -28,17 +30,18 @@ app = Flask(__name__)
 # Create a Character
 @app.route('/API/characters/creator', methods=['POST'])
 def create_character():
-    dataDict = json.loads(request.json)
+    print(request.json)
+    dataDict = request.json
     if 'name' not in dataDict:
         return {'error':'Invalid character data'}, BAD_REQUEST
     
-    res = Character.new(dataDict)
+    #res = Character.new(dataDict)
     
-    if res == -1:
-        return {'error':'Invalid character data'}, BAD_REQUEST
+    # if res == -1:
+    #     return {'error':'Invalid character data'}, BAD_REQUEST
 
-    if res == -2:
-        return {'error':'Character already exists'}, NOT_ACCEPTABLE
+    # if res == -2:
+    #     return {'error':'Character already exists'}, NOT_ACCEPTABLE
     return {'message':'Character created'}, CREATED
 
 # Character Deletion
@@ -170,4 +173,4 @@ def list_classes():
 
 if __name__ == "__main__":
     # initiating server
-    app.run(host='0.0.0.0', port=8001, debug=True)
+    app.run(port=8001, debug=True)
