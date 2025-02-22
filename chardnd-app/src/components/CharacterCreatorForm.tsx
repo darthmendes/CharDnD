@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 interface CharacterFormData {
     name: string;
     species: string;
-    characterClass: string;
+    char_class: string;
     level: number;
 
     STR: number;
@@ -13,13 +13,15 @@ interface CharacterFormData {
     INT: number;
     WIS: number;
     CHA: number;
+
+
 }
 
 const CharacterForm: React.FC = () => {
     const [formData, setFormData] = useState<CharacterFormData>({
         name: '',
         species: '',
-        characterClass: '',
+        char_class: '',
         level: 1,
         STR: 10,
         DEX: 10,
@@ -71,7 +73,7 @@ const CharacterForm: React.FC = () => {
             // Optionally, reset the form after successful submission
             setFormData({   name: '',
                             species: '',
-                            characterClass: '',
+                            char_class: '',
                             level: 1,
                             STR: 10,
                             DEX: 10,
@@ -117,8 +119,8 @@ const CharacterForm: React.FC = () => {
             Class:
             <input
             type="text"
-            name="characterClass"
-            value={formData.characterClass}
+            name="char_class"
+            value={formData.char_class}
             onChange={handleChange}
             required
             />

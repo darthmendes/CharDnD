@@ -30,18 +30,24 @@ cors = CORS(app, origins='*')
 # Create a Character
 @app.route('/API/characters/creator', methods=['POST'])
 def create_character():
-    print(request.json)
     dataDict = request.json
     if 'name' not in dataDict:
         return {'error':'Invalid character data'}, BAD_REQUEST
     
-    #res = Character.new(dataDict)
+    dataDict['ability_scores'] = {'STR':dataDict['STR'], 
+                                'DEX':dataDict['DEX'],
+                                'CON':dataDict['CON'],
+                                'INT':dataDict['INT'],
+                                'WIS':dataDict['WIS'],
+                                'CHA':dataDict['CHA']}
+    print(dataDict)
+    res = Character.new(dataDict)
     
-    # if res == -1:
-    #     return {'error':'Invalid character data'}, BAD_REQUEST
+    if res == -1:
+        return {'error':'Invalid character data'}, BAD_REQUEST
 
-    # if res == -2:
-    #     return {'error':'Character already exists'}, NOT_ACCEPTABLE
+    if res == -2:
+        return {'error':'Character already exists'}, NOT_ACCEPTABLE
     return {'message':'Character created'}, CREATED
 
 # Character Deletion

@@ -50,7 +50,6 @@ class Character(Base):
 
     # CRUD operations
     def new(kwargs):
-        print(kwargs)
         if not Character.is_valid(kwargs):
             return -1
         
@@ -58,8 +57,12 @@ class Character(Base):
             return -2
         
         new_char = Character()
-        for key, value in kwargs.items():
-            setattr(new_char, key, value)
+        new_char.name = kwargs['name']
+        new_char.species = kwargs['species']
+        new_char.char_class = kwargs['char_class']
+        new_char.level = kwargs['level']
+        new_char.ability_scores =str(kwargs['ability_scores'])
+        
         session.add(new_char)
         session.commit()
         return 1
