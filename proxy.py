@@ -51,10 +51,10 @@ def create_character():
     return {'message':'Character created'}, CREATED
 
 # Character Deletion
-@app.route('/API/characters/<path:name>', methods=['DELETE'])
-def delete_character(name):
+@app.route('/API/characters/<path:id>', methods=['DELETE'])
+def delete_character(id):
     dataDict = json.loads(request.json)
-    character = Character.delete(name=dataDict['name']).first()
+    character = Character.delete(id=dataDict['id']).first()
     if character:
         character.delete()
         return "Character Deleted", OK
@@ -62,9 +62,9 @@ def delete_character(name):
         return "Character Not Found", NOT_FOUND
 
 # Character retrieval
-@app.route('/API/characters/<path:name>', methods=['GET'])
-def get_character(name):
-    character = Character.get(name=name)
+@app.route('/API/characters/<path:id>', methods=['GET'])
+def get_character(id):
+    character = Character.get(id=id)
     if character:
         return jsonify(character.to_dict())
     else:

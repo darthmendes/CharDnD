@@ -33,6 +33,7 @@ class Character(Base):
     
     def to_dict(self):
         return {
+            'id':self.id,
             'name': self.name,
             'species': self.species,
             'char_class': self.char_class,
@@ -67,12 +68,12 @@ class Character(Base):
         session.commit()
         return 1
 
-    def get(name):
-        char = session.query(Character).filter_by(name=name).first()
+    def get(id):
+        char = session.query(Character).filter_by(id=id).first()
         return char
                    
-    def update(name, **kwargs):
-        char = session.query(Character).filter_by(name=name).first()
+    def update(id, **kwargs):
+        char = session.query(Character).filter_by(id=id).first()
         if char:
             for key, value in kwargs.items():
                 setattr(char, key, value)
@@ -81,8 +82,8 @@ class Character(Base):
             return {"message": "Character updated successfully"}
         return {"error": "Character not found"}
 
-    def delete(name):
-        char = session.query(Character).filter_by(name=name).first()
+    def delete(id):
+        char = session.query(Character).filter_by(id=id).first()
         if char:
             session.delete(char)
             session.commit()

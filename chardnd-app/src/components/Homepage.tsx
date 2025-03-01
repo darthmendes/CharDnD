@@ -1,6 +1,6 @@
 // src/components/HomePage.tsx
 import React, { useState } from 'react';
-import CharacterCreatorForm from './CharacterCreatorForm';
+import CharacterCreatorForm from '../Character/CharacterCreatorForm';
 
 const HomePage: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
@@ -15,7 +15,7 @@ const HomePage: React.FC = () => {
       <button onClick={handleShowForm}>
         {showForm ? 'Home Page' : 'Create Character'}
       </button>
-
+      <a href='CharacterCreatorForm'>New Page</a>
       {/* Conditionally render the CharacterForm */}
       {showForm && <CharacterCreatorForm />}
     </div>
