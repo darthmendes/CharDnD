@@ -1,10 +1,15 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.tsx'
+import ReactDOM from "react-dom/client";
+import { BrowserRouter, Routes, Route } from "react-router";
+import App from "./App.tsx";
+import CharacterForm from "./Character/CharacterCreatorForm.tsx";
+import CharacterDisplay from "./Character/CharacterDisplay.tsx";
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <BrowserRouter>
+    <Routes>
+      <Route index element={<App />} />
+      <Route path="characters/creator" element={<CharacterForm />} />
+      <Route path="characters/:id" element={<CharacterDisplay />} />
+    </Routes>
+  </BrowserRouter>
+);

@@ -15,7 +15,7 @@ const HomePage: React.FC = () => {
       <button onClick={handleShowForm}>
         {showForm ? 'Home Page' : 'Create Character'}
       </button>
-      <a href='CharacterCreatorForm'>New Page</a>
+      
       {/* Conditionally render the CharacterForm */}
       {showForm && <CharacterCreatorForm />}
     </div>
