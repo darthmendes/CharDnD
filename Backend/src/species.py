@@ -2,7 +2,7 @@ from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-from config import DATABASES_PATH
+from Backend.src.config import DATABASES_PATH
 DB_NAME = 'SpeciessDB.sqlite'
 Base = declarative_base()
 
