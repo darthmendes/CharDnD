@@ -43,3 +43,20 @@ Future Features:
     - Clicking allows more detail or editing
     - Change Ui styles
     - Need capacity Tracker/Indicator
+
+Progress Tracker:
+- Make visible fields:
+    x -> name            
+    x -> class
+    x -> species
+    x -> level
+    -> xp
+    -> ab scores
+    -> spells
+    -> inventory
+    -> proficiencies
+    -> skills
+    -> hp
+    -> speed
+    -> ac
+    -> prof bonus

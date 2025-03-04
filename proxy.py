@@ -34,12 +34,12 @@ def create_character():
     if 'name' not in dataDict:
         return {'error':'Invalid character data'}, BAD_REQUEST
     
-    dataDict['ability_scores'] = {'STR':dataDict['STR'], 
-                                'DEX':dataDict['DEX'],
-                                'CON':dataDict['CON'],
-                                'INT':dataDict['INT'],
-                                'WIS':dataDict['WIS'],
-                                'CHA':dataDict['CHA']}
+    dataDict['abilityScores'] = {   "strenght":dataDict['STR'], 
+                                    "dexterity":dataDict['DEX'],
+                                    "constitution":dataDict['CON'],
+                                    "intelligence":dataDict['INT'],
+                                    "wisdom":dataDict['WIS'],
+                                    "charisma":dataDict['CHA']}
     print(dataDict)
     res = Character.new(dataDict)
     

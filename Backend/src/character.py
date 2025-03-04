@@ -1,7 +1,7 @@
-from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy import PickleType, create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-
+import json
 from Backend.src.config import DATABASES_PATH
 
 DB_NAME = 'charactersDB.sqlite'
@@ -9,6 +9,26 @@ Base = declarative_base()
 
 # Initialize database
 engine = create_engine('sqlite:///%s'%(DATABASES_PATH + '\\' + DB_NAME), echo=False, connect_args={'check_same_thread': False})
+
+class JSONType(PickleType):
+    '''
+        JSON DB type is used to store JSON objects in the database
+    '''
+    def __init__(self, *args, **kwargs):        
+        
+        #kwargs['pickler'] = json
+        super(JSONType, self).__init__(*args, **kwargs)
+
+    def process_bind_param(self, value, dialect):
+        if value is not None:
+            value = json.dumps(value, ensure_ascii=True)
+        return value
+
+    def process_result_value(self, value, dialect):
+
+        if value is not None:
+            value = json.loads(value)
+        return value
 
 class Character(Base):
 
@@ -20,7 +40,7 @@ class Character(Base):
     level = Column(Integer, default=1)
     xp = Column(Integer, default=300)
     hp = Column(String) # {actual:0, max:0, tmp:0}
-    ability_scores = Column(String, nullable=False) # {STR:10, WIS: 10 ... }
+    abilityScores = Column(JSONType, nullable=False) # {STR:10, WIS: 10 ... }
     skills = Column(String) # list [skill1, skill2 ... ]
     equipment = Column(String) # list
     spells = Column(String) # ? understand better how to show known/prepared spells or if able to retrieve from other srcs
@@ -40,7 +60,7 @@ class Character(Base):
             'level': self.level,
             'xp': self.xp,
             'hp': self.hp,
-            'ability_scores': self.ability_scores,
+            'abilityScores': self.abilityScores,
             'skills': self.skills,
             'equipment': self.equipment,
             'spells': self.spells,
@@ -62,7 +82,7 @@ class Character(Base):
         new_char.species = kwargs['species']
         new_char.char_class = kwargs['char_class']
         new_char.level = kwargs['level']
-        new_char.ability_scores =str(kwargs['ability_scores'])
+        new_char.abilityScores = kwargs['abilityScores']
         
         session.add(new_char)
         session.commit()
@@ -97,11 +117,11 @@ class Character(Base):
     def is_valid(dataDict):
         if 'name' not in dataDict or 'species' not in dataDict or 'char_class' not in dataDict or 'level' not in dataDict:
             return False
-        if 'ability_scores' not in dataDict:
+        if 'abilityScores' not in dataDict:
             return False
 
         # check if all fields are filled correctly
-        if not dataDict['name'] or not dataDict['species'] or not dataDict['char_class'] or not dataDict['level'] or not dataDict['ability_scores']:
+        if not dataDict['name'] or not dataDict['species'] or not dataDict['char_class'] or not dataDict['level'] or not dataDict['abilityScores']:
             return False
         
         return True
