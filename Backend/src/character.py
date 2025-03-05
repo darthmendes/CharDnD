@@ -1,8 +1,8 @@
-from sqlalchemy import PickleType, create_engine, Column, Integer, String
+from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-import json
 from Backend.src.config import DATABASES_PATH
+from Backend.src.utils import JSONType
 
 DB_NAME = 'charactersDB.sqlite'
 Base = declarative_base()
@@ -10,25 +10,6 @@ Base = declarative_base()
 # Initialize database
 engine = create_engine('sqlite:///%s'%(DATABASES_PATH + '\\' + DB_NAME), echo=False, connect_args={'check_same_thread': False})
 
-class JSONType(PickleType):
-    '''
-        JSON DB type is used to store JSON objects in the database
-    '''
-    def __init__(self, *args, **kwargs):        
-        
-        #kwargs['pickler'] = json
-        super(JSONType, self).__init__(*args, **kwargs)
-
-    def process_bind_param(self, value, dialect):
-        if value is not None:
-            value = json.dumps(value, ensure_ascii=True)
-        return value
-
-    def process_result_value(self, value, dialect):
-
-        if value is not None:
-            value = json.loads(value)
-        return value
 
 class Character(Base):
 

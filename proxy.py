@@ -123,11 +123,11 @@ def get_species(name):
 @app.route('/API/species', methods=['GET'])
 def list_species():
     aux = Species.get_all()
-    return [{'name':'Ranger'},
-            {'name':'Druid'},
-            {'name':'Barbarian'},
-            {'name':'Artificer'},
-            {'name':'Wizard'} ]
+    return [{'name':'Human'},
+            {'name':'Half Elf'},
+            {'name':'Elf'},
+            {'name':'Gnome'},
+            {'name':'Tortle'} ]
             #jsonify([a.to_dict() for a in aux]), OK
     
 
@@ -179,7 +179,12 @@ def get_classes(name):
 @app.route('/API/classes', methods=['GET'])
 def list_classes():
     aux = Char_Class.get_all()
-    return jsonify([a.to_dict() for a in aux]), OK
+    return [{'name':'Ranger'},
+            {'name':'Druid'},
+            {'name':'Barbarian'},
+            {'name':'Artificer'},
+            {'name':'Wizard'} ]
+    #jsonify([a.to_dict() for a in aux]), OK
 
 
 if __name__ == "__main__":
