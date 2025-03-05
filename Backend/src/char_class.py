@@ -1,84 +1,45 @@
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-
+from Backend.src.utils import JSONType
 from Backend.src.config import DATABASES_PATH
-DB_NAME = 'ClassesDB.sqlite'
+DB_NAME = 'classesDB.sqlite'
 Base = declarative_base()
 
 # Initialize database
 engine = create_engine('sqlite:///%s'%(DATABASES_PATH + '\\' + DB_NAME), echo=False, connect_args={'check_same_thread': False})
-
-
-class_hit_dice = {
-            "Barbarian": 12,
-            "Bard": 8,
-            "Cleric": 8,
-            "Druid": 8,
-            "Fighter": 10,
-            "Monk": 8,
-            "Paladin": 10,
-            "Ranger": 10,
-            "Rogue": 8,
-            "Sorcerer": 6,
-            "Warlock": 8,
-            "Wizard": 6,
-        } 
-class_prerequisites = {
-            "Barbarian": {"Strength": 13},
-            "Bard": {"Charisma": 13},
-            "Cleric": {"Wisdom": 13},
-            "Druid": {"Wisdom": 13},
-            "Fighter": {"Strength": 13, "Dexterity": 13},
-            "Monk": {"Dexterity": 13, "Wisdom": 13},
-            "Paladin": {"Strength": 13, "Charisma": 13},
-            "Ranger": {"Dexterity": 13, "Wisdom": 13},
-            "Rogue": {"Dexterity": 13},
-            "Sorcerer": {"Charisma": 13},
-            "Warlock": {"Charisma": 13},
-            "Wizard": {"Intelligence": 13},
-        }
 
 class Char_Class(Base):
     __tablename__ = "classes"    
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, unique=True, nullable=False)
     hit_dice = Column(String) 
-    prerequisites = Column(String) # {STR: 10, WIS:13}
+    proficiency_choices = Column(JSONType)
+    proficiencies = Column(JSONType)
+    saving_throws = Column(JSONType) 
+    starting_equipment = Column(JSONType) 
+    starting_equipment_choices = Column(JSONType)
+    multiclassing = Column(JSONType)
+    subclasses = Column(JSONType)
+    spellcasting = Column(JSONType)
 
-    features = Column(String) # list 
-
-    proficiencies = Column(String)  # default : [op1, op2, ... ]
-                                    # choices : {"choose": 2,
-                                        #"type": "proficiencies",
-                                        #"from": [op1, op2, ... ]
-
-    saving_throws = Column(String)  # [STR, WIS, ... ]
-
-    starting_equipment = Column(String) # { default : { option:quantity, op2:quant2,...}
-                                        #   choices : [ {a:{op:quant}, b:[]}
-                                        #               {a:[], b:[]}, ... ]
-    class_levels = Column(String)   
-    subclasses = Column(String)
-    multiclassing = Column(String)  # {prerequisites : {score:value}, 
-                                    #  proficiencies : [op1, op2, op3]}
-
-    spellcasting = Column(String)   #{  level : val,
-                                    #   spellcasting_ability : [INT, WIS ?],
-                                    #   spells : {} }
-    
-        # Starting CRUD funtions
-    def new(self,**kwargs):
-        if not self.is_valid(kwargs):
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name
+        }
+    # Starting CRUD funtions
+    def new(kwargs):
+        if not Char_Class.is_valid(kwargs):
             return -1
         
-        if self.get(kwargs['name']):
+        if Char_Class.get(kwargs['name']):
             return -2
         
-        new_ = Char_Class()
+        new_spec = Char_Class()
         for key, value in kwargs.items():
-            setattr(new_, key, value)
-        session.add(new_)
+            setattr(new_spec, key, value)
+        session.add(new_spec)
         session.commit()
         return 1
     

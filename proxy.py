@@ -148,7 +148,7 @@ def create_classes():
     if res == -1:
         return {'error':'Invalid class data'}, BAD_REQUEST
 
-    if res == -2:
+    elif res == -2:
         return {'error':'Class already exists'}, NOT_ACCEPTABLE
     return {'message':'Class created'}, CREATED
 
@@ -177,13 +177,11 @@ def get_classes(name):
 @app.route('/API/classes', methods=['GET'])
 def list_classes():
     aux = Char_Class.get_all()
-    return [{'name':'Ranger'},
-            {'name':'Druid'},
-            {'name':'Barbarian'},
-            {'name':'Artificer'},
-            {'name':'Wizard'} ]
-    #jsonify([a.to_dict() for a in aux]), OK
-
+    res = []
+    for a in aux:
+        a = a.to_dict()
+        res.append({'id':a['id'], 'name':a['name']})
+    return res
 
 if __name__ == "__main__":
     # initiating server

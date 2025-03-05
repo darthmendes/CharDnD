@@ -4,7 +4,7 @@ def addNewSpecies(species):
   res = Species.new(species)
   if res == -1:
       print(f'error: Invalid Species data {species}')
-  if res == -2:
+  elif res == -2:
       print(f'error: Species already exists {species}')
   else: print(f'message: Species created {species}')
 
