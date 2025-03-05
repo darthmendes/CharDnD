@@ -1,5 +1,5 @@
 // src/components/CharacterForm.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface CharacterFormData {
     name: string;
@@ -17,7 +17,21 @@ interface CharacterFormData {
 
 }
 
-const CharacterForm: React.FC = () => {
+interface SpecieAux {
+    name: string
+}
+const CharacterForm: React.FC = () => {  
+    const [speciesList, setSpeciesList] = useState<SpecieAux[]>([])
+
+    useEffect(() => {
+        fetchSpecies()
+    },[])
+    const fetchSpecies = async () => {
+        const response = await fetch("http://127.0.0.1:8001//API//species")
+        const data = await response.json()
+        setSpeciesList(data)
+        console.log(data)
+    }
     const [formData, setFormData] = useState<CharacterFormData>({
         name: '',
         species: '',
@@ -106,13 +120,17 @@ const CharacterForm: React.FC = () => {
         </label>
         <label>
             Species:
-            <input
+            <select name="species" id="species">
+                {speciesList.map(({name}) => (
+                    <option value={name}>{name}</option>))}
+            </select>
+            {/* <input
             type="text"
             name="species"
             value={formData.species}
             onChange={handleChange}
             required
-            />
+            /> */}
         </label>
 
         <label>

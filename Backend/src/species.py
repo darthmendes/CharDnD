@@ -60,7 +60,8 @@ class Species(Base):
         return {"error": "Species not found"}
 
     def get_all():
-        return session.query(Species).all()
+        # return session.query(Species).all()
+        return ['Ranger', 'Druid', 'Cleric', 'Paladin', 'Fighter', 'Barbarian']
     
     # upon receiving a dataDict verifies if is is valid
     def is_valid(dataDict):

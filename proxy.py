@@ -123,7 +123,12 @@ def get_species(name):
 @app.route('/API/species', methods=['GET'])
 def list_species():
     aux = Species.get_all()
-    return jsonify([a.to_dict() for a in aux]), OK
+    return [{'name':'Ranger'},
+            {'name':'Druid'},
+            {'name':'Barbarian'},
+            {'name':'Artificer'},
+            {'name':'Wizard'} ]
+            #jsonify([a.to_dict() for a in aux]), OK
     
 
 
