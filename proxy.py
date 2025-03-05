@@ -111,9 +111,9 @@ def delete_species(name):
         return "Species Not Found", NOT_FOUND
 
 # Retrieve Species
-@app.route('/API/species/<path:name>', methods=['GET'])
-def get_species(name):
-    aux = Species.get(name=name)
+@app.route('/API/species/<path:id>', methods=['GET'])
+def get_species(id):
+    aux = Species.get(id=id)
     if aux:
         return jsonify(aux.to_dict())
     else:
@@ -123,13 +123,11 @@ def get_species(name):
 @app.route('/API/species', methods=['GET'])
 def list_species():
     aux = Species.get_all()
-    return [{'name':'Human'},
-            {'name':'Half Elf'},
-            {'name':'Elf'},
-            {'name':'Gnome'},
-            {'name':'Tortle'} ]
-            #jsonify([a.to_dict() for a in aux]), OK
-    
+    res = []
+    for a in aux:
+        a = a.to_dict()
+        res.append({'id':a['id'], 'name':a['name']})
+    return res
 
 
 ##################################################################################################################################################

@@ -1,9 +1,10 @@
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from Backend.src.utils import JSONType
 
 from Backend.src.config import DATABASES_PATH
-DB_NAME = 'SpeciessDB.sqlite'
+DB_NAME = 'speciessDB.sqlite'
 Base = declarative_base()
 
 # Initialize database
@@ -14,16 +15,33 @@ class Species(Base):
     __tablename__ = "species"
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, unique=True, nullable=False)
-    ability_bonuses = Column(String) #format {STR:1,DEX:1} where you add bonus to the specific ability score
+    ability_bonuses = Column(JSONType) #format {STR:1,DEX:1} where you add bonus to the specific ability score
     size = Column(String) 
     speed = Column(Integer)
-    traits = Column(String) # list 
-    starting_proficiencies = Column(String) # list
-    starting_proficiencies_options = Column(String) # {choose:1, list:[op1,op2,op3]}
-    languages = Column(String) # list
+    traits = Column(JSONType) # list 
+    starting_proficiencies = Column(JSONType) # list
+    starting_proficiencies_options = Column(JSONType) # {choose:1, list:[op1,op2,op3]}
+    languages = Column(JSONType) # list
+    languages_options = Column(JSONType)
+    subclasses = Column(JSONType)
+
+    def to_dict(self):
+        return {
+            'id':self.id,
+            'name':self.name,
+            'size':self.size,
+            'speed':self.speed,
+            'abilityBonuses': self.ability_bonuses,
+            'traits':self.traits,
+            'languages':self.languages,
+            'languages_options':self.languages_options,
+            'subclasses':self.subclasses
+
+        }
+
 
     # Starting CRUD funtions
-    def new(**kwargs):
+    def new(kwargs):
         if not Species.is_valid(kwargs):
             return -1
         
@@ -46,13 +64,13 @@ class Species(Base):
             return {"message": "Species updated successfully", "id": species.id}
         return {"message": "Species not found", "id": None}
     
-    def get(name):
-        char = session.query(Species).filter_by(name=name).first()
+    def get(id):
+        char = session.query(Species).filter_by(id=id).first()
         return char
     
     
-    def delete(name):
-        char = session.query(Species).filter_by(name=name).first()
+    def delete(id):
+        char = session.query(Species).filter_by(id=id).first()
         if char:
             session.delete(char)
             session.commit()
