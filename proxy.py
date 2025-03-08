@@ -11,10 +11,9 @@
 from http.client import BAD_REQUEST, CREATED, NOT_ACCEPTABLE, NOT_FOUND, OK
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import requests
 from Backend.src.character import Character
 from Backend.src.species import Species
-from Backend.src.char_class import Char_Class
+from Backend.src.DnDclass import Char_Class
 import json
 
 

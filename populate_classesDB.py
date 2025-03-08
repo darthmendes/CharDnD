@@ -1,6 +1,6 @@
-from Backend.src.char_class import Char_Class
+from Backend.models.dndclass import DnDclass
 def addNewClass(charclass):  
-  res = Char_Class.new(charclass)
+  res = DnDclass.new(charclass)
   if res == -1:
       print(f'error: Invalid Class data {charclass}')
   elif res == -2:
