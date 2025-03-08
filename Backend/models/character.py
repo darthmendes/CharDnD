@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from . import Base
-from utils import JSONType
+from .utils import JSONType
 
 # Base table for storing character information
 class Character(Base):
@@ -16,12 +16,12 @@ class Character(Base):
     tmp_hp = Column(Integer)
     
     speciesID = Column(Integer, ForeignKey("species.id"))
-    backgroundID = Column(Integer, ForeignKey("background.id"))
+    backgroundID = Column(Integer, ForeignKey("backgrounds.id"))
 
     species = relationship("Species", back_populates="characters")
     background = relationship("Background", back_populates="characters")
-    classes_assoc = relationship("CharacterClass", back_populates="character")
-    inventory = relationship("CharacterInventory", back_populates="character")
+    classes_assoc = relationship("CharacterClass", back_populates="characters")
+    inventory = relationship("CharacterInventory", back_populates="characters")
 
     def __repr__(self):
         return f"Character('{self.name}', '{self.species}', '{self.char_class}', '{self.level}'"
@@ -49,9 +49,16 @@ class CharacterClass(Base):
     __tablename__ = "characterclass"
     id = Column(Integer, primary_key=True)
     characterID = Column(Integer, ForeignKey("characters.id"), nullable = False)
-    classID = Column(Integer, ForeignKey("DnDclass.id"), nullable=False)
+    classID = Column(Integer, ForeignKey("dndclass.id"), nullable=False)
     level = Column(Integer, default=1)
 
     character = relationship("Character", back_populates="classes_assoc")
     dndclass = relationship("DnDclass", back_populates="character_assoc")
 
+
+class CharacterInventory(Base):
+    __tablename__ = "characterinventory"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    characterID = Column(Integer, ForeignKey("characters.id"), nullable=False)
+    itemID = Column(Integer, ForeignKey("items.id"), nullable=False)
+    quantity = Column(Integer)

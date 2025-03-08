@@ -1,6 +1,6 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
-from utils import JSONType
+from .utils import JSONType
 from . import Base
 
 class Species(Base):
@@ -27,7 +27,13 @@ class Species(Base):
             'size':self.size,
             'speed':self.speed,
             'abilityBonuses': self.ability_bonuses,
-            'traits':self.traits,
-            'languages':self.languages,
-            'languages_options':self.languages_options
-        }
+            'traits':self.traits}
+        #     'languages':self.languages,
+        #     'languages_options':self.languages_options
+        # }
+
+class SpeciesTraits(Base):
+    __tablename__ = "species_traits"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    speciesID = Column(Integer, ForeignKey("species.id"), nullable=False)
+    featureID = Column(Integer, ForeignKey("features.id"), nullable=False)
