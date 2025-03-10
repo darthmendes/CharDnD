@@ -12,16 +12,6 @@ class DnDclass(Base):
     class_equipment = relationship("ClassEquipment", back_populates="dndclass")
     character_assoc = relationship("CharacterClass", back_populates="dndclass")
 
-
-    # proficiency_choices = Column(JSONType)
-    # proficiencies = Column(JSONType)
-    # saving_throws = Column(JSONType) 
-    # starting_equipment = Column(JSONType) 
-    # starting_equipment_choices = Column(JSONType)
-    # multiclassing = Column(JSONType)
-    # subclasses = Column(JSONType)
-    # spellcasting = Column(JSONType)
-
     def to_dict(self):
         return {
             'id': self.id,
@@ -44,7 +34,7 @@ class ClassFeatures(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     classID = Column(Integer, ForeignKey("dndclass.id"), nullable=False)
     featureID = Column(Integer, ForeignKey("features.id"), nullable=False)
-
+    level = Column(Integer, nullable = False)   
     
     dndclass = relationship("DnDclass", back_populates= "class_features")
     features = relationship("Features", back_populates="classFeatures")
