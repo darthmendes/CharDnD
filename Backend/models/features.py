@@ -11,3 +11,10 @@ class Features(Base):
     
     classFeatures = relationship("ClassFeatures", back_populates="features")
     speciesTraits = relationship("SpeciesTraits", back_populates="features")
+
+    def to_dict(self):
+        return {
+            "id" : self.id,
+            "name" : self.name,
+            "desc" : self.desc
+        }

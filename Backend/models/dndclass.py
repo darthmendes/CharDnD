@@ -36,8 +36,15 @@ class ClassEquipment(Base):
     itemID = Column(Integer, ForeignKey("items.id"), nullable=False)
     quantity = Column(Integer, default=1)
 
+    dndclass = relationship("DnDclass", back_populates= "class_equipment")
+    item = relationship("Item", back_populates="class_entries")
+
 class ClassFeatures(Base):
     __tablename__ = "class_features"
     id = Column(Integer, primary_key=True, autoincrement=True)
     classID = Column(Integer, ForeignKey("dndclass.id"), nullable=False)
     featureID = Column(Integer, ForeignKey("features.id"), nullable=False)
+
+    
+    dndclass = relationship("DnDclass", back_populates= "class_features")
+    features = relationship("Features", back_populates="classFeatures")

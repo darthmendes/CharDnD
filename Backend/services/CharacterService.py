@@ -1,5 +1,5 @@
-from models.character import Character
-from models import session
+from ..models.character import Character
+from ..models import session
 
 class CharacterService:
     

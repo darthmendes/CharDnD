@@ -1,4 +1,4 @@
-from Backend.src.character import Character
+from ..Backend.services.CharacterService import Character
 char1 = {
     'name': 'Gwinleth',
     'level' : 12,

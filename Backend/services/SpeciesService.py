@@ -1,5 +1,5 @@
-from models.species import Species
-from models import session  
+from ..models.species import Species
+from ..models import session  
 
 class SpeciesService:
     # Starting CRUD funtions

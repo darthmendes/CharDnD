@@ -18,6 +18,8 @@ from .item import Item
 from .species import Species, SpeciesTraits
 from .background import Background, BackgroundEquipment
 from .features import Features
+from .proficiencies import Proficiency, ProficiencyChoice, ProficiencyChoiceGroup
+from .languages import Language, LanguageChoice, LanguageChoiceGroup
 
 # Create all tables
 Base.metadata.create_all(engine)

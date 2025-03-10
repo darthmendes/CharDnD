@@ -1,5 +1,5 @@
-from models.dndclass import DnDclass
-from models import session 
+from ..models.dndclass import DnDclass
+from ..models import session 
 
 class ClassService:
         

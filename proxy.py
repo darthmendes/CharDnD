@@ -11,9 +11,9 @@
 from http.client import BAD_REQUEST, CREATED, NOT_ACCEPTABLE, NOT_FOUND, OK
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from Backend.src.character import Character
-from Backend.src.species import Species
-from Backend.src.DnDclass import Char_Class
+from Backend.services.CharacterService import CharacterService as Character
+from Backend.services.SpeciesService import SpeciesService as Species
+from Backend.services.ClassService import ClassService as DnDClass
 import json
 
 
@@ -142,7 +142,7 @@ def create_classes():
     if 'name' not in dataDict:
         return {'error':'Invalid class data'}, BAD_REQUEST
     
-    res = Char_Class.new(dataDict)
+    res = DnDClass.new(dataDict)
     
     if res == -1:
         return {'error':'Invalid class data'}, BAD_REQUEST
@@ -155,7 +155,7 @@ def create_classes():
 @app.route('/API/classes/<path:name>', methods=['DELETE'])
 def delete_classes(name):
     dataDict = json.loads(request.json)
-    aux = Char_Class.delete(name=dataDict['name']).first()
+    aux = DnDClass.delete(name=dataDict['name']).first()
     if aux:
         aux.delete()
         return "Class Deleted", OK
@@ -166,7 +166,7 @@ def delete_classes(name):
 # Retrieve class
 @app.route('/API/classes/<path:name>', methods=['GET']) 
 def get_classes(name):
-    aux = Char_Class.get(name=name)
+    aux = DnDClass.get(name=name)
     if aux:
         return jsonify(aux.to_dict())
     else:
@@ -175,7 +175,7 @@ def get_classes(name):
 # List class
 @app.route('/API/classes', methods=['GET'])
 def list_classes():
-    aux = Char_Class.get_all()
+    aux = DnDClass.get_all()
     res = []
     for a in aux:
         a = a.to_dict()

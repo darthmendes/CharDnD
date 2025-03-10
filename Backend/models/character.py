@@ -20,8 +20,8 @@ class Character(Base):
 
     species = relationship("Species", back_populates="characters")
     background = relationship("Background", back_populates="characters")
-    classes_assoc = relationship("CharacterClass", back_populates="characters")
-    inventory = relationship("CharacterInventory", back_populates="characters")
+    classes_assoc = relationship("CharacterClass", back_populates="character")
+    inventory = relationship("CharacterInventory", back_populates="character")
 
     def __repr__(self):
         return f"Character('{self.name}', '{self.species}', '{self.char_class}', '{self.level}'"
@@ -62,3 +62,6 @@ class CharacterInventory(Base):
     characterID = Column(Integer, ForeignKey("characters.id"), nullable=False)
     itemID = Column(Integer, ForeignKey("items.id"), nullable=False)
     quantity = Column(Integer)
+
+    character = relationship("Character", back_populates="inventory")
+    item = relationship("Item", back_populates="inventory_entries")
