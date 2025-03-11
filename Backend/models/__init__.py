@@ -17,7 +17,7 @@ from .dndclass import DnDclass, ClassFeatures, ClassEquipment
 from .item import Item
 from .species import Species, SpeciesTraits
 from .background import Background, BackgroundEquipment
-from .features import Features
+from .features import Features, FeatureLevel
 from .proficiencies import Proficiency, ProficiencyChoice, ProficiencyChoiceGroup
 from .languages import Language, LanguageChoice, LanguageChoiceGroup
 

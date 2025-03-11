@@ -6,7 +6,7 @@ class DnDclass(Base):
     __tablename__ = "dndclass"    
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, unique=True, nullable=False)
-    hit_dice = Column(String) 
+    hit_dice = Column(Integer, nullable=False) 
 
     class_features = relationship("ClassFeatures", back_populates= "dndclass")
     class_equipment = relationship("ClassEquipment", back_populates="dndclass")
@@ -15,7 +15,8 @@ class DnDclass(Base):
     def to_dict(self):
         return {
             'id': self.id,
-            'name': self.name
+            'name': self.name,
+            'class_features':[ep.features.to_dict() for ep in self.class_features]
         }
 
 
