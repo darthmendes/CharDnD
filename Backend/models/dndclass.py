@@ -1,16 +1,24 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from . import Base
+from .utils import JSONType
 
 class DnDclass(Base):
     __tablename__ = "dndclass"    
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, unique=True, nullable=False)
     hit_dice = Column(Integer, nullable=False) 
+    saving_throws = Column(JSONType)
 
     class_features = relationship("ClassFeatures", back_populates= "dndclass")
     class_equipment = relationship("ClassEquipment", back_populates="dndclass")
     character_assoc = relationship("CharacterClass", back_populates="dndclass")
+
+    guaranteed_proficiencies = relationship(
+        "EntityProficiency",
+        primaryjoin="and_(DnDclass.id == foreign(EntityProficiency.sourceID), EntityProficiency.sourceType == 'class')",
+        viewonly=True
+    )
 
     def to_dict(self):
         return {

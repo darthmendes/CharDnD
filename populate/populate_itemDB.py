@@ -39,7 +39,96 @@ items = [
         rarity = "common",
         properties = {}
     ),
-    
+    Item(
+        name="Leather",
+        item_type="armor",
+        item_category="light-armor",
+        rarity="common",
+        desc="",
+        weight=10,
+        cost=10,
+        properties={
+            "ac":11
+        },
+    ),
+    Item(
+        name="Padded",
+        item_type="armor",
+        item_category="light-armor",
+        rarity="common",
+        desc="",
+        weight=8,
+        cost=5,
+        properties={
+            "ac":11,
+            "stealth":"disadvantage"
+        },
+    ),
+    Item(
+        name="Shield",
+        item_type="armor",
+        item_category="shields",
+        rarity="common",
+        desc="",
+        weight=6,
+        cost=10,
+        properties={
+            "ac":2
+        },
+    ),
+    Item(
+        name="Club",
+        item_type="weapon",
+        item_category="simple",
+        rarity="common",
+        desc="",
+        weight=2,
+        cost=0.1,
+        properties={
+            "ranged": False,
+            "damage":"1d4",
+            "attributes":[
+                "light"
+            ],
+            "damage_type":"bludgeoning"
+        },
+    ),
+    Item(
+        name="Dagger",
+        item_type="weapon",
+        item_category="simple",
+        rarity="common",
+        desc="",
+        weight=1,
+        cost=2,
+        properties={
+            "ranged": False,
+            "damage":"1d4",
+            "attributes":[
+                "light",
+                "finesse",
+                "thrown"
+            ],
+            "range_dist": "20/60",
+            "damage_type":"piercing"
+        },
+    ),
+    Item(
+        name="Simple weapon",
+        item_type="category",
+        properties={
+            "ranged":True,
+            "weapon_category":"simple"
+        }
+    ),
+    Item(
+        name="Simple melee weapon",
+        item_type="category",
+        properties={
+            "ranged":False,
+            "weapon_category":"simple"
+        }
+    )
 ]
 
 def add_items():

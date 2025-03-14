@@ -84,7 +84,7 @@ def create_human():
     )
 
     for lang in session.query(Language).all():
-        if lang.name != 'Common':
+        if lang.type == '' and lang.name != 'Common':
             lang_group.choices.append(LanguageChoice(languageID=lang.id))
 
     session.add_all([human, lang_group, languages])

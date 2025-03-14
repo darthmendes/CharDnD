@@ -7,6 +7,7 @@ class Language(Base):
     __tablename__ = 'languages'
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, nullable=False)
+    type = Column(String)
     desc = Column(String)
 
     entity_languages = relationship("EntityLanguage", back_populates="language")
