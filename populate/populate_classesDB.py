@@ -1,9 +1,8 @@
-from Backend.models.species import Species, SpeciesTraits
 from Backend.models.features import Features, FeatureLevel
 from Backend.models.dndclass import DnDclass, ClassEquipment, ClassFeatures
 from Backend.models.item import Item, ItemChoiceGroup, ItemChoice
 from Backend.models.languages import Language, EntityLanguage, LanguageChoice, LanguageChoiceGroup
-from Backend.models.proficiencies import Proficiency, ProficiencyChoice, ProficiencyChoiceGroup
+from Backend.models.proficiencies import Proficiency, ProficiencyChoice, ProficiencyChoiceGroup, EntityProficiency
 from Backend.models import session
 
 def create_barbarian():
@@ -189,6 +188,9 @@ def create_druid():
         name='Druid',
         hit_dice=8
     )
+    session.add(druid)
+    session.commit()
+
     features = [
         Features(
             name='Ritual Casting',
@@ -247,20 +249,8 @@ def create_druid():
     session.commit()
     
     asi = session.query(Features).filter_by(name="Ability Score Improvement").first()
-    wildshape = features[2]
-    druid_levels = [
-        FeatureLevel(
-            featureID = features[1].id, # Ritual Casting 
-            level = 1,
-        ),
-        FeatureLevel(
-            featureID = features[3].id, # Druid Circle 
-            level = 2,
-        ),
-        FeatureLevel(
-            featureID = features[4].id, # Wild Companion 
-            level = 2,
-        ),
+    wildshape = features[1]
+    wildshape_levels = [
         FeatureLevel(
             featureID = wildshape.id,
             level = 2,
@@ -269,15 +259,7 @@ def create_druid():
                 "fly":False,
                 "swim":False
                 }
-        ),
-        FeatureLevel(
-            featureID = asi.id, # Ability Score Improvement
-            level = 4,
-        ),
-        FeatureLevel(
-            featureID = features[5].id, # Cantrip Versatility
-            level = 4,
-        ),
+        ),        
         FeatureLevel(
             featureID = wildshape.id,
             level = 4,
@@ -296,47 +278,96 @@ def create_druid():
                 "swim":True
                 }
         ),
-        FeatureLevel(
+    ]
+
+
+    druid_levels = [
+        ClassFeatures(
+            classID = druid.id,
+            featureID = features[0].id, # Ritual Casting 
+            level = 1,
+        ),
+        ClassFeatures(
+            classID = druid.id,
+            featureID = features[2].id, # Druid Circle 
+            level = 2,
+        ),
+        ClassFeatures(
+            classID = druid.id,
+            featureID = features[3].id, # Wild Companion 
+            level = 2,
+        ),
+        ClassFeatures(
+            classID = druid.id,
+            featureID = wildshape.id,
+            level = 2,
+        ),
+        ClassFeatures(
+            classID = druid.id,
+            featureID = asi.id, # Ability Score Improvement
+            level = 4,
+        ),
+        ClassFeatures(
+            classID = druid.id,
+            featureID = features[4].id, # Cantrip Versatility
+            level = 4,
+        ),
+        ClassFeatures(
+            classID = druid.id,
             featureID = asi.id, # Ability Score Improvement
             level = 8,
         ),
-        FeatureLevel(
-            featureID = features[5].id, # Cantrip Versatility
+        ClassFeatures(
+            classID = druid.id,
+            featureID = features[4].id, # Cantrip Versatility
             level = 8,
         ),
-        FeatureLevel(
+        ClassFeatures(
+            classID = druid.id,
             featureID = asi.id, # Ability Score Improvement
             level = 12,
         ),
-        FeatureLevel(
-            featureID = features[5].id, # Cantrip Versatility
+        ClassFeatures(
+            classID = druid.id,
+            featureID = features[4].id, # Cantrip Versatility
             level = 12,
         ),
-        FeatureLevel(
+        ClassFeatures(
+            classID = druid.id,
             featureID = asi.id, # Ability Score Improvement
             level = 16,
         ),
-        FeatureLevel(
-            featureID = features[5].id, # Cantrip Versatility
+        ClassFeatures(
+            classID = druid.id,
+            featureID = features[4].id, # Cantrip Versatility
             level = 16,
         ),
-        FeatureLevel(
+        ClassFeatures(
+            classID = druid.id,
             featureID = asi.id, # Ability Score Improvement
             level = 19,
         ),
-        FeatureLevel(
-            featureID = features[5].id, # Cantrip Versatility
+        ClassFeatures(
+            classID = druid.id,
+            featureID = features[4].id, # Cantrip Versatility
             level = 19,
         ),
     ]
     session.add_all(druid_levels)
     session.commit()
 
+    herbalism_kit = session.query(Proficiency).filter_by(name="Herbalism Kit").first()
     druid_profs = [
         Proficiency(
             name='Druidic',
             type='language'
         ),
+        EntityProficiency(
+            sourceType = "class",
+            sourceID = druid.id,
+            proficiencyID = herbalism_kit.id
+
+        )
     ]
 
     skill_profs = ProficiencyChoiceGroup(
@@ -378,7 +409,7 @@ def create_druid():
         n_choices=1
     )
     wooden_shield = session.query(Item).filter_by(name="Wooden Shield").first()
-    simple_weapon = session.query(Item).filter_by(name="Simple Weapon").first()
+    simple_weapon = session.query(Item).filter_by(name="Simple weapon").first()
     choice1.choices =[
         ItemChoice(itemID=wooden_shield.id),
         ItemChoice(itemID=simple_weapon.id)
@@ -403,21 +434,22 @@ def create_druid():
     leather_armor = session.query(Item).filter_by(name="Leather", item_type="armor").first()
     explorers_pack = session.query(Item).filter_by(name="Explorer's Pack").first()
     druidic_focus = session.query(Item).filter_by(name="Druidic Focus").first()
-    druid.class_equipment(
+    class_equipment=[
         ClassEquipment(
             classID = druid.id,
-            itemID = leather_armor,
+            itemID = leather_armor.id,
             quantity = 1
         ),
         ClassEquipment(
             classID = druid.id,
-            itemID = explorers_pack,
+            itemID = explorers_pack.id,
             quantity = 1
         ),
         ClassEquipment(
             classID = druid.id,
-            itemID = druidic_focus,
+            itemID = druidic_focus.id,
             quantity = 1
         )
-    )
+    ]
+    session.add_all(class_equipment)
     session.commit()

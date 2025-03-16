@@ -14,7 +14,8 @@ add_items()
 from populate.populate_featuresDB import add_features
 add_features()
 
-import populate.populate_proficienciesDB 
+from populate.populate_proficienciesDB import add_proficiencies
+add_proficiencies()
 
 from populate.populate_speciesDB import create_dwarf, create_human
 create_dwarf()
@@ -22,7 +23,7 @@ create_human()
 
 from populate.populate_classesDB import create_barbarian, create_druid
 create_barbarian()
-create_druid
+create_druid()
 
 
 dwarf = session.query(DnDclass).filter_by(name="Druid").first()
