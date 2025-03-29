@@ -1,24 +1,33 @@
-from ..models.character import Character
+from ..models.character import Character, CharacterClass
+from ..models.species import Species
+from ..models.dndclass import DnDclass
 from ..models import session
 
 class CharacterService:
     
     # CRUD operations
     def new(kwargs):
-        if not Character.is_valid(kwargs):
+        if not CharacterService.is_valid(kwargs):
             return -1
         
-        if Character.get(kwargs['name']):
+        if CharacterService.get(kwargs['name']):
             return -2
         
         new_char = Character()
         new_char.name = kwargs['name']
-        new_char.species = kwargs['species']
-        new_char.char_class = kwargs['char_class']
+        new_char.species = session.query(Species).filter_by(name = kwargs['species']).first()
         new_char.level = kwargs['level']
         new_char.abilityScores = kwargs['abilityScores']
         
         session.add(new_char)
+        session.commit()
+
+        characterClass = CharacterClass(
+            characterID = new_char.id,
+            classID = session.query(DnDclass).filter_by(name=kwargs['char_class']).first().id,
+            level = new_char.level
+        )
+        session.add(characterClass)
         session.commit()
         return 1
 

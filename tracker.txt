@@ -5,7 +5,7 @@ DnD Character Tracker Implementation Goals:
     - Edit Class
     - Edit Level
     - Edit Experience Points
-    - Image
+    - Image?
 
 
 - able to manage inventory
@@ -44,19 +44,13 @@ Future Features:
     - Change Ui styles
     - Need capacity Tracker/Indicator
 
-Progress Tracker:
-- Make visible fields:
-    x -> name            
-    x -> class
-    x -> species
-    x -> level
-    -> xp
-    -> ab scores
-    -> spells
-    -> inventory
-    -> proficiencies
-    -> skills
-    -> hp
-    -> speed
-    -> ac
-    -> prof bonus
+
+Proxima task:
+    Process to create character
+        Select values etc and open mini menu to choose specific things
+    
+    Process to create species
+    Process to create Class
+    Process to create item, feature, background... etc
+    
+    -> Show character Information when selecting a Character

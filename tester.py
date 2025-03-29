@@ -26,8 +26,8 @@ create_barbarian()
 create_druid()
 
 
-dwarf = session.query(DnDclass).filter_by(name="Druid").first()
-print(dwarf.to_dict())
+# dwarf = session.query(DnDclass).filter_by(name="Druid").first()
+# print(dwarf.to_dict())
 
 # all = session.query(Item).all()
 # for feat in all:

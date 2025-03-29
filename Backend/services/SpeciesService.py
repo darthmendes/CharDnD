@@ -4,10 +4,10 @@ from ..models import session
 class SpeciesService:
     # Starting CRUD funtions
     def new(kwargs):
-        if not Species.is_valid(kwargs):
+        if not SpeciesService.is_valid(kwargs):
             return -1
         
-        if Species.get(kwargs['name']):
+        if SpeciesService.get(kwargs['name']):
             return -2
         
         new_spec = Species()

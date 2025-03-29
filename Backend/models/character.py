@@ -11,6 +11,7 @@ class Character(Base):
     name = Column(String, unique=True, nullable=False)
     abilityScores = Column(JSONType, nullable=False)
     xp = Column(Integer, default=300)
+    level = Column(Integer, default = 1)
     curr_hp = Column(Integer)
     max_hp = Column(Integer)
     tmp_hp = Column(Integer)
@@ -24,24 +25,21 @@ class Character(Base):
     inventory = relationship("CharacterInventory", back_populates="character")
 
     def __repr__(self):
-        return f"Character('{self.name}', '{self.species}', '{self.char_class}', '{self.level}'"
+        return f"Character('{self.name}', '{self.species}', '{self.level}'"
     
     def to_dict(self):
         return {
             'id':self.id,
             'name': self.name,
-            'species': self.species,
-            'char_class': self.char_class,
+            'species': self.species.name,
+            'char_class' : [{
+                            'name' : c.dndclass.name,
+                            'level' : c.level
+                        } for c in self.classes_assoc],
             'level': self.level,
             'xp': self.xp,
-            'hp': self.hp,
             'abilityScores': self.abilityScores,
-            'skills': self.skills,
-            'equipment': self.equipment,
-            'spells': self.spells,
-            'languages': self.languages,
-            'background': self.background,
-            'alignment': self.alignment,
+            'background': self.background
             }
 
 # Table used to map Character to classes (used for multiclassing as well)                                                                       

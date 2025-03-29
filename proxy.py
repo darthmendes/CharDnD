@@ -4,8 +4,6 @@
 # Currently it performs the requests directly to the DBs, in the future replace with a proxy that maps the calls correctly
 #
 # author: darthmendes
-# date: 2025-02-04
-# version: 1.0.0
 #
 
 from http.client import BAD_REQUEST, CREATED, NOT_ACCEPTABLE, NOT_FOUND, OK
@@ -33,7 +31,7 @@ def create_character():
     if 'name' not in dataDict:
         return {'error':'Invalid character data'}, BAD_REQUEST
     
-    dataDict['abilityScores'] = {   "strenght":dataDict['STR'], 
+    dataDict['abilityScores'] = {   "strength":dataDict['STR'], 
                                     "dexterity":dataDict['DEX'],
                                     "constitution":dataDict['CON'],
                                     "intelligence":dataDict['INT'],
@@ -65,6 +63,7 @@ def delete_character(id):
 def get_character(id):
     character = Character.get(id=id)
     if character:
+        print(character.to_dict())
         return jsonify(character.to_dict())
     else:
         return "Character Not Found", NOT_FOUND
@@ -72,8 +71,13 @@ def get_character(id):
 # List Characters
 @app.route('/API/characters', methods=['GET'])
 def list_characters():
-    characters = Character.get_all()
-    return jsonify([character.to_dict() for character in characters]), OK
+    aux = Character.get_all()
+    res = []
+    for a in aux:
+        a = a.to_dict()
+        res.append({'id':a['id'], 'name':a['name']})
+    
+    return res, OK
     
 
 ##################################################################################################################################################
@@ -161,7 +165,6 @@ def delete_classes(name):
         return "Class Deleted", OK
     else:
         return "Class Not Found", NOT_FOUND
-
 
 # Retrieve class
 @app.route('/API/classes/<path:name>', methods=['GET']) 

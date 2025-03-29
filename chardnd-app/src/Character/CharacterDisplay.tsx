@@ -1,8 +1,36 @@
 
 // Example: Fetching a single character in a component
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { Character } from '../types/Character';
+
+
+const ClassList = ({ classes }) => {
+    return  <ul>
+                {classes.map((dndclass) => (
+                    <li>
+                        {dndclass.name} {dndclass.level}
+                    </li>
+                ))}
+            </ul>
+};
+const AbsScores = ({ abilityScores }) => {
+    const abilityOrder = [
+        "strength", "dexterity", "constitution",
+        "intelligence", "wisdom", "charisma"
+    ];
+        return <ul>
+                    {abilityOrder.map((ability) => {
+                        const score = abilityScores[ability];
+                        const modifier = Math.floor((score - 10) / 2);  // D&D modifier formula
+                        return (
+                            <li key={ability}>
+                                {ability}: {score} (Modifier: {modifier >= 0 ? `+${modifier}` : modifier})
+                            </li>
+                        );
+                    })}
+                </ul>
+};
 
 const CharacterDisplay: React.FC = () => {
     const { id } = useParams();
@@ -33,20 +61,16 @@ const CharacterDisplay: React.FC = () => {
     if (loading) return <p>Loading character...</p>;
     if (error) return <p style={{ color: 'red' }}>{error}</p>;
     if (!character) return <p>No character found.</p>;
-
+    
     return (
         <div>
             <h1>{character.name}</h1>
             <p><strong>Species:</strong> {character.species}</p>
-            <p><strong>Class:</strong> {character.char_class}</p>
             <p><strong>Level:</strong> {character.level}</p>
-            <div><strong>Ability Scores:</strong> 
-                <p>Strenght: {character.abilityScores.strenght}</p>
-                <p>Constitution: {character.abilityScores.constitution}</p>
-                <p>Dexterity: {character.abilityScores.dexterity}</p>
-                <p>Intelligence: {character.abilityScores.intelligence}</p>
-                <p>Wisdom: {character.abilityScores.wisdom}</p>
-                <p>Charisma: {character.abilityScores.charisma}</p>
+            <p><strong>Class:</strong>
+                <ClassList classes={character.char_class}/></p>
+            <div><strong>Ability Scores:</strong>
+                <AbsScores abilityScores={character.abilityScores}/> 
             </div>
         </div>
     );
