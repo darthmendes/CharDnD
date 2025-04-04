@@ -72,6 +72,12 @@ const CharacterDisplay: React.FC = () => {
             <div><strong>Ability Scores:</strong>
                 <AbsScores abilityScores={character.abilityScores}/> 
             </div>
+            <div><strong>Proficiencies:</strong>
+                <AbsScores abilityScores={character.abilityScores}/> 
+            </div>
+            <div><strong>Inventory:</strong>
+                <AbsScores abilityScores={character.abilityScores}/> 
+            </div>
         </div>
     );
 };
