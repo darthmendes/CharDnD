@@ -4,17 +4,14 @@
 # Currently it performs the requests directly to the DBs, in the future replace with a proxy that maps the calls correctly
 #
 # author: darthmendes
-# date: 2025-02-04
-# version: 1.0.0
 #
 
 from http.client import BAD_REQUEST, CREATED, NOT_ACCEPTABLE, NOT_FOUND, OK
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import requests
-from Backend.src.character import Character
-from Backend.src.species import Species
-from Backend.src.char_class import Char_Class
+from Backend.services.CharacterService import CharacterService as Character
+from Backend.services.SpeciesService import SpeciesService as Species
+from Backend.services.ClassService import ClassService as DnDClass
 import json
 
 
@@ -34,7 +31,7 @@ def create_character():
     if 'name' not in dataDict:
         return {'error':'Invalid character data'}, BAD_REQUEST
     
-    dataDict['abilityScores'] = {   "strenght":dataDict['STR'], 
+    dataDict['abilityScores'] = {   "strength":dataDict['STR'], 
                                     "dexterity":dataDict['DEX'],
                                     "constitution":dataDict['CON'],
                                     "intelligence":dataDict['INT'],
@@ -66,6 +63,7 @@ def delete_character(id):
 def get_character(id):
     character = Character.get(id=id)
     if character:
+        print(character.to_dict())
         return jsonify(character.to_dict())
     else:
         return "Character Not Found", NOT_FOUND
@@ -73,8 +71,13 @@ def get_character(id):
 # List Characters
 @app.route('/API/characters', methods=['GET'])
 def list_characters():
-    characters = Character.get_all()
-    return jsonify([character.to_dict() for character in characters]), OK
+    aux = Character.get_all()
+    res = []
+    for a in aux:
+        a = a.to_dict()
+        res.append({'id':a['id'], 'name':a['name']})
+    
+    return res, OK
     
 
 ##################################################################################################################################################
@@ -111,9 +114,9 @@ def delete_species(name):
         return "Species Not Found", NOT_FOUND
 
 # Retrieve Species
-@app.route('/API/species/<path:name>', methods=['GET'])
-def get_species(name):
-    aux = Species.get(name=name)
+@app.route('/API/species/<path:id>', methods=['GET'])
+def get_species(id):
+    aux = Species.get(id=id)
     if aux:
         return jsonify(aux.to_dict())
     else:
@@ -123,8 +126,11 @@ def get_species(name):
 @app.route('/API/species', methods=['GET'])
 def list_species():
     aux = Species.get_all()
-    return jsonify([a.to_dict() for a in aux]), OK
-    
+    res = []
+    for a in aux:
+        a = a.to_dict()
+        res.append({'id':a['id'], 'name':a['name']})
+    return res
 
 
 ##################################################################################################################################################
@@ -140,12 +146,12 @@ def create_classes():
     if 'name' not in dataDict:
         return {'error':'Invalid class data'}, BAD_REQUEST
     
-    res = Char_Class.new(dataDict)
+    res = DnDClass.new(dataDict)
     
     if res == -1:
         return {'error':'Invalid class data'}, BAD_REQUEST
 
-    if res == -2:
+    elif res == -2:
         return {'error':'Class already exists'}, NOT_ACCEPTABLE
     return {'message':'Class created'}, CREATED
 
@@ -153,18 +159,17 @@ def create_classes():
 @app.route('/API/classes/<path:name>', methods=['DELETE'])
 def delete_classes(name):
     dataDict = json.loads(request.json)
-    aux = Char_Class.delete(name=dataDict['name']).first()
+    aux = DnDClass.delete(name=dataDict['name']).first()
     if aux:
         aux.delete()
         return "Class Deleted", OK
     else:
         return "Class Not Found", NOT_FOUND
 
-
 # Retrieve class
 @app.route('/API/classes/<path:name>', methods=['GET']) 
 def get_classes(name):
-    aux = Char_Class.get(name=name)
+    aux = DnDClass.get(name=name)
     if aux:
         return jsonify(aux.to_dict())
     else:
@@ -173,9 +178,12 @@ def get_classes(name):
 # List class
 @app.route('/API/classes', methods=['GET'])
 def list_classes():
-    aux = Char_Class.get_all()
-    return jsonify([a.to_dict() for a in aux]), OK
-
+    aux = DnDClass.get_all()
+    res = []
+    for a in aux:
+        a = a.to_dict()
+        res.append({'id':a['id'], 'name':a['name']})
+    return res
 
 if __name__ == "__main__":
     # initiating server
