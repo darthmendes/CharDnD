@@ -10,7 +10,7 @@ class CharacterService:
         if not CharacterService.is_valid(kwargs):
             return -1
         
-        if CharacterService.get(kwargs['name']):
+        if CharacterService.get_name(kwargs['name']):
             return -2
         
         new_char = Character()
@@ -34,7 +34,11 @@ class CharacterService:
     def get(id):
         char = session.query(Character).filter_by(id=id).first()
         return char
-                   
+
+    def get_name(name):
+        char = session.query(Character).filter_by(name=name).first()
+        return char
+
     def update(id, **kwargs):
         char = session.query(Character).filter_by(id=id).first()
         if char:

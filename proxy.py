@@ -12,6 +12,7 @@ from flask_cors import CORS
 from Backend.services.CharacterService import CharacterService as Character
 from Backend.services.SpeciesService import SpeciesService as Species
 from Backend.services.ClassService import ClassService as DnDClass
+from Backend.services.ItemService import ItemService as Item
 import json
 
 
@@ -184,6 +185,44 @@ def list_classes():
         a = a.to_dict()
         res.append({'id':a['id'], 'name':a['name']})
     return res
+
+##################################################################################################################################################
+#
+# Item DB operations
+#
+##################################################################################################################################################
+@app.route('/API/items/creator', methods=['POST'])
+def create_items():
+    dataDict = request.json
+    if 'name' not in dataDict:
+        return {'error':'Invalid item data'}, BAD_REQUEST
+    
+    res = Item.new(dataDict)
+    
+    if res == -1:
+        return {'error':'Invalid Item data'}, BAD_REQUEST
+
+    elif res == -2:
+        return {'error':'Item already exists'}, NOT_ACCEPTABLE
+    return {'message':'Item created'}, CREATED
+
+@app.route('/API/items/<path:id>', methods=['GET'])
+def get_item(id):
+    item = Item.get(id=id)
+    if item:
+        print(item.to_dict())
+        return jsonify(item.to_dict())
+    else:
+        return "Item Not Found", NOT_FOUND
+
+@app.route('/API/items/<path:id>', methods=['DELETE'])
+def delete_item(id):
+    item = Item.delete(id=id)
+    if 'message' in item.keys():
+        return "Item Deleted", OK
+    else:
+        return "Item Not Found", NOT_FOUND
+
 
 if __name__ == "__main__":
     # initiating server

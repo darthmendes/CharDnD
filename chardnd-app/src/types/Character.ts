@@ -4,5 +4,6 @@ export interface Character {
     species : String;
     char_class : String;
     level : number;
+    xp: number;
     abilityScores : {[key:string]:number};
 }

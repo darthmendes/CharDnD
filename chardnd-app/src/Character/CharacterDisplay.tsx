@@ -31,6 +31,12 @@ const AbsScores = ({ abilityScores }) => {
                     })}
                 </ul>
 };
+const ProficiencyList = ({ proficiencies }) => {
+    return  <>
+            Proficiencies
+            </>;
+};
+
 
 const CharacterDisplay: React.FC = () => {
     const { id } = useParams();
@@ -65,18 +71,29 @@ const CharacterDisplay: React.FC = () => {
     return (
         <div>
             <h1>{character.name}</h1>
-            <p><strong>Species:</strong> {character.species}</p>
-            <p><strong>Level:</strong> {character.level}</p>
-            <p><strong>Class:</strong>
-                <ClassList classes={character.char_class}/></p>
-            <div><strong>Ability Scores:</strong>
-                <AbsScores abilityScores={character.abilityScores}/> 
+            <div><h2><strong>Species:</strong></h2>
+                <p><strong>Species:</strong> {character.species}</p>
+                <p><strong>Level:</strong> {character.level}</p>
+                <p><strong>XP:</strong> {character.xp}</p>
+                <p><strong>Class:</strong>
+                    <ClassList classes={character.char_class}/></p>
+                <div><strong>Ability Scores:</strong>
+                    <AbsScores abilityScores={character.abilityScores}/> 
+                </div>
+                <div><strong>Proficiencies:</strong>
+                    <ProficiencyList proficiencies={character.proficiencies}></ProficiencyList>
+                </div>
+                <div><strong>Languages:</strong>
+                </div>
+                <div><strong>Features:</strong>
+                </div>
             </div>
-            <div><strong>Proficiencies:</strong>
-                <AbsScores abilityScores={character.abilityScores}/> 
+            <div><h2><strong>SpellCasting:</strong></h2>
             </div>
-            <div><strong>Inventory:</strong>
-                <AbsScores abilityScores={character.abilityScores}/> 
+            <div><h2><strong>Inventory:</strong></h2>
+                <button>Inventory</button>
+            </div>
+            <div><h2><strong>Combat</strong></h2>
             </div>
         </div>
     );
