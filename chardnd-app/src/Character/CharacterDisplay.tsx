@@ -1,7 +1,7 @@
 
 // Example: Fetching a single character in a component
 import React, { useState, useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Character } from '../types/Character';
 
 
@@ -44,6 +44,15 @@ const CharacterDisplay: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    // Navigation buttons 
+    const navigate = useNavigate()
+    const goToMain = () => {
+        navigate("/");
+    }
+    const goToItemCreator = () => {
+        navigate("/items/creator");
+    }
+
     useEffect(() => {
         const fetchCharacter = async () => {
         try {
@@ -69,14 +78,18 @@ const CharacterDisplay: React.FC = () => {
     if (!character) return <p>No character found.</p>;
     
     return (
-        <div>
+        <>
+            <header>
+                <button onClick={goToMain}>Home</button>
+                <button onClick={goToItemCreator}>Item Creator</button>
+            </header>
             <h1>{character.name}</h1>
             <div><h2><strong>Species:</strong></h2>
-                <p><strong>Species:</strong> {character.species}</p>
-                <p><strong>Level:</strong> {character.level}</p>
-                <p><strong>XP:</strong> {character.xp}</p>
-                <p><strong>Class:</strong>
-                    <ClassList classes={character.char_class}/></p>
+                <label><strong>Species:</strong> {character.species}</label>
+                <label><strong>Level:</strong> {character.level}</label>
+                <label><strong>XP:</strong> {character.xp}</label>
+                <label><strong>Class:</strong>
+                    <ClassList classes={character.char_class}/></label>
                 <div><strong>Ability Scores:</strong>
                     <AbsScores abilityScores={character.abilityScores}/> 
                 </div>
@@ -95,7 +108,7 @@ const CharacterDisplay: React.FC = () => {
             </div>
             <div><h2><strong>Combat</strong></h2>
             </div>
-        </div>
+        </>
     );
 };
 

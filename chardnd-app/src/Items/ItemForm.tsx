@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router';
 
 interface ItemFormData {
     name : string;
@@ -20,6 +21,13 @@ const ItemForm : React.FC = () => {
         item_category: '',
         rarity : 'common'
     });
+
+    // Navigation buttons 
+    const navigate = useNavigate()
+    const goToMain = () => {
+        navigate("/");
+    }
+
 
     const [loading, setLoading] = useState(false); // Track loading state
     const [error, setError] = useState<string | null>(null); // Track errors
@@ -69,6 +77,10 @@ const ItemForm : React.FC = () => {
         };
 
     return (
+        <>
+        <header>
+            <button onClick={goToMain}>Home</button>
+        </header>
         <form onSubmit={handleSubmit} className="character-form">
         <h1>Item Creator</h1>
         <div>
@@ -145,6 +157,7 @@ const ItemForm : React.FC = () => {
         {/* Error Message */}
         {error && <p style={{ color: 'red' }}>{error}</p>}
         </form>
+        </>
     );
 };
 
