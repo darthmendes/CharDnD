@@ -1,6 +1,6 @@
 // src/App.tsx
 import { useState, useEffect } from 'react';
-import CharacterList from './Character/CharacterList';
+import CharacterList from './features/character-sheet/CharacterList';
 import HomePage from './components/Homepage';
 import { useNavigate } from 'react-router';
 

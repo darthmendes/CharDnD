@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Item } from '../types/Item';
+import { Item } from '../../types/Item';
 
 
 const ItemDisplay : React.FC = () => {

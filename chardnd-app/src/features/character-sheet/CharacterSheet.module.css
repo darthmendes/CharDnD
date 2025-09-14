@@ -1,0 +1,125 @@
+/* CharacterDisplay.module.css */
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f5f7fa;
+  color: #2c3e50;
+}
+
+/* Header Buttons */
+.header {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.header button {
+  padding: 8px 16px;
+  background-color: #4a5568;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.header button:hover {
+  background-color: #2d3748;
+}
+
+/* Page Title */
+h1 {
+  text-align: center;
+  color: #2c3e50;
+  margin-bottom: 20px;
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+/* Section Styling */
+.section {
+  margin-bottom: 24px;
+  padding: 20px;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+}
+
+.section h2 {
+  margin-top: 0;
+  color: #2d3748;
+  font-size: 1.3rem;
+  border-bottom: 2px solid #3498db;
+  padding-bottom: 6px;
+}
+
+/* Grid for basic info */
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+label {
+  margin: 6px 0;
+  font-size: 14px;
+  color: #4a5568;
+}
+
+/* Save Button */
+.saveBtn {
+  margin-top: 12px;
+  padding: 10px 18px;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.saveBtn:hover:not(:disabled) {
+  background-color: #2980b9;
+}
+
+.saveBtn:disabled {
+  background-color: #a0aec0;
+  cursor: not-allowed;
+}
+
+/* Loading & Error */
+.loading {
+  text-align: center;
+  font-size: 18px;
+  color: #718096;
+  margin: 40px 0;
+}
+
+.error {
+  text-align: center;
+  color: #e74c3c;
+  font-weight: bold;
+  margin: 20px;
+}
+
+/* Primary Button (e.g., Inventory) */
+.primary {
+  padding: 10px 20px;
+  background-color: #2ecc71;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.primary:hover {
+  background-color: #27ae60;
+}

@@ -1,6 +1,6 @@
 // src/components/HomePage.tsx
 import React, { useState } from 'react';
-import CharacterCreatorForm from '../Character/CharacterCreatorForm';
+import CharacterCreatorForm from '../features/character-sheet/CharacterCreatorForm';
 
 const HomePage: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
