@@ -21,12 +21,19 @@ function App() {
   const goToItemCreator = () => {
     navigate('items/creator');
   }
+  
+  const goToCharacterCreator = () => {
+    navigate('characters/creator');
+  }
 
   return (
     <>
       <header>
         <button onClick={goToItemCreator}>
           Item Creator
+        </button>
+        <button onClick={goToCharacterCreator}>
+          Character Creator
         </button>
       </header>
       <div className="app">
