@@ -27,7 +27,7 @@
   transition: background-color 0.2s;
 }
 
-.header button:hover {
+.header button:hover:not(:disabled) {
   background-color: #2d3748;
 }
 
@@ -70,6 +70,99 @@ label {
   margin: 6px 0;
   font-size: 14px;
   color: #4a5568;
+}
+
+/* === LEVEL & XP STYLING === */
+
+.levelXpGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 10px 0;
+  padding: 12px;
+  background-color: #f8f9fa;
+  border: 1px dashed #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.levelXpRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.levelXpLabel {
+  font-weight: bold;
+  color: #2c3e50;
+  min-width: 50px;
+}
+
+.xpInput {
+  width: 100px;
+  padding: 6px 8px;
+  border: 1px solid #cbd5e0;
+  border-radius: 4px;
+  font-size: 14px;
+  outline: none;
+}
+
+.xpInput:focus {
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.levelButtons,
+.xpButtons {
+  display: flex;
+  gap: 4px;
+}
+
+.levelButton,
+.xpStepButton {
+  width: 50px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f1f3f5;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 18px;
+  font-weight: bold;
+  color: #4a5568;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.levelButton:hover,
+.xpStepButton:hover {
+  background-color: #e9ecef;
+  transform: translateY(-1px);
+}
+
+.levelButton:active,
+.xpStepButton:active {
+  transform: translateY(0);
+}
+
+.levelButton:disabled,
+.xpStepButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* XP to next level hint */
+.xpHint {
+  font-size: 0.85rem;
+  color: #666;
+  margin-top: 4px;
+  padding: 4px 8px;
+  background-color: #e3f2fd;
+  border-left: 3px solid #3498db;
+  border-radius: 4px;
 }
 
 /* Save Button */
@@ -122,4 +215,68 @@ label {
 
 .primary:hover {
   background-color: #27ae60;
+}
+
+/* HP Section */
+.hpSection {
+  margin: 10px 0;
+  padding: 12px;
+  background-color: #f9f9f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.hpRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 6px 0;
+  flex-wrap: wrap;
+}
+
+.hpMain {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.tempHpBadge {
+  background-color: #fff3cd;
+  color: #856404;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border: 1px solid #ffeaa7;
+}
+
+.hpControls {
+  display: flex;
+  gap: 6px;
+  margin: 8px 0;
+}
+
+.hpControls button {
+  width: 40px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f1f3f5;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.hpControls button:hover:not(:disabled) {
+  background-color: #e9ecef;
+  transform: translateY(-1px);
+}
+
+.hpControls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

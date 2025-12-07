@@ -1,5 +1,6 @@
 /* ItemModal.module.css */
 
+/* Overlay: Full-screen backdrop */
 .overlay {
   position: fixed;
   top: 0;
@@ -13,16 +14,31 @@
   z-index: 1000;
 }
 
+/* Base Modal: Compact size (only list) */
 .modal {
   background: white;
   border-radius: 12px;
-  width: 90%;
-  max-width: 500px;
-  max-height: 80vh;
+  width: 320px;
+  max-width: 320px;
+  height: 500px;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Expanded Modal: With details panel */
+.modalExpanded {
+  width: 680px;
+  max-width: 680px;
+}
+
+/* Content wrapper for layout */
+.content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
 }
 
 /* Header */
@@ -36,6 +52,7 @@
   color: #2d3748;
 }
 
+/* Close button (X) */
 .closeBtn {
   background: none;
   border: none;
@@ -56,11 +73,35 @@
   color: #4a5568;
 }
 
-/* Search */
+/* New Item Button */
+.newButtonContainer {
+  padding: 0 12px;
+  margin: 8px 0;
+}
+
+.newBtn {
+  width: 100%;
+  padding: 10px;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.newBtn:hover {
+  background-color: #2980b9;
+}
+
+/* Search Input */
 .searchContainer {
-  padding: 12px 16px;
-  background-color: #f7fafc;
-  border-bottom: 1px solid #e2e8f0;
+  padding: 0 12px;
+  margin: 8px 0;
 }
 
 .searchInput {
@@ -77,11 +118,11 @@
   border-color: #3498db;
 }
 
-/* List */
+/* Item List */
 .listContainer {
-  padding: 8px;
+  flex: 1;
   overflow-y: auto;
-  max-height: 400px;
+  padding: 0 12px;
 }
 
 .noResults {
@@ -91,12 +132,13 @@
   padding: 20px;
 }
 
+/* List Item Row */
 .itemRow {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
-  margin: 6px;
+  padding: 10px 12px;
+  margin: 4px 0;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   background-color: #f8f9fa;
@@ -105,11 +147,16 @@
   font-size: 14px;
 }
 
-.itemRow:hover, .itemRow:focus {
+.itemRow:hover {
   background-color: #e3f2fd;
   border-color: #3498db;
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.itemRow.selected {
+  background-color: #e3f2fd;
+  border-color: #3498db;
+  font-weight: 500;
 }
 
 .itemName {
@@ -124,4 +171,161 @@
   padding: 2px 8px;
   border-radius: 12px;
   white-space: nowrap;
+}
+
+/* Left Menu Panel */
+.menuPanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Right Details Panel */
+.detailsPanel {
+  width: 340px;
+  border-left: 1px solid #e2e8f0;
+  background-color: #f9fafb;
+  padding: 20px;
+  overflow-y: auto;
+  animation: slideIn 0.2s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Details Content */
+.detailsContent {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.detailsTitle {
+  margin: 0 0 12px 0;
+  color: #2c3e50;
+  font-size: 1.1rem;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 8px;
+}
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 16px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+  color: #4a5568;
+}
+
+.detailGrid strong {
+  color: #2d3748;
+}
+
+.description {
+  margin-top: 12px;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.description p {
+  margin: 6px 0 0;
+  line-height: 1.4;
+}
+
+/* Rarity Badge */
+.rarityBadge {
+  text-transform: capitalize;
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  color: white;
+}
+
+.rarityCommon     { background-color: #cbd5e0; color: #1a202c; }
+.rarityUncommon   { background-color: #68d391; }
+.rarityRare       { background-color: #4299e1; }
+.rarityVeryRare   { background-color: #9f7aea; }
+.rarityLegendary  { background-color: #ed8936; }
+.rarityMythic     { background-color: #e53e3e; }
+
+/* Quantity Section */
+.quantitySection {
+  padding: 16px 0 0;
+  border-top: 1px solid #eee;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.quantityInput {
+  width: 80px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+/* Action Buttons */
+.buttonGroup {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.addBtn,
+.addMoreBtn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: white;
+}
+
+.addBtn {
+  background-color: #2ecc71;
+}
+
+.addBtn:hover {
+  background-color: #27ae60;
+}
+
+.addMoreBtn {
+  background-color: #3498db;
+}
+
+.addMoreBtn:hover {
+  background-color: #2980b9;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .modal,
+  .modalExpanded {
+    width: 90% !important;
+    max-width: none;
+    height: 80vh;
+  }
+
+  .content {
+    flex-direction: column;
+  }
+
+  .detailsPanel {
+    width: auto;
+    border-top: 1px solid #e2e8f0;
+    border-left: none;
+    height: 40%;
+    overflow-y: auto;
+  }
 }
