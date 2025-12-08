@@ -5,7 +5,7 @@ import App from "./App.tsx";
 import CharacterDisplay from "./features/character-sheet/CharacterSheet.tsx";
 import CharacterCreator from "./features/character-creator/CharacterCreator.tsx";
 import ItemDisplay from "./features/Items/ItemDisplay.tsx";
-import ItemForm from "./features/Items/ItemForm.tsx";
+import ItemForm from "./features/Items/ItemCreator/ItemForm.tsx";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <BrowserRouter>

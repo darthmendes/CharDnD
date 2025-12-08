@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import styles from '../CharacterCreator.module.css';
-import ItemModal from '../../character-sheet/components/ItemModal/ItemModal';
+import ItemModal from '../../Items/ItemModal/ItemModal';
 import { fetchItems } from '../../../services/api'; 
 
 interface Props {

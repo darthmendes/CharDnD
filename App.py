@@ -15,6 +15,8 @@ from Backend.services.SpeciesService import SpeciesService as Species
 from Backend.services.ClassService import ClassService as DnDClass
 from Backend.services.ItemService import ItemService as Item
 
+from Backend.constants import PACK_DEFINITIONS
+
 app = Flask(__name__)
 CORS(app, origins='*')  # Fine for dev; restrict in production
 
@@ -74,6 +76,28 @@ def list_characters():
     result = [{"id": c.id, "name": c.name} for c in chars]
     return jsonify(result), HTTPStatus.OK
 
+# In app.py
+@app.route('/API/characters/<int:char_id>/items', methods=['POST'])
+def add_item_to_character(char_id):
+    data = request.json
+    
+    if 'pack_name' in data:
+        # Handle pack
+        result = Item.add_pack_to_character(char_id, data['pack_name'])
+    elif 'itemID' in data:
+        # Handle single item
+        result = Item.add_item_to_character(
+            char_id, 
+            data['itemID'], 
+            data.get('quantity', 1)
+        )
+    else:
+        return jsonify({"error": "Missing itemID or pack_name"}), 400
+
+    if result["success"]:
+        return jsonify(result), 200
+    else:
+        return jsonify(result), 400
 
 ################################################################
 # Species Routes
@@ -194,7 +218,6 @@ def delete_item(id):
     if not result["success"]:
         return jsonify({"error": result["error"]}), HTTPStatus.NOT_FOUND
     return jsonify({"message": "Item deleted"}), HTTPStatus.OK
-
 
 ################################################################
 # App Entry

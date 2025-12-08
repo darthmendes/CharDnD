@@ -1,6 +1,9 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, JSON
+from sqlalchemy import Column, Integer, String, ForeignKey, CheckConstraint, JSON
 from sqlalchemy.orm import relationship
 from . import Base
+from ..constants import ITEM_TYPES
+
+VALID_TYPES_LIST = sorted(ITEM_TYPES)
 
 class Item(Base):
     __tablename__ = "items"
@@ -17,6 +20,13 @@ class Item(Base):
     damage_dice = Column(String)        # e.g., "1d8", "2d6"
     damage_type = Column(String)        # e.g., "Slashing", "Radiant"
     special_abilities = Column(JSON)  # List[str]: e.g., ["Has 3 charges...", "Bonus action to shed light"]
+
+    __table_args__ = (
+        CheckConstraint(
+            item_type.in_(VALID_TYPES_LIST),
+            name="valid_item_type"
+        ),
+    )
 
     # Relationships
     inventory_entries = relationship("CharacterInventory", back_populates="item")

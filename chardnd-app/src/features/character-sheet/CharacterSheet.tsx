@@ -7,7 +7,7 @@ import AbsScores from './components/AbilityScores/AbsScores';
 import ClassList from './components/ClassList/ClassList';
 import ProficiencyList from './components/ProficiencyList/ProficiencyList';
 import styles from './CharacterSheet.module.css';
-import ItemModal from './components/ItemModal/ItemModal';
+import ItemModal from '../Items/ItemModal/ItemModal';
 import SpellModal from './components/SpellModal/SpellModal';
 import { fetchItems } from '../../services/api'; // ✅ Import API function
 

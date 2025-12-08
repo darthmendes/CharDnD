@@ -1,7 +1,8 @@
 // ItemModal.tsx
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './ItemModal.module.css';
+import { VIRTUAL_PACKS, PACK_NAMES } from '../../../constants';
 
 interface ItemModalProps {
   isOpen: boolean;
@@ -15,7 +16,6 @@ interface ItemModalProps {
     cost?: number;
     item_category?: string;
     rarity?: string;
-    // ✅ Weapon-specific fields (optional)
     damageType?: string;
     damageDice?: string;
     properties?: string[];
@@ -37,22 +37,82 @@ const ItemModal: React.FC<ItemModalProps> = ({
   const [quantity, setQuantity] = useState(1);
   const navigate = useNavigate();
 
-  const filteredItems = availableItems.filter((item) =>
+  // ✅ Merge real items with virtual packs
+  const itemsWithPacks = useMemo(() => {
+    const realItemNames = new Set(availableItems.map(item => item.name));
+    const packsToAdd = VIRTUAL_PACKS.filter(pack => !realItemNames.has(pack.name));
+    return [...availableItems, ...packsToAdd];
+  }, [availableItems]);
+
+  const filteredItems = itemsWithPacks.filter((item) =>
     item.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (!isOpen) return null;
 
-  const handleAdd = () => {
-    if (!selectedItem) return;
-    onAddItem({ ...selectedItem }, quantity);
-    setQuantity(1);
+  // ✅ Unified API call
+  const sendAddRequest = async (isPack: boolean, body: any): Promise<boolean> => {
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:8001/API/characters/${characterId}/items`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        }
+      );
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        alert(`Error: ${err.error || 'Unknown error'}`);
+        return false;
+      }
+      return true;
+    } catch (err) {
+      console.error('Network error:', err);
+      alert('Failed to connect to server.');
+      return false;
+    }
   };
 
-  const handleAddAndContinue = () => {
+  const handleAdd = async () => {
     if (!selectedItem) return;
-    onAddItem({ ...selectedItem }, quantity);
-    setQuantity(1);
+
+    const isPack = PACK_NAMES.includes(selectedItem.name);
+    let success = false;
+
+    if (isPack) {
+      success = await sendAddRequest(true, { pack_name: selectedItem.name });
+    } else {
+      success = await sendAddRequest(false, { itemID: selectedItem.id, quantity });
+      if (success) {
+        onAddItem(selectedItem, quantity);
+        setQuantity(1);
+      }
+    }
+
+    if (success) {
+      onClose();
+    }
+  };
+
+  const handleAddAndContinue = async () => {
+    if (!selectedItem) return;
+
+    const isPack = PACK_NAMES.includes(selectedItem.name);
+    let success = false;
+
+    if (isPack) {
+      success = await sendAddRequest(true, { pack_name: selectedItem.name });
+    } else {
+      success = await sendAddRequest(false, { itemID: selectedItem.id, quantity });
+      if (success) {
+        onAddItem(selectedItem, quantity);
+        setQuantity(1);
+      }
+    }
+
+    // Do NOT close modal
   };
 
   return (
@@ -63,7 +123,6 @@ const ItemModal: React.FC<ItemModalProps> = ({
         className={`${styles.modal} ${selectedItem ? styles.modalExpanded : ''}`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className={styles.header}>
           <h3>{selectedItem ? 'Item Details' : 'Add Item'}</h3>
           <button onClick={() => selectedItem ? setSelectedItem(null) : onClose()} className={styles.closeBtn}>
@@ -71,9 +130,7 @@ const ItemModal: React.FC<ItemModalProps> = ({
           </button>
         </div>
 
-        {/* Content */}
         <div className={styles.content}>
-          {/* Left: Menu */}
           <div className={styles.menuPanel}>
             <div className={styles.newButtonContainer}>
               <button
@@ -124,13 +181,11 @@ const ItemModal: React.FC<ItemModalProps> = ({
             </div>
           </div>
 
-          {/* Right: Details Panel */}
           {selectedItem && (
             <div className={styles.detailsPanel}>
               <div className={styles.detailsContent}>
                 <h4 className={styles.detailsTitle}>{selectedItem.name}</h4>
 
-                {/* Basic Info Grid */}
                 <div className={styles.detailGrid}>
                   {selectedItem.type && (
                     <div><strong>Type:</strong> {selectedItem.type}</div>
@@ -156,7 +211,6 @@ const ItemModal: React.FC<ItemModalProps> = ({
                   )}
                 </div>
 
-                {/* Description */}
                 {selectedItem.desc && (
                   <div className={styles.description}>
                     <strong>Description:</strong>
@@ -164,7 +218,6 @@ const ItemModal: React.FC<ItemModalProps> = ({
                   </div>
                 )}
 
-                {/* Weapon-Specific Details */}
                 {selectedItem.type === 'Weapon' && (
                   <div className={styles.weaponDetails}>
                     {selectedItem.damageDice && (
@@ -192,27 +245,29 @@ const ItemModal: React.FC<ItemModalProps> = ({
                   </div>
                 )}
 
-                {/* Quantity & Actions */}
-                <div className={styles.quantitySection}>
-                  <label>
-                    Quantity:
-                    <input
-                      type="number"
-                      min="1"
-                      value={quantity}
-                      onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                      className={styles.quantityInput}
-                    />
-                  </label>
-
-                  <div className={styles.buttonGroup}>
-                    <button onClick={handleAdd} className={styles.addBtn}>
-                      Add Item
-                    </button>
-                    <button onClick={handleAddAndContinue} className={styles.addMoreBtn}>
-                      Add & Add Another
-                    </button>
+                {/* Hide quantity for packs */}
+                {!PACK_NAMES.includes(selectedItem.name) && (
+                  <div className={styles.quantitySection}>
+                    <label>
+                      Quantity:
+                      <input
+                        type="number"
+                        min="1"
+                        value={quantity}
+                        onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                        className={styles.quantityInput}
+                      />
+                    </label>
                   </div>
+                )}
+
+                <div className={styles.buttonGroup}>
+                  <button onClick={handleAdd} className={styles.addBtn}>
+                    Add {PACK_NAMES.includes(selectedItem.name) ? 'Pack' : 'Item'}
+                  </button>
+                  <button onClick={handleAddAndContinue} className={styles.addMoreBtn}>
+                    Add & Add Another
+                  </button>
                 </div>
               </div>
             </div>
