@@ -1,4 +1,5 @@
-// CharacterDisplay.tsx
+// src/features/character-sheet/CharacterDisplay.tsx
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Character } from '../../types/Character';
@@ -8,6 +9,7 @@ import ProficiencyList from './components/ProficiencyList/ProficiencyList';
 import styles from './CharacterSheet.module.css';
 import ItemModal from './components/ItemModal/ItemModal';
 import SpellModal from './components/SpellModal/SpellModal';
+import { fetchItems } from '../../services/api'; // ✅ Import API function
 
 // 🔽 D&D 5e XP Thresholds
 const LEVEL_XP_TABLE = [
@@ -57,6 +59,10 @@ const CharacterDisplay = () => {
   const [saving, setSaving] = useState(false);
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
   const [isSpellModalOpen, setIsSpellModalOpen] = useState(false);
+
+  // ✅ NEW: State for items
+  const [availableItems, setAvailableItems] = useState<any[]>([]);
+  const [itemsLoading, setItemsLoading] = useState(true);
 
   // Navigation
   const goToMain = () => navigate('/');
@@ -117,29 +123,25 @@ const CharacterDisplay = () => {
     }
   };
 
-  // 🩸 HP Logic: Heal & Take Damage
+  // 🩸 HP Logic
   const heal = (amount: number) => {
     setHpCurrent(prev => Math.min(hpMax, prev + amount));
   };
 
   const takeDamage = (amount: number) => {
     let remaining = amount;
-
-    // First: reduce temp HP
     if (hpTmp > 0) {
       const newTemp = Math.max(0, hpTmp - amount);
       const usedOnTemp = amount - newTemp;
       setHpTmp(newTemp);
       remaining -= usedOnTemp;
     }
-
-    // Then: apply to current HP
     if (remaining > 0) {
-      setHpCurrent(prev => Math.max(-hpMax, prev - remaining)); // Can go negative
+      setHpCurrent(prev => Math.max(-hpMax, prev - remaining));
     }
   };
 
-  // 💾 Save HP to Backend
+  // 💾 Save HP
   const saveHp = async () => {
     if (!id || saving) return;
     setSaving(true);
@@ -147,14 +149,9 @@ const CharacterDisplay = () => {
       const response = await fetch(`http://127.0.0.1:8001/API/characters/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          hpCurrent,
-          hpTmp
-        }),
+        body: JSON.stringify({ hpCurrent, hpTmp }),
       });
-
       if (!response.ok) throw new Error('Save failed');
-      
       const updated: Character = await response.json();
       setCharacter(updated);
       alert('✅ HP saved!');
@@ -166,7 +163,7 @@ const CharacterDisplay = () => {
     }
   };
 
-  // 📥 Load character data
+  // 📥 Load character
   useEffect(() => {
     const fetchCharacter = async () => {
       if (!id) return;
@@ -175,8 +172,6 @@ const CharacterDisplay = () => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data: Character = await response.json();
         setCharacter(data);
-
-        // Initialize all local states
         setLocalAbilityScores(data.abilityScores);
         setLocalLevel(data.level);
         setLocalXp(data.xp);
@@ -189,16 +184,30 @@ const CharacterDisplay = () => {
         setLoading(false);
       }
     };
-
     fetchCharacter();
   }, [id]);
 
-  // Handle ability score changes
+  // 📥 Load items for modal
+  useEffect(() => {
+    const loadItems = async () => {
+      try {
+        const items = await fetchItems();
+        setAvailableItems(items);
+      } catch (err) {
+        console.error('Failed to load items:', err);
+        setAvailableItems([]); // fallback
+      } finally {
+        setItemsLoading(false);
+      }
+    };
+    loadItems();
+  }, []);
+
+  // Ability scores
   const handleScoreChange = (newScores: { [key: string]: number }) => {
     setLocalAbilityScores(newScores);
   };
 
-  // Save ability scores
   const saveScores = async () => {
     if (!id || !localAbilityScores || saving) return;
     setSaving(true);
@@ -220,7 +229,7 @@ const CharacterDisplay = () => {
     }
   };
 
-  // Add item with quantity
+  // Add item
   const addItem = async (item: { name: string; [key: string]: any }, quantity: number = 1) => {
     try {
       const response = await fetch(`http://127.0.0.1:8001/API/characters/${id}/items`, {
@@ -238,19 +247,7 @@ const CharacterDisplay = () => {
     }
   };
 
-  // Mock items
-  const availableItems = [
-    { name: "Longsword", type: "Weapon" },
-    { name: "Spellbook", type: "Container" },
-    { name: "Leather Armor", type: "Armor" },
-    { name: "Ring of Protection", type: "Magic Ring" },
-    { name: "Potion of Healing", type: "Consumable" },
-    { name: "Dagger", type: "Weapon" },
-    { name: "Backpack", type: "Container" },
-    { name: "Wand of Fireballs", type: "Magic Staff" },
-  ];
-
-  // Add spell
+  // Add spell (using items as placeholder — update later if needed)
   const addSpell = async (spell: { name: string }) => {
     try {
       const response = await fetch(`http://127.0.0.1:8001/API/characters/${id}/spells`, {
@@ -269,14 +266,13 @@ const CharacterDisplay = () => {
     }
   };
 
-  const availableSpells = [...availableItems]; // Replace later
+  const availableSpells = [...availableItems]; // ⚠️ Temporary — replace with real spells later
 
   // Auto-add item from creator
   useEffect(() => {
     const search = location.search;
     const params = new URLSearchParams(search);
     const newItemParam = params.get('newItem');
-
     if (newItemParam && addItem) {
       try {
         const newItem = JSON.parse(newItemParam);
@@ -288,7 +284,7 @@ const CharacterDisplay = () => {
     }
   }, [location.search, addItem, id, navigate]);
 
-  // 🔍 Get unlocked class features
+  // Class features
   const unlockedFeatures = [];
   if (character?.char_class && localLevel) {
     const className = character.char_class;
@@ -318,7 +314,6 @@ const CharacterDisplay = () => {
 
       <section className={styles.section}>
         <h2>Species & Level</h2>
-        
         <label><strong>Species:</strong> {character.species}</label>
 
         {/* Level & XP */}
@@ -386,11 +381,9 @@ const CharacterDisplay = () => {
           </button>
         </div>
 
-        {/* Class List */}
         <label><strong>Class:</strong></label>
         <ClassList classes={character.char_class} />
 
-        {/* Ability Scores */}
         <div>
           <strong>Ability Scores:</strong>
           <AbsScores abilityScores={localAbilityScores} onScoreChange={handleScoreChange} />
@@ -399,19 +392,16 @@ const CharacterDisplay = () => {
           </button>
         </div>
 
-        {/* Proficiencies */}
         <div>
           <strong>Proficiencies:</strong>
           <ProficiencyList proficiencies={character.proficiencies} />
         </div>
 
-        {/* Languages */}
         <div>
           <strong>Languages:</strong>
           <p>{character.languages?.join(', ') || 'None'}</p>
         </div>
 
-        {/* Features */}
         <div>
           <strong>Features:</strong>
           {unlockedFeatures.length === 0 ? (
@@ -443,7 +433,13 @@ const CharacterDisplay = () => {
       {/* Inventory */}
       <section className={styles.section}>
         <h2>Inventory</h2>
-        <button className={styles.primary} onClick={() => setIsItemModalOpen(true)}>Add Item</button>
+        <button 
+          className={styles.primary} 
+          onClick={() => setIsItemModalOpen(true)}
+          disabled={itemsLoading}
+        >
+          {itemsLoading ? 'Loading Items...' : 'Add Item'}
+        </button>
         <ItemModal
           isOpen={isItemModalOpen}
           onClose={() => setIsItemModalOpen(false)}
@@ -456,29 +452,22 @@ const CharacterDisplay = () => {
       {/* Combat */}
       <section className={styles.section}>
         <h2>Combat</h2>
-
-        {/* HP Controls */}
         <div className={styles.hpSection}>
           <strong>HP:</strong>
           <div className={styles.hpRow}>
             <div className={styles.hpMain}>{hpCurrent} / {hpMax}</div>
-            {hpTmp > 0 && (
-              <div className={styles.tempHpBadge}>+ {hpTmp} temp</div>
-            )}
+            {hpTmp > 0 && <div className={styles.tempHpBadge}>+ {hpTmp} temp</div>}
           </div>
-
           <div className={styles.hpControls}>
             <button type="button" onClick={() => heal(1)} disabled={saving}>+1</button>
             <button type="button" onClick={() => heal(5)} disabled={saving}>+5</button>
             <button type="button" onClick={() => takeDamage(1)} disabled={saving}>−1</button>
             <button type="button" onClick={() => takeDamage(5)} disabled={saving}>−5</button>
           </div>
-
           <button onClick={saveHp} disabled={saving} className={styles.saveBtn}>
             {saving ? 'Saving...' : 'Save HP'}
           </button>
         </div>
-
         <p><strong>AC:</strong> {character.ac}</p>
         <p><strong>Initiative:</strong> {character.initiative}</p>
         <p><strong>Speed:</strong> {character.speed}</p>

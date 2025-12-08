@@ -15,6 +15,11 @@ interface ItemModalProps {
     cost?: number;
     item_category?: string;
     rarity?: string;
+    // ✅ Weapon-specific fields (optional)
+    damageType?: string;
+    damageDice?: string;
+    properties?: string[];
+    specialAbilities?: string[];
     [key: string]: any;
   }>;
   characterId: number;
@@ -48,14 +53,12 @@ const ItemModal: React.FC<ItemModalProps> = ({
     if (!selectedItem) return;
     onAddItem({ ...selectedItem }, quantity);
     setQuantity(1);
-    // Do NOT close details — reset for next
   };
 
   return (
     <div className={styles.overlay} onClick={(e) => {
       if (e.target === e.currentTarget) onClose();
     }}>
-      {/* Conditionally wider modal */}
       <div
         className={`${styles.modal} ${selectedItem ? styles.modalExpanded : ''}`}
         onClick={(e) => e.stopPropagation()}
@@ -70,9 +73,8 @@ const ItemModal: React.FC<ItemModalProps> = ({
 
         {/* Content */}
         <div className={styles.content}>
-          {/* Left: Original Menu */}
+          {/* Left: Menu */}
           <div className={styles.menuPanel}>
-            {/* "New" Button */}
             <div className={styles.newButtonContainer}>
               <button
                 onClick={() => {
@@ -85,7 +87,6 @@ const ItemModal: React.FC<ItemModalProps> = ({
               </button>
             </div>
 
-            {/* Search */}
             <div className={styles.searchContainer}>
               <input
                 type="text"
@@ -97,7 +98,6 @@ const ItemModal: React.FC<ItemModalProps> = ({
               />
             </div>
 
-            {/* Item List */}
             <div className={styles.listContainer}>
               {filteredItems.length === 0 ? (
                 <p className={styles.noResults}>No items found</p>
@@ -105,7 +105,13 @@ const ItemModal: React.FC<ItemModalProps> = ({
                 filteredItems.map((item) => (
                   <div
                     key={item.name}
-                    onClick={() => setSelectedItem(item)}
+                    onClick={() => {
+                      if (selectedItem && selectedItem.name === item.name) {
+                        setSelectedItem(null);
+                      } else {
+                        setSelectedItem(item);
+                      }
+                    }}
                     className={`${styles.itemRow} ${
                       selectedItem?.name === item.name ? styles.selected : ''
                     }`}
@@ -118,12 +124,13 @@ const ItemModal: React.FC<ItemModalProps> = ({
             </div>
           </div>
 
-          {/* Right: Details Panel – Only shown when expanded */}
+          {/* Right: Details Panel */}
           {selectedItem && (
             <div className={styles.detailsPanel}>
               <div className={styles.detailsContent}>
                 <h4 className={styles.detailsTitle}>{selectedItem.name}</h4>
 
+                {/* Basic Info Grid */}
                 <div className={styles.detailGrid}>
                   {selectedItem.type && (
                     <div><strong>Type:</strong> {selectedItem.type}</div>
@@ -149,6 +156,7 @@ const ItemModal: React.FC<ItemModalProps> = ({
                   )}
                 </div>
 
+                {/* Description */}
                 {selectedItem.desc && (
                   <div className={styles.description}>
                     <strong>Description:</strong>
@@ -156,6 +164,35 @@ const ItemModal: React.FC<ItemModalProps> = ({
                   </div>
                 )}
 
+                {/* Weapon-Specific Details */}
+                {selectedItem.type === 'Weapon' && (
+                  <div className={styles.weaponDetails}>
+                    {selectedItem.damageDice && (
+                      <div><strong>Damage:</strong> {selectedItem.damageDice}</div>
+                    )}
+                    {selectedItem.damageType && (
+                      <div><strong>Damage Type:</strong> {selectedItem.damageType}</div>
+                    )}
+                    {selectedItem.properties && selectedItem.properties.length > 0 && (
+                      <div>
+                        <strong>Properties:</strong>{' '}
+                        {selectedItem.properties.join(', ')}
+                      </div>
+                    )}
+                    {selectedItem.specialAbilities && selectedItem.specialAbilities.length > 0 && (
+                      <div>
+                        <strong>Special Abilities:</strong>
+                        <ul>
+                          {selectedItem.specialAbilities.map((ability, i) => (
+                            <li key={i}>{ability}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Quantity & Actions */}
                 <div className={styles.quantitySection}>
                   <label>
                     Quantity:

@@ -2,7 +2,7 @@ import React from 'react';
 import styles from './AbsScores.module.css';
 
 const AbsScores = ({ abilityScores, onScoreChange }) => {
-  const abilityOrder = ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'];
+  const abilityOrder = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
 
   // 🔹 Ensure valid scores
   const validScores = abilityOrder.reduce((acc, ability) => {

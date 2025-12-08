@@ -1,25 +1,28 @@
-// src/components/CharacterCreator/steps/Step1Name.tsx
+// src/features/character-creator/steps/Step1Name.tsx
+
 import React from 'react';
-import { CharacterData } from '../types';
+import styles from '../CharacterCreator.module.css';
 
 interface Props {
-  character: CharacterData;
-  updateField: (field: keyof CharacterData, value: any) => void;
+  character: any;
+  updateField: (field: string, value: any) => void;
 }
 
-const Step1Name: React.FC<Props> = ({ character, updateField }) => (
-  <div>
-    <label>
-      Character Name:
+const Step1Name: React.FC<Props> = ({ character, updateField }) => {
+  return (
+    <div className={styles.formGroup}>
+      <label htmlFor="char-name">Character Name</label>
       <input
+        id="char-name"
         type="text"
+        className={styles.input}
         value={character.name}
         onChange={e => updateField('name', e.target.value)}
-        placeholder="e.g., Legolas"
+        placeholder="e.g., Elrond"
         required
       />
-    </label>
-  </div>
-);
+    </div>
+  );
+};
 
 export default Step1Name;

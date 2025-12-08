@@ -1,7 +1,6 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, JSON
 from sqlalchemy.orm import relationship
 from . import Base
-from .utils import JSONType
 
 # Base table for storing character information
 class Character(Base):
@@ -9,7 +8,7 @@ class Character(Base):
     __tablename__ = "characters"
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, unique=True, nullable=False)
-    abilityScores = Column(JSONType, nullable=False)
+    abilityScores = Column(JSON, nullable=False)
     xp = Column(Integer, default=300)
     level = Column(Integer, default = 1)
     curr_hp = Column(Integer)

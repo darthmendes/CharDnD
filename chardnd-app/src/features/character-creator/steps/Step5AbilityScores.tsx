@@ -1,14 +1,14 @@
-// src/components/CharacterCreator/steps/Step5Abilities.tsx
+// src/features/character-creator/steps/Step5AbilityScores.tsx
 
 import React from 'react';
-import { AbilityScores } from '../types';
+import styles from '../CharacterCreator.module.css';
 
 interface Props {
-  character: { abilityScores: AbilityScores };
+  character: any;
   updateField: (field: string, value: any) => void;
 }
 
-const Step5Abilities: React.FC<Props> = ({ character, updateField }) => {
+const Step5AbilityScores: React.FC<Props> = ({ character, updateField }) => {
   const abilities = [
     { key: 'str', label: 'Strength (STR)' },
     { key: 'dex', label: 'Dexterity (DEX)' },
@@ -18,19 +18,17 @@ const Step5Abilities: React.FC<Props> = ({ character, updateField }) => {
     { key: 'cha', label: 'Charisma (CHA)' },
   ];
 
-  const handleAbilityChange = (key: keyof AbilityScores, value: string) => {
+  const handleAbilityChange = (key: string, value: string) => {
     const num = parseInt(value) || 10;
-    // Clamp between 1 and 30
     const clamped = Math.min(30, Math.max(1, num));
     const newScores = { ...character.abilityScores, [key]: clamped };
     updateField('abilityScores', newScores);
   };
 
-  // Optional: Add Point Buy or Standard Array buttons
   const applyStandardArray = () => {
     const standard = [15, 14, 13, 12, 10, 8];
     const shuffled = [...standard].sort(() => 0.5 - Math.random());
-    const newScores: AbilityScores = {
+    const newScores = {
       str: shuffled[0],
       dex: shuffled[1],
       con: shuffled[2],
@@ -43,42 +41,41 @@ const Step5Abilities: React.FC<Props> = ({ character, updateField }) => {
 
   return (
     <div>
-      <h3>Ability Scores</h3>
-      <p>Enter scores between 1 and 30.</p>
+      <div className={styles.formGroup}>
+        <label>Ability Scores (1–30)</label>
+        <button
+          type="button"
+          className={styles.inlineActionBtn}
+          onClick={applyStandardArray}
+          style={{ marginBottom: '1rem', padding: '0.4rem 0.8rem', fontSize: '0.95rem' }}
+        >
+          Use Standard Array (15,14,13,12,10,8)
+        </button>
 
-      <button type="button" onClick={applyStandardArray} style={{ marginBottom: '1rem' }}>
-        Use Standard Array (15,14,13,12,10,8)
-      </button>
-
-      {abilities.map(ability => (
-        <label key={ability.key} style={{ display: 'block', margin: '0.5rem 0' }}>
-          {ability.label}:
-          <input
-            type="number"
-            min="1"
-            max="30"
-            value={character.abilityScores[ability.key as keyof AbilityScores]}
-            onChange={e => handleAbilityChange(ability.key as keyof AbilityScores, e.target.value)}
-            style={{ width: '80px', marginLeft: '0.5rem' }}
-          />
-        </label>
-      ))}
-
-      {/* Optional: Show modifiers */}
-      <div style={{ marginTop: '1rem', fontSize: '0.9em', color: '#444' }}>
-        {abilities.map(ability => {
-          const score = character.abilityScores[ability.key as keyof AbilityScores];
-          const modifier = Math.floor((score - 10) / 2);
-          const displayMod = modifier >= 0 ? `+${modifier}` : `${modifier}`;
-          return (
-            <div key={ability.key}>
-              {ability.label} Modifier: {displayMod}
-            </div>
-          );
-        })}
+        <div className={styles.abilityScores}>
+          {abilities.map(ability => {
+            const score = character.abilityScores[ability.key];
+            const modifier = Math.floor((score - 10) / 2);
+            const displayMod = modifier >= 0 ? `+${modifier}` : `${modifier}`;
+            return (
+              <div key={ability.key} className={styles.abilityItem}>
+                <label>{ability.label}</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="30"
+                  value={score}
+                  onChange={e => handleAbilityChange(ability.key, e.target.value)}
+                  className={styles.numberInput}
+                />
+                <div className={styles.modifier}>Modifier: {displayMod}</div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
 };
 
-export default Step5Abilities;
+export default Step5AbilityScores;

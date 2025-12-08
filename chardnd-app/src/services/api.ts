@@ -17,3 +17,9 @@ export const fetchSpecies = () =>
 
 export const fetchClasses = () =>
   fetch(`${API_BASE}/classes`).then(res => res.json());
+
+export const fetchItems = async (): Promise<any[]> => {
+  const res = await fetch('http://127.0.0.1:8001/API/items');
+  if (!res.ok) throw new Error('Failed to fetch items');
+  return res.json();
+};

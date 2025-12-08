@@ -62,6 +62,7 @@ def delete_character(id):
 @app.route('/API/characters/<int:id>', methods=['GET'])
 def get_character(id):
     char = Character.get_by_id(id)
+    print(char.to_dict())
     if not char:
         return jsonify({"error": "Character not found"}), HTTPStatus.NOT_FOUND
     return jsonify(char.to_dict()), HTTPStatus.OK
@@ -181,6 +182,11 @@ def get_item(id):
         return jsonify({"error": "Item not found"}), HTTPStatus.NOT_FOUND
     return jsonify(item.to_dict()), HTTPStatus.OK
 
+@app.route('/API/items', methods=['GET'])
+def list_items():
+    all_items = Item.get_all()
+    result = [c.to_dict() for c in all_items]
+    return jsonify(result), HTTPStatus.OK
 
 @app.route('/API/items/<int:id>', methods=['DELETE'])
 def delete_item(id):

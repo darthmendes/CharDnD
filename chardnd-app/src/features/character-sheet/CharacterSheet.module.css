@@ -1,12 +1,15 @@
-/* CharacterDisplay.module.css */
+/* CharacterSheet.module.css */
 
 .container {
   max-width: 900px;
   margin: 0 auto;
   padding: 20px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f5f7fa;
-  color: #2c3e50;
+  background-color: #fdf6e3; /* Parchment */
+  color: #333;
+  border: 1px solid #d6c38a;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 /* Header Buttons */
@@ -18,7 +21,7 @@
 
 .header button {
   padding: 8px 16px;
-  background-color: #4a5568;
+  background-color: #5a3921; /* Dark brown */
   color: white;
   border: none;
   border-radius: 6px;
@@ -28,33 +31,35 @@
 }
 
 .header button:hover:not(:disabled) {
-  background-color: #2d3748;
+  background-color: #442c18; /* Darker brown */
 }
 
 /* Page Title */
 h1 {
   text-align: center;
-  color: #2c3e50;
+  color: #5a3921;
   margin-bottom: 20px;
   font-size: 2rem;
   font-weight: bold;
+  border-bottom: 2px solid #d6c38a;
+  padding-bottom: 10px;
 }
 
 /* Section Styling */
 .section {
   margin-bottom: 24px;
   padding: 20px;
-  background-color: white;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e2e8f0;
+  background-color: #fffef9; /* Lighter parchment */
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(90, 57, 33, 0.1);
+  border: 1px solid #d6c38a;
 }
 
 .section h2 {
   margin-top: 0;
-  color: #2d3748;
+  color: #5a3921;
   font-size: 1.3rem;
-  border-bottom: 2px solid #3498db;
+  border-bottom: 2px solid #d6c38a;
   padding-bottom: 6px;
 }
 
@@ -62,14 +67,16 @@ h1 {
 .infoGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 10px;
+  gap: 12px;
   margin-bottom: 16px;
 }
 
 label {
+  display: block;
   margin: 6px 0;
   font-size: 14px;
-  color: #4a5568;
+  color: #5a3921;
+  font-weight: 600;
 }
 
 /* === LEVEL & XP STYLING === */
@@ -77,11 +84,11 @@ label {
 .levelXpGroup {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin: 10px 0;
-  padding: 12px;
-  background-color: #f8f9fa;
-  border: 1px dashed #ddd;
+  gap: 10px;
+  margin: 12px 0;
+  padding: 14px;
+  background-color: #f8f4e9;
+  border: 1px dashed #c9b47e;
   border-radius: 8px;
   font-size: 14px;
 }
@@ -89,56 +96,57 @@ label {
 .levelXpRow {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
 .levelXpLabel {
   font-weight: bold;
-  color: #2c3e50;
-  min-width: 50px;
+  color: #5a3921;
+  min-width: 60px;
 }
 
 .xpInput {
   width: 100px;
-  padding: 6px 8px;
-  border: 1px solid #cbd5e0;
+  padding: 6px 10px;
+  border: 1px solid #c9b47e;
   border-radius: 4px;
   font-size: 14px;
+  background-color: #fffef9;
   outline: none;
 }
 
 .xpInput:focus {
-  border-color: #3498db;
-  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+  border-color: #a88b5e;
+  box-shadow: 0 0 0 2px rgba(168, 139, 94, 0.2);
 }
 
 .levelButtons,
 .xpButtons {
   display: flex;
-  gap: 4px;
+  gap: 6px;
 }
 
 .levelButton,
 .xpStepButton {
-  width: 50px;
+  width: 40px;
   height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f1f3f5;
-  border: 1px solid #ddd;
+  background-color: #e0d3b9;
+  border: 1px solid #c9b47e;
   border-radius: 6px;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: bold;
-  color: #4a5568;
+  color: #5a3921;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .levelButton:hover,
 .xpStepButton:hover {
-  background-color: #e9ecef;
+  background-color: #d6c38a;
   transform: translateY(-1px);
 }
 
@@ -149,41 +157,44 @@ label {
 
 .levelButton:disabled,
 .xpStepButton:disabled {
-  opacity: 0.5;
+  opacity: 0.6;
   cursor: not-allowed;
   transform: none;
+  background-color: #e8e0c9;
 }
 
 /* XP to next level hint */
 .xpHint {
   font-size: 0.85rem;
-  color: #666;
-  margin-top: 4px;
-  padding: 4px 8px;
-  background-color: #e3f2fd;
-  border-left: 3px solid #3498db;
+  color: #5a3921;
+  margin-top: 6px;
+  padding: 6px 10px;
+  background-color: #f0e6d2;
+  border-left: 3px solid #d6c38a;
   border-radius: 4px;
+  font-style: italic;
 }
 
 /* Save Button */
 .saveBtn {
-  margin-top: 12px;
-  padding: 10px 18px;
-  background-color: #3498db;
+  margin-top: 16px;
+  padding: 10px 20px;
+  background-color: #5a3921;
   color: white;
   border: none;
   border-radius: 6px;
   font-size: 14px;
   cursor: pointer;
   transition: background-color 0.2s;
+  font-weight: 600;
 }
 
 .saveBtn:hover:not(:disabled) {
-  background-color: #2980b9;
+  background-color: #442c18;
 }
 
 .saveBtn:disabled {
-  background-color: #a0aec0;
+  background-color: #b8a88f;
   cursor: not-allowed;
 }
 
@@ -191,38 +202,44 @@ label {
 .loading {
   text-align: center;
   font-size: 18px;
-  color: #718096;
+  color: #7a684f;
   margin: 40px 0;
 }
 
 .error {
   text-align: center;
-  color: #e74c3c;
+  color: #c0392b;
   font-weight: bold;
   margin: 20px;
+  background-color: #f9eaea;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #e7bcbc;
 }
 
 /* Primary Button (e.g., Inventory) */
 .primary {
   padding: 10px 20px;
-  background-color: #2ecc71;
+  background-color: #7a684f; /* Muted gold-brown */
   color: white;
   border: none;
   border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
+  font-weight: 600;
+  transition: background-color 0.2s;
 }
 
 .primary:hover {
-  background-color: #27ae60;
+  background-color: #65543f;
 }
 
 /* HP Section */
 .hpSection {
-  margin: 10px 0;
-  padding: 12px;
-  background-color: #f9f9f9;
-  border: 1px solid #e2e8f0;
+  margin: 12px 0;
+  padding: 14px;
+  background-color: #f8f4e9;
+  border: 1px solid #d6c38a;
   border-radius: 8px;
   font-size: 14px;
 }
@@ -230,53 +247,54 @@ label {
 .hpRow {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin: 6px 0;
+  gap: 12px;
+  margin: 8px 0;
   flex-wrap: wrap;
 }
 
 .hpMain {
-  font-size: 1.2rem;
+  font-size: 1.25rem;
   font-weight: bold;
-  color: #2c3e50;
+  color: #5a3921;
 }
 
 .tempHpBadge {
-  background-color: #fff3cd;
-  color: #856404;
-  padding: 4px 8px;
+  background-color: #f0e6d2;
+  color: #5a3921;
+  padding: 4px 10px;
   border-radius: 6px;
   font-size: 0.9rem;
-  font-weight: 500;
-  border: 1px solid #ffeaa7;
+  font-weight: 600;
+  border: 1px solid #d6c38a;
 }
 
 .hpControls {
   display: flex;
-  gap: 6px;
-  margin: 8px 0;
+  gap: 8px;
+  margin: 10px 0;
 }
 
 .hpControls button {
-  width: 40px;
-  height: 36px;
+  width: 36px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f1f3f5;
-  border: 1px solid #ddd;
+  background-color: #e0d3b9;
+  border: 1px solid #c9b47e;
   border-radius: 6px;
   font-size: 14px;
+  color: #5a3921;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .hpControls button:hover:not(:disabled) {
-  background-color: #e9ecef;
+  background-color: #d6c38a;
   transform: translateY(-1px);
 }
 
 .hpControls button:disabled {
-  opacity: 0.5;
+  opacity: 0.6;
   cursor: not-allowed;
 }

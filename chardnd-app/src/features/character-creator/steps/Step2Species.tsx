@@ -1,10 +1,22 @@
-// Fetch species from /API/species, show dropdown + dynamic options
+// src/features/character-creator/steps/Step2Species.tsx
 
 import React, { useEffect, useState } from 'react';
-import { Species } from '../types';
+import styles from '../CharacterCreator.module.css';
 import { fetchSpecies } from '../../../services/api';
 
-const Step2Species: React.FC<{ character: any; updateField: any }> = ({ character, updateField }) => {
+interface Species {
+  id: number;
+  name: string;
+  hasSubrace?: boolean;
+  subraces?: string[];
+}
+
+interface Props {
+  character: any;
+  updateField: (field: string, value: any) => void;
+}
+
+const Step2Species: React.FC<Props> = ({ character, updateField }) => {
   const [speciesList, setSpeciesList] = useState<Species[]>([]);
   const [subrace, setSubrace] = useState('');
 
@@ -13,25 +25,47 @@ const Step2Species: React.FC<{ character: any; updateField: any }> = ({ characte
   }, []);
 
   const selectedSpecies = speciesList.find(s => s.name === character.species);
-  
+
   return (
     <div>
-      <label>
-        Species:
-        <select value={character.species} onChange={e => updateField('species', e.target.value)}>
-          <option value="">-- Select --</option>
-          {speciesList.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
+      <div className={styles.formGroup}>
+        <label htmlFor="species-select">Species</label>
+        <select
+          id="species-select"
+          className={styles.select}
+          value={character.species}
+          onChange={e => {
+            updateField('species', e.target.value);
+            setSubrace(''); // reset subrace
+          }}
+        >
+          <option value="">-- Choose a species --</option>
+          {speciesList.map(species => (
+            <option key={species.id} value={species.name}>
+              {species.name}
+            </option>
+          ))}
         </select>
-      </label>
+      </div>
 
       {selectedSpecies?.hasSubrace && (
-        <label>
-          Subrace:
-          <select value={subrace} onChange={e => setSubrace(e.target.value)}>
-            <option value="">-- Choose --</option>
-            {selectedSpecies.subraces?.map(sr => <option key={sr} value={sr}>{sr}</option>)}
+        <div className={styles.formGroup}>
+          <label htmlFor="subrace-select">Subrace</label>
+          <select
+            id="subrace-select"
+            className={styles.select}
+            value={subrace}
+            onChange={e => {
+              setSubrace(e.target.value);
+              updateField('speciesChoices', { ...character.speciesChoices, subrace: e.target.value });
+            }}
+          >
+            <option value="">-- Choose a subrace --</option>
+            {selectedSpecies.subraces?.map(sr => (
+              <option key={sr} value={sr}>{sr}</option>
+            ))}
           </select>
-        </label>
+        </div>
       )}
     </div>
   );
