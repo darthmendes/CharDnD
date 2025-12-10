@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import styles from '../CharacterCreator.module.css';
 import ItemModal from '../../Items/ItemModal/ItemModal';
-import { fetchItems } from '../../../services/api'; 
+import { fetchItems } from '../../../services/api';
+import { PACK_CONTENTS } from '../../../constants'; 
 
 interface Props {
   character: any;
@@ -15,11 +16,10 @@ const Step6Equipment: React.FC<Props> = ({ character, updateField }) => {
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Fetch items on mount
   useEffect(() => {
     const loadItems = async () => {
       try {
-        const items = await fetchItems(); // Returns list of items
+        const items = await fetchItems();
         setAvailableItems(items);
       } catch (err) {
         console.error('Failed to load items:', err);
@@ -30,15 +30,26 @@ const Step6Equipment: React.FC<Props> = ({ character, updateField }) => {
     loadItems();
   }, []);
 
-  // Handle adding selected item from modal
   const handleAddItem = (item: any, quantity: number) => {
     const newItem = {
       id: item.id,
       name: item.name,
       quantity,
-      isCustom: false, // ← important: not custom
+      isCustom: false,
     };
     updateField('equipment', [...character.equipment, newItem]);
+    setIsItemModalOpen(false);
+  };
+
+  // ✅ Handle pack: manually add all items
+  const handleAddPack = (packName: string) => {
+    const itemsToAdd = PACK_CONTENTS[packName] || [];
+    const newEquipment = itemsToAdd.map(({ name, quantity }) => ({
+      name,
+      quantity,
+      isCustom: false,
+    }));
+    updateField('equipment', [...character.equipment, ...newEquipment]);
     setIsItemModalOpen(false);
   };
 
@@ -55,17 +66,7 @@ const Step6Equipment: React.FC<Props> = ({ character, updateField }) => {
 
   return (
     <div>
-      <div className={styles.formGroup}>
-        <label htmlFor="gold-input">Starting Gold (GP)</label>
-        <input
-          id="gold-input"
-          type="number"
-          min="0"
-          value={character.gold}
-          onChange={(e) => updateField('gold', parseInt(e.target.value) || 0)}
-          className={styles.numberInput}
-        />
-      </div>
+      {/* ... gold input ... */}
 
       <div className={styles.formGroup}>
         <label>Equipment</label>
@@ -77,8 +78,7 @@ const Step6Equipment: React.FC<Props> = ({ character, updateField }) => {
               <input
                 type="text"
                 value={item.name}
-                readOnly={!item.isCustom} // ← non-custom items are read-only
-                onChange={(e) => updateItem(i, 'name', e.target.value)}
+                readOnly={!item.isCustom}
                 className={styles.input}
                 style={{ backgroundColor: item.isCustom ? '#fff' : '#f8f4e9' }}
               />
@@ -90,11 +90,7 @@ const Step6Equipment: React.FC<Props> = ({ character, updateField }) => {
                 className={styles.numberInput}
                 style={{ width: '80px' }}
               />
-              <button
-                type="button"
-                className={styles.removeBtn}
-                onClick={() => removeItem(i)}
-              >
+              <button type="button" className={styles.removeBtn} onClick={() => removeItem(i)}>
                 Remove
               </button>
             </div>
@@ -107,17 +103,17 @@ const Step6Equipment: React.FC<Props> = ({ character, updateField }) => {
           onClick={() => setIsItemModalOpen(true)}
           disabled={loading}
         >
-          {loading ? 'Loading items...' : '+ Add Existing Item'}
+          {loading ? 'Loading...' : '+ Add Existing Item'}
         </button>
       </div>
 
-      {/* Item Selection Modal */}
       <ItemModal
         isOpen={isItemModalOpen}
         onClose={() => setIsItemModalOpen(false)}
         onAddItem={handleAddItem}
+        onAddPack={handleAddPack} // ✅ NEW PROP
         availableItems={availableItems}
-        characterId={0} // ← dummy ID; adjust if needed
+        characterId={0}
       />
     </div>
   );

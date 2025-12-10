@@ -76,21 +76,15 @@ def list_characters():
     result = [{"id": c.id, "name": c.name} for c in chars]
     return jsonify(result), HTTPStatus.OK
 
-# In app.py
+
 @app.route('/API/characters/<int:char_id>/items', methods=['POST'])
 def add_item_to_character(char_id):
     data = request.json
     
     if 'pack_name' in data:
-        # Handle pack
         result = Item.add_pack_to_character(char_id, data['pack_name'])
     elif 'itemID' in data:
-        # Handle single item
-        result = Item.add_item_to_character(
-            char_id, 
-            data['itemID'], 
-            data.get('quantity', 1)
-        )
+        result = Item.add_item_to_character(char_id, data['itemID'], data.get('quantity', 1))
     else:
         return jsonify({"error": "Missing itemID or pack_name"}), 400
 
@@ -98,7 +92,7 @@ def add_item_to_character(char_id):
         return jsonify(result), 200
     else:
         return jsonify(result), 400
-
+    
 ################################################################
 # Species Routes
 ################################################################

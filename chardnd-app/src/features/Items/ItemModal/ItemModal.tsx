@@ -1,13 +1,14 @@
-// ItemModal.tsx
+// src/components/ItemModal/ItemModal.tsx
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './ItemModal.module.css';
-import { VIRTUAL_PACKS, PACK_NAMES } from '../../../constants';
+import { VIRTUAL_PACKS, PACK_NAMES } from '../../../constants'; // ✅ Adjust path as needed
 
 interface ItemModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAddItem: (item: { name: string; [key: string]: any }, quantity: number) => void;
+  onAddPack?: (packName: string) => void;
   availableItems: Array<{
     name: string;
     type: string;
@@ -29,15 +30,15 @@ const ItemModal: React.FC<ItemModalProps> = ({
   isOpen,
   onClose,
   onAddItem,
+  onAddPack,
   availableItems,
   characterId,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedItem, setSelectedItem] = useState<ItemModalProps['availableItems'][0] | null>(null);
+  const [selectedItem, setSelectedItem] = useState<any>(null);
   const [quantity, setQuantity] = useState(1);
   const navigate = useNavigate();
 
-  // ✅ Merge real items with virtual packs
   const itemsWithPacks = useMemo(() => {
     const realItemNames = new Set(availableItems.map(item => item.name));
     const packsToAdd = VIRTUAL_PACKS.filter(pack => !realItemNames.has(pack.name));
@@ -50,8 +51,7 @@ const ItemModal: React.FC<ItemModalProps> = ({
 
   if (!isOpen) return null;
 
-  // ✅ Unified API call
-  const sendAddRequest = async (isPack: boolean, body: any): Promise<boolean> => {
+  const sendAddRequest = async (body: any): Promise<boolean> => {
     try {
       const response = await fetch(
         `http://127.0.0.1:8001/API/characters/${characterId}/items`,
@@ -75,45 +75,33 @@ const ItemModal: React.FC<ItemModalProps> = ({
     }
   };
 
-  const handleAdd = async () => {
+  const handleAddItemOrPack = async (closeAfter: boolean) => {
     if (!selectedItem) return;
 
     const isPack = PACK_NAMES.includes(selectedItem.name);
     let success = false;
 
     if (isPack) {
-      success = await sendAddRequest(true, { pack_name: selectedItem.name });
+      success = await sendAddRequest({ pack_name: selectedItem.name });
+      if (success) {
+        onAddPack?.(selectedItem.name); // ✅ Call new prop
+        onClose();
+      }
     } else {
-      success = await sendAddRequest(false, { itemID: selectedItem.id, quantity });
+      success = await sendAddRequest({ itemID: selectedItem.id, quantity });
       if (success) {
         onAddItem(selectedItem, quantity);
         setQuantity(1);
       }
     }
 
-    if (success) {
+    if (success && closeAfter) {
       onClose();
     }
   };
 
-  const handleAddAndContinue = async () => {
-    if (!selectedItem) return;
-
-    const isPack = PACK_NAMES.includes(selectedItem.name);
-    let success = false;
-
-    if (isPack) {
-      success = await sendAddRequest(true, { pack_name: selectedItem.name });
-    } else {
-      success = await sendAddRequest(false, { itemID: selectedItem.id, quantity });
-      if (success) {
-        onAddItem(selectedItem, quantity);
-        setQuantity(1);
-      }
-    }
-
-    // Do NOT close modal
-  };
+  const handleAdd = () => handleAddItemOrPack(true);
+  const handleAddAndContinue = () => handleAddItemOrPack(false);
 
   return (
     <div className={styles.overlay} onClick={(e) => {
@@ -163,15 +151,13 @@ const ItemModal: React.FC<ItemModalProps> = ({
                   <div
                     key={item.name}
                     onClick={() => {
-                      if (selectedItem && selectedItem.name === item.name) {
+                      if (selectedItem?.name === item.name) {
                         setSelectedItem(null);
                       } else {
                         setSelectedItem(item);
                       }
                     }}
-                    className={`${styles.itemRow} ${
-                      selectedItem?.name === item.name ? styles.selected : ''
-                    }`}
+                    className={`${styles.itemRow} ${selectedItem?.name === item.name ? styles.selected : ''}`}
                   >
                     <span className={styles.itemName}>{item.name}</span>
                     <small className={styles.itemType}>{item.type}</small>
@@ -187,24 +173,14 @@ const ItemModal: React.FC<ItemModalProps> = ({
                 <h4 className={styles.detailsTitle}>{selectedItem.name}</h4>
 
                 <div className={styles.detailGrid}>
-                  {selectedItem.type && (
-                    <div><strong>Type:</strong> {selectedItem.type}</div>
-                  )}
-                  {selectedItem.item_category && (
-                    <div><strong>Category:</strong> {selectedItem.item_category}</div>
-                  )}
-                  {typeof selectedItem.weight === 'number' && (
-                    <div><strong>Weight:</strong> {selectedItem.weight} lbs</div>
-                  )}
-                  {typeof selectedItem.cost === 'number' && (
-                    <div><strong>Cost:</strong> {selectedItem.cost} gp</div>
-                  )}
+                  {selectedItem.type && <div><strong>Type:</strong> {selectedItem.type}</div>}
+                  {selectedItem.item_category && <div><strong>Category:</strong> {selectedItem.item_category}</div>}
+                  {typeof selectedItem.weight === 'number' && <div><strong>Weight:</strong> {selectedItem.weight} lbs</div>}
+                  {typeof selectedItem.cost === 'number' && <div><strong>Cost:</strong> {selectedItem.cost} gp</div>}
                   {selectedItem.rarity && (
                     <div>
-                      <strong>Rarity:</strong>{' '}
-                      <span
-                        className={`${styles.rarityBadge} ${styles[selectedItem.rarity.toLowerCase()]}`}
-                      >
+                      <strong>Rarity:</strong>
+                      <span className={`${styles.rarityBadge} ${styles[selectedItem.rarity.toLowerCase()]}`}>
                         {selectedItem.rarity}
                       </span>
                     </div>
@@ -220,19 +196,12 @@ const ItemModal: React.FC<ItemModalProps> = ({
 
                 {selectedItem.type === 'Weapon' && (
                   <div className={styles.weaponDetails}>
-                    {selectedItem.damageDice && (
-                      <div><strong>Damage:</strong> {selectedItem.damageDice}</div>
+                    {selectedItem.damageDice && <div><strong>Damage:</strong> {selectedItem.damageDice}</div>}
+                    {selectedItem.damageType && <div><strong>Damage Type:</strong> {selectedItem.damageType}</div>}
+                    {selectedItem.properties?.length && (
+                      <div><strong>Properties:</strong> {selectedItem.properties.join(', ')}</div>
                     )}
-                    {selectedItem.damageType && (
-                      <div><strong>Damage Type:</strong> {selectedItem.damageType}</div>
-                    )}
-                    {selectedItem.properties && selectedItem.properties.length > 0 && (
-                      <div>
-                        <strong>Properties:</strong>{' '}
-                        {selectedItem.properties.join(', ')}
-                      </div>
-                    )}
-                    {selectedItem.specialAbilities && selectedItem.specialAbilities.length > 0 && (
+                    {selectedItem.specialAbilities?.length && (
                       <div>
                         <strong>Special Abilities:</strong>
                         <ul>
@@ -245,7 +214,6 @@ const ItemModal: React.FC<ItemModalProps> = ({
                   </div>
                 )}
 
-                {/* Hide quantity for packs */}
                 {!PACK_NAMES.includes(selectedItem.name) && (
                   <div className={styles.quantitySection}>
                     <label>

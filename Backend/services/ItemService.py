@@ -2,8 +2,8 @@
 
 from typing import Dict, Any, Optional, Tuple
 from ..models.item import Item
-from ..models import session
 from ..models.character import CharacterInventory
+from ..models import session
 from ..constants import ITEM_TYPES, PACK_DEFINITIONS
 
 
@@ -11,16 +11,10 @@ class ItemService:
 
     @classmethod
     def new(cls, data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Create a new item.
-        Returns: {"success": bool, "error"?: str, "data"?: {"id": int, "name": str}}
-        """
-        # Validate input
         is_valid, error_msg = cls._validate_item_data(data)
         if not is_valid:
             return {"success": False, "error": error_msg}
 
-        # Check for duplicate name
         if cls.get_by_name(data['name']):
             return {
                 "success": False,
@@ -57,7 +51,6 @@ class ItemService:
         if not item:
             return {"success": False, "error": "Item not found."}
 
-        # Validate item_type if being updated
         if 'item_type' in kwargs:
             if kwargs['item_type'] not in ITEM_TYPES:
                 return {
@@ -105,7 +98,6 @@ class ItemService:
 
     @classmethod
     def _validate_item_data(cls, data: Dict[str, Any]) -> Tuple[bool, str]:
-        # Required fields
         if 'name' not in data or not data['name'].strip():
             return False, "Item name is required and cannot be empty."
 
@@ -116,10 +108,21 @@ class ItemService:
             return False, f"Invalid item type: '{data['item_type']}'. Must be one of: {', '.join(sorted(ITEM_TYPES))}"
 
         return True, ""
-    
+
+    # ✅ RESTORED: Add item without character validation
     @classmethod
-    def add_pack_to_character(cls, char_id: int, pack_name: str) -> dict:
-        """Expands a predefined pack into individual inventory entries."""
+    def add_item_to_character(cls, char_id: int, item_id: int, quantity: int = 1) -> Dict[str, Any]:
+        try:
+            cls._add_or_update_inventory(char_id, item_id, quantity)
+            session.commit()
+            return {"success": True, "message": "Item added to inventory."}
+        except Exception as e:
+            session.rollback()
+            return {"success": False, "error": f"Failed to add item: {str(e)}"}
+
+    # ✅ RESTORED: Add pack without character validation
+    @classmethod
+    def add_pack_to_character(cls, char_id: int, pack_name: str) -> Dict[str, Any]:
         if pack_name not in PACK_DEFINITIONS:
             return {"success": False, "error": f"Unknown pack: {pack_name}"}
         
@@ -127,22 +130,20 @@ class ItemService:
             for item_name, qty in PACK_DEFINITIONS[pack_name]:
                 item = session.query(Item).filter_by(name=item_name).first()
                 if not item:
-                    return {"success": False, "error": f"Item '{item_name}' missing"}
-                
-                # Reuse add_item_to_character logic if possible
+                    return {"success": False, "error": f"Required item '{item_name}' not found in database."}
                 cls._add_or_update_inventory(char_id, item.id, qty)
             
             session.commit()
-            return {"success": True, "message": f"{pack_name} added"}
+            return {"success": True, "message": f"{pack_name} added to inventory."}
         except Exception as e:
             session.rollback()
             return {"success": False, "error": str(e)}
 
-    # Helper (private)
     @classmethod
-    def _add_or_update_inventory(cls, char_id, item_id, quantity):
+    def _add_or_update_inventory(cls, char_id: int, item_id: int, quantity: int) -> None:
         existing = session.query(CharacterInventory).filter_by(
-            characterID=char_id, itemID=item_id
+            characterID=char_id,
+            itemID=item_id
         ).first()
         if existing:
             existing.quantity += quantity
