@@ -1,4 +1,5 @@
 # models/__init__.py
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -7,7 +8,9 @@ from .config import DATABASES_PATH
 
 DB_NAME = 'AppDB.sqlite'
 Base = declarative_base()
-engine = create_engine('sqlite:///%s'%(DATABASES_PATH + '\\' + DB_NAME))
+# Use os.path.join for cross-platform compatibility
+db_path = os.path.join(DATABASES_PATH, DB_NAME)
+engine = create_engine(f'sqlite:///{db_path}')
 Session = sessionmaker(bind=engine)
 session = Session()
 

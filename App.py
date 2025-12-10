@@ -16,9 +16,16 @@ from Backend.services.ClassService import ClassService as DnDClass
 from Backend.services.ItemService import ItemService as Item
 
 from Backend.constants import PACK_DEFINITIONS
+from Backend.config import FLASK_DEBUG, FLASK_PORT, CORS_ORIGINS, SECRET_KEY
 
 app = Flask(__name__)
-CORS(app, origins='*')  # Fine for dev; restrict in production
+app.config['SECRET_KEY'] = SECRET_KEY
+
+# CORS: Use environment-configured origins
+if '*' in CORS_ORIGINS:
+    CORS(app, origins='*')  # Development only
+else:
+    CORS(app, origins=CORS_ORIGINS)
 
 
 ################################################################
@@ -27,6 +34,7 @@ CORS(app, origins='*')  # Fine for dev; restrict in production
 
 @app.route('/API/characters/creator', methods=['POST'])
 def create_character():
+    """Create a new character with the provided data."""
     data = request.json
     if not data:
         return jsonify({"error": "Request body must be valid JSON"}), HTTPStatus.BAD_REQUEST
@@ -55,6 +63,7 @@ def create_character():
 
 @app.route('/API/characters/<int:id>', methods=['DELETE'])
 def delete_character(id):
+    """Delete a character by ID."""
     result = Character.delete(id)
     if not result["success"]:
         return jsonify({"error": result["error"]}), HTTPStatus.NOT_FOUND
@@ -63,8 +72,8 @@ def delete_character(id):
 
 @app.route('/API/characters/<int:id>', methods=['GET'])
 def get_character(id):
+    """Retrieve a character by ID."""
     char = Character.get_by_id(id)
-    print(char.to_dict())
     if not char:
         return jsonify({"error": "Character not found"}), HTTPStatus.NOT_FOUND
     return jsonify(char.to_dict()), HTTPStatus.OK
@@ -72,6 +81,7 @@ def get_character(id):
 
 @app.route('/API/characters', methods=['GET'])
 def list_characters():
+    """Retrieve a list of all characters."""
     chars = Character.get_all()
     result = [{"id": c.id, "name": c.name} for c in chars]
     return jsonify(result), HTTPStatus.OK
@@ -79,19 +89,22 @@ def list_characters():
 
 @app.route('/API/characters/<int:char_id>/items', methods=['POST'])
 def add_item_to_character(char_id):
+    """Add an item or pack to a character's inventory."""
     data = request.json
+    if not data:
+        return jsonify({"error": "Request body must be valid JSON"}), HTTPStatus.BAD_REQUEST
     
     if 'pack_name' in data:
         result = Item.add_pack_to_character(char_id, data['pack_name'])
     elif 'itemID' in data:
         result = Item.add_item_to_character(char_id, data['itemID'], data.get('quantity', 1))
     else:
-        return jsonify({"error": "Missing itemID or pack_name"}), 400
+        return jsonify({"error": "Missing itemID or pack_name"}), HTTPStatus.BAD_REQUEST
 
     if result["success"]:
-        return jsonify(result), 200
+        return jsonify(result), HTTPStatus.OK
     else:
-        return jsonify(result), 400
+        return jsonify(result), HTTPStatus.BAD_REQUEST
     
 ################################################################
 # Species Routes
@@ -218,4 +231,4 @@ def delete_item(id):
 ################################################################
 
 if __name__ == "__main__":
-    app.run(port=8001, debug=True)
+    app.run(port=FLASK_PORT, debug=FLASK_DEBUG)

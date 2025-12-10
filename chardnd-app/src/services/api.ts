@@ -2,24 +2,69 @@
 
 const API_BASE = 'http://127.0.0.1:8001/API';
 
-export const createCharacter = (data: any) =>
-  fetch(`${API_BASE}/characters/creator`, {
+/**
+ * Generic API error handler
+ */
+const handleResponse = async (response: Response) => {
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({
+      error: `HTTP ${response.status}: ${response.statusText}`
+    }));
+    throw new Error(errorData.error || 'Request failed');
+  }
+  return response.json();
+};
+
+/**
+ * Create a new character
+ */
+export const createCharacter = async (data: any): Promise<any> => {
+  const response = await fetch(`${API_BASE}/characters/creator`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
-  }).then(res => {
-    if (!res.ok) throw new Error('Failed to create character');
-    return res.json();
   });
+  return handleResponse(response);
+};
 
-export const fetchSpecies = () =>
-  fetch(`${API_BASE}/species`).then(res => res.json());
+/**
+ * Fetch all species
+ */
+export const fetchSpecies = async (): Promise<any[]> => {
+  const response = await fetch(`${API_BASE}/species`);
+  return handleResponse(response);
+};
 
-export const fetchClasses = () =>
-  fetch(`${API_BASE}/classes`).then(res => res.json());
+/**
+ * Fetch all classes
+ */
+export const fetchClasses = async (): Promise<any[]> => {
+  const response = await fetch(`${API_BASE}/classes`);
+  return handleResponse(response);
+};
 
+/**
+ * Fetch all items
+ */
 export const fetchItems = async (): Promise<any[]> => {
-  const res = await fetch('http://127.0.0.1:8001/API/items');
-  if (!res.ok) throw new Error('Failed to fetch items');
-  return res.json();
+  const response = await fetch(`${API_BASE}/items`);
+  return handleResponse(response);
+};
+
+/**
+ * Fetch a specific character by ID
+ */
+export const fetchCharacter = async (id: number): Promise<any> => {
+  const response = await fetch(`${API_BASE}/characters/${id}`);
+  return handleResponse(response);
+};
+
+/**
+ * Delete a character by ID
+ */
+export const deleteCharacter = async (id: number): Promise<any> => {
+  const response = await fetch(`${API_BASE}/characters/${id}`, {
+    method: 'DELETE',
+  });
+  return handleResponse(response);
 };
