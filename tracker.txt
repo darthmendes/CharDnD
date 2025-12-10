@@ -54,3 +54,6 @@ Proxima task:
     Process to create item, feature, background... etc
     
     -> Show character Information when selecting a Character
+
+    -> Add small menu num canto para adicionar languages ou proficiencies 
+    

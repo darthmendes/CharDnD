@@ -1,0 +1,300 @@
+/* CharacterSheet.module.css */
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #fdf6e3; /* Parchment */
+  color: #333;
+  border: 1px solid #d6c38a;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Header Buttons */
+.header {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.header button {
+  padding: 8px 16px;
+  background-color: #5a3921; /* Dark brown */
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.header button:hover:not(:disabled) {
+  background-color: #442c18; /* Darker brown */
+}
+
+/* Page Title */
+h1 {
+  text-align: center;
+  color: #5a3921;
+  margin-bottom: 20px;
+  font-size: 2rem;
+  font-weight: bold;
+  border-bottom: 2px solid #d6c38a;
+  padding-bottom: 10px;
+}
+
+/* Section Styling */
+.section {
+  margin-bottom: 24px;
+  padding: 20px;
+  background-color: #fffef9; /* Lighter parchment */
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(90, 57, 33, 0.1);
+  border: 1px solid #d6c38a;
+}
+
+.section h2 {
+  margin-top: 0;
+  color: #5a3921;
+  font-size: 1.3rem;
+  border-bottom: 2px solid #d6c38a;
+  padding-bottom: 6px;
+}
+
+/* Grid for basic info */
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+label {
+  display: block;
+  margin: 6px 0;
+  font-size: 14px;
+  color: #5a3921;
+  font-weight: 600;
+}
+
+/* === LEVEL & XP STYLING === */
+
+.levelXpGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 12px 0;
+  padding: 14px;
+  background-color: #f8f4e9;
+  border: 1px dashed #c9b47e;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.levelXpRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.levelXpLabel {
+  font-weight: bold;
+  color: #5a3921;
+  min-width: 60px;
+}
+
+.xpInput {
+  width: 100px;
+  padding: 6px 10px;
+  border: 1px solid #c9b47e;
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: #fffef9;
+  outline: none;
+}
+
+.xpInput:focus {
+  border-color: #a88b5e;
+  box-shadow: 0 0 0 2px rgba(168, 139, 94, 0.2);
+}
+
+.levelButtons,
+.xpButtons {
+  display: flex;
+  gap: 6px;
+}
+
+.levelButton,
+.xpStepButton {
+  width: 40px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #e0d3b9;
+  border: 1px solid #c9b47e;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #5a3921;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.levelButton:hover,
+.xpStepButton:hover {
+  background-color: #d6c38a;
+  transform: translateY(-1px);
+}
+
+.levelButton:active,
+.xpStepButton:active {
+  transform: translateY(0);
+}
+
+.levelButton:disabled,
+.xpStepButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  background-color: #e8e0c9;
+}
+
+/* XP to next level hint */
+.xpHint {
+  font-size: 0.85rem;
+  color: #5a3921;
+  margin-top: 6px;
+  padding: 6px 10px;
+  background-color: #f0e6d2;
+  border-left: 3px solid #d6c38a;
+  border-radius: 4px;
+  font-style: italic;
+}
+
+/* Save Button */
+.saveBtn {
+  margin-top: 16px;
+  padding: 10px 20px;
+  background-color: #5a3921;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-weight: 600;
+}
+
+.saveBtn:hover:not(:disabled) {
+  background-color: #442c18;
+}
+
+.saveBtn:disabled {
+  background-color: #b8a88f;
+  cursor: not-allowed;
+}
+
+/* Loading & Error */
+.loading {
+  text-align: center;
+  font-size: 18px;
+  color: #7a684f;
+  margin: 40px 0;
+}
+
+.error {
+  text-align: center;
+  color: #c0392b;
+  font-weight: bold;
+  margin: 20px;
+  background-color: #f9eaea;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #e7bcbc;
+}
+
+/* Primary Button (e.g., Inventory) */
+.primary {
+  padding: 10px 20px;
+  background-color: #7a684f; /* Muted gold-brown */
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.primary:hover {
+  background-color: #65543f;
+}
+
+/* HP Section */
+.hpSection {
+  margin: 12px 0;
+  padding: 14px;
+  background-color: #f8f4e9;
+  border: 1px solid #d6c38a;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.hpRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0;
+  flex-wrap: wrap;
+}
+
+.hpMain {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #5a3921;
+}
+
+.tempHpBadge {
+  background-color: #f0e6d2;
+  color: #5a3921;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: 1px solid #d6c38a;
+}
+
+.hpControls {
+  display: flex;
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.hpControls button {
+  width: 36px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #e0d3b9;
+  border: 1px solid #c9b47e;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #5a3921;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.hpControls button:hover:not(:disabled) {
+  background-color: #d6c38a;
+  transform: translateY(-1px);
+}
+
+.hpControls button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

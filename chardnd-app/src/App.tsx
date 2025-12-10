@@ -1,9 +1,11 @@
 // src/App.tsx
 import { useState, useEffect } from 'react';
-import CharacterList from './Character/CharacterList';
+import CharacterList from './features/character-sheet/CharacterList';
 import HomePage from './components/Homepage';
+import { useNavigate } from 'react-router';
 
 function App() {
+  const navigate = useNavigate();
   const [characters, setCharacters] = useState([])
 
   useEffect(() => {
@@ -16,8 +18,24 @@ function App() {
     console.log(data)
   }
 
+  const goToItemCreator = () => {
+    navigate('items/creator');
+  }
+  
+  const goToCharacterCreator = () => {
+    navigate('characters/creator');
+  }
+
   return (
     <>
+      <header>
+        <button onClick={goToItemCreator}>
+          Item Creator
+        </button>
+        <button onClick={goToCharacterCreator}>
+          Character Creator
+        </button>
+      </header>
       <div className="app">
         <HomePage />
       </div>
