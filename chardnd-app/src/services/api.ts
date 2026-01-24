@@ -52,6 +52,14 @@ export const fetchItems = async (): Promise<any[]> => {
 };
 
 /**
+ * Fetch all backgrounds
+ */
+export const fetchBackgrounds = async (): Promise<any[]> => {
+  const response = await fetch(`${API_BASE}/backgrounds`);
+  return handleResponse(response);
+};
+
+/**
  * Fetch a specific character by ID
  */
 export const fetchCharacter = async (id: number): Promise<any> => {

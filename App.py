@@ -184,8 +184,29 @@ def get_class(id):
 @app.route('/API/classes', methods=['GET'])
 def list_classes():
     all_classes = DnDClass.get_all()
-    result = [{"id": c.id, "name": c.name} for c in all_classes]
-    return jsonify(result), HTTPStatus.OK
+    return jsonify([c.to_dict() for c in all_classes]), 200
+
+
+################################################################
+# Background Routes
+################################################################
+
+@app.route('/API/backgrounds', methods=['GET'])
+def list_backgrounds():
+    from Backend.services.BackgroundService import BackgroundService
+    result = BackgroundService.get_all()
+    if result["success"]:
+        return jsonify(result["data"]), 200
+    return jsonify({"error": result["error"]}), 500
+
+
+@app.route('/API/backgrounds/<int:bg_id>', methods=['GET'])
+def get_background(bg_id):
+    from Backend.services.BackgroundService import BackgroundService
+    result = BackgroundService.get_by_id(bg_id)
+    if result["success"]:
+        return jsonify(result["data"]), 200
+    return jsonify({"error": result["error"]}), 404
 
 
 ################################################################

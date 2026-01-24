@@ -1,6 +1,15 @@
-from typing import Dict, Any, Optional
+import logging
+from typing import Dict, Any, Optional, List, Tuple
+from sqlalchemy.orm import joinedload
+from sqlalchemy.exc import SQLAlchemyError
 from ..models.dndclass import DnDclass
 from ..models import session
+
+__all__ = [
+    'ClassService',
+]
+
+logger = logging.getLogger(__name__)
 
 
 class ClassService:
@@ -41,9 +50,14 @@ class ClassService:
                     "message": "Class created successfully."
                 }
             }
+        except SQLAlchemyError as e:
+            session.rollback()
+            logger.error(f"Database error creating class: {str(e)}")
+            return {"success": False, "error": f"Database error: {str(e)}"}
         except Exception as e:
             session.rollback()
-            return {"success": False, "error": f"Database error: {str(e)}"}
+            logger.error(f"Unexpected error creating class: {str(e)}")
+            return {"success": False, "error": f"Unexpected error: {str(e)}"}
     
     @classmethod
     def update(cls, id: int, **kwargs) -> Dict[str, Any]:
@@ -60,9 +74,14 @@ class ClassService:
                     return {"success": False, "error": f"Invalid field: {key}"}
             session.commit()
             return {"success": True, "message": "Class updated successfully.", "id": dnd_class.id}
+        except SQLAlchemyError as e:
+            session.rollback()
+            logger.error(f"Database error updating class {id}: {str(e)}")
+            return {"success": False, "error": f"Update failed: {str(e)}"}
         except Exception as e:
             session.rollback()
-            return {"success": False, "error": f"Update failed: {str(e)}"}
+            logger.error(f"Unexpected error updating class {id}: {str(e)}")
+            return {"success": False, "error": f"Unexpected error: {str(e)}"}
     
     @classmethod
     def get_by_id(cls, id: int) -> Optional[DnDclass]:
@@ -85,17 +104,22 @@ class ClassService:
             session.delete(dnd_class)
             session.commit()
             return {"success": True, "message": "Class deleted successfully."}
+        except SQLAlchemyError as e:
+            session.rollback()
+            logger.error(f"Database error deleting class {id}: {str(e)}")
+            return {"success": False, "error": f"Deletion failed: {str(e)}"}
         except Exception as e:
             session.rollback()
-            return {"success": False, "error": f"Deletion failed: {str(e)}"}
+            logger.error(f"Unexpected error deleting class {id}: {str(e)}")
+            return {"success": False, "error": f"Unexpected error: {str(e)}"}
 
     @classmethod
-    def get_all(cls):
+    def get_all(cls) -> List[DnDclass]:
         """Retrieve all classes."""
         return session.query(DnDclass).all()
     
     @classmethod
-    def _validate_class_data(cls, data: Dict[str, Any]) -> tuple[bool, str]:
+    def _validate_class_data(cls, data: Dict[str, Any]) -> Tuple[bool, str]:
         """Validate class data before creation."""
         if 'name' not in data:
             return False, "Missing required field: name"

@@ -3,12 +3,13 @@ from Backend.models.item import Item
 from Backend.models.dndclass import DnDclass
 from Backend.models.species import Species
 from Backend.models.languages import Language
+from Backend.models.background import Background
 from Backend.models import session
 
 """
 Database Population Tester
 Toggle the imports/calls below to populate the database.
-Recommended order: Languages -> Features -> Proficiencies -> Species -> Classes -> Items -> Link Traits
+Recommended order: Languages -> Features -> Proficiencies -> Species -> Classes -> Items -> Backgrounds -> Link Traits
 """
 
 # === Step 1: Populate Languages ===
@@ -31,23 +32,29 @@ add_species_and_subspecies()
 add_species_traits()
 
 # === Step 6: Populate Classes ===
-# from populate.populate_classesDB import create_barbarian, create_druid
-# create_barbarian()
-# create_druid()
+from populate.populate_classesDB import create_barbarian, create_druid
+create_barbarian()
+create_druid()
 
 # === Step 7: Populate Items ===
 from populate.populate_itemDB import add_items
 add_items()
 
+# === Step 8: Populate Backgrounds ===
+from populate.populate_backgroundsDB import populate_backgrounds
+populate_backgrounds()
+
 
 # === Testing/Verification Queries ===
 # Uncomment to test and view populated data
 
-# dwarf = session.query(DnDclass).filter_by(name="Druid").first()
-# if dwarf:
-#     print(dwarf.to_dict())
+# druid = session.query(DnDclass).filter_by(name="Druid").first()
+# if druid:
+#     print(druid.to_dict())
 
-# all_items = session.query(Item).all()
+# all_backgrounds = session.query(Background).all()
+# for bg in all_backgrounds:
+#     print(bg.to_dict())
 # for item in all_items:
 #     print(item.to_dict())
 

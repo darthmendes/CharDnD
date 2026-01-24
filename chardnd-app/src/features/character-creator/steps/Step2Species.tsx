@@ -71,10 +71,37 @@ const Step2Species: React.FC<Props> = ({ character, updateField }) => {
   const handleSpeciesChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     updateField('species', e.target.value);
     updateField('subspecies', '');
+    updateField('speciesChoices', {}); // Clear previous species choices
   };
 
   const handleSubspeciesChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     updateField('subspecies', e.target.value);
+  };
+
+  // Handle ability choice selection
+  const handleAbilityChoice = (ability: string, isSelected: boolean) => {
+    const currentChoices = character.speciesChoices || {};
+    const choiceGroup = selectedSpecies?.ability_choices[0];
+    const selectedCount = Object.values(currentChoices).filter((v: any) => v > 0).length;
+    
+    if (isSelected) {
+      // Only add if we haven't reached the max choices
+      if (selectedCount < choiceGroup?.n_choices) {
+        updateField('speciesChoices', {
+          ...currentChoices,
+          [ability.toLowerCase()]: choiceGroup?.bonus || 1
+        });
+      }
+    } else {
+      // Remove the choice
+      const newChoices = { ...currentChoices };
+      delete newChoices[ability.toLowerCase()];
+      updateField('speciesChoices', newChoices);
+    }
+  };
+
+  const isAbilityChosen = (ability: string) => {
+    return character.speciesChoices?.[ability.toLowerCase()] > 0;
   };
 
   // Helper: Format ability bonuses
@@ -177,6 +204,22 @@ const Step2Species: React.FC<Props> = ({ character, updateField }) => {
                   {selectedSpecies.ability_choices.length > 0 && (
                     <li>
                       Choose {selectedSpecies.ability_choices[0].n_choices} abilities to +{selectedSpecies.ability_choices[0].bonus}
+                    </li>
+                  )}
+                  {selectedSpecies.ability_choices.length > 0 && (
+                    <li style={{ listStyle: 'none', marginTop: '1rem' }}>
+                      {['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'].map(ability => (
+                        <label key={ability} style={{ display: 'block', marginBottom: '0.5rem', cursor: 'pointer' }}>
+                          <input
+                            type="checkbox"
+                            checked={isAbilityChosen(ability)}
+                            onChange={(e) => handleAbilityChoice(ability, e.target.checked)}
+                            disabled={!isAbilityChosen(ability) && Object.values(character.speciesChoices || {}).filter((v: any) => v > 0).length >= selectedSpecies.ability_choices[0].n_choices}
+                            style={{ marginRight: '0.5rem' }}
+                          />
+                          {ability}
+                        </label>
+                      ))}
                     </li>
                   )}
                   <li>Size: {selectedSpecies.size}</li>

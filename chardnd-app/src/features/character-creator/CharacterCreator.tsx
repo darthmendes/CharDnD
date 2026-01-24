@@ -6,9 +6,9 @@ import styles from './CharacterCreator.module.css';
 
 // Steps
 import Step1Name from './steps/Step1Name';
+import Step2Background from './steps/Step2Background';
 import Step2Species from './steps/Step2Species';
 import Step3Class from './steps/Step3Class';
-import Step4Level from './steps/Step4Level';
 import Step5Abilities from './steps/Step5AbilityScores';
 import Step6Equipment from './steps/Step6Equipment';
 
@@ -37,6 +37,7 @@ const CharacterCreator: React.FC = () => {
   const [step, setStep] = useState(1);
   const [character, setCharacter] = useState<CharacterData>({
     name: '',
+    background: '',
     species: '',
     speciesChoices: {},
     classes: [{ className: '', level: 1, subclass: '' }],
@@ -57,8 +58,8 @@ const CharacterCreator: React.FC = () => {
           fetchSpecies(),
           fetchClasses(),
         ]);
-        setSpeciesList(species);
-        setClassList(classes);
+        setSpeciesList(Array.isArray(species) ? species : species?.data || []);
+        setClassList(Array.isArray(classes) ? classes : classes?.data || []);
       } catch (err) {
         console.error('Failed to load species or classes:', err);
       } finally {
@@ -115,15 +116,15 @@ const CharacterCreator: React.FC = () => {
   };
 
   const renderStep = () => {
-    if (loading && (step === 2 || step === 3 || step === 4)) {
+    if (loading && (step === 3)) {
       return <div className={styles.loading}>Loading options...</div>;
     }
 
     switch (step) {
       case 1: return <Step1Name {...commonProps} />;
-      case 2: return <Step2Species {...commonProps} />;
-      case 3: return <Step3Class {...commonProps} />;
-      case 4: return <Step4Level {...commonProps} />;
+      case 2: return <Step2Background {...commonProps} />;
+      case 3: return <Step2Species {...commonProps} />;
+      case 4: return <Step3Class {...commonProps} />;
       case 5: return <Step5Abilities {...commonProps} />;
       case 6: return <Step6Equipment {...commonProps} />;
       default: return null;

@@ -40,6 +40,7 @@ export interface EquipmentItem {
 
 export interface CharacterData {
   name: string;
+  background: string;
   species: string;
   speciesChoices?: Record<string, string>;
   classes: CharacterClassLevel[];

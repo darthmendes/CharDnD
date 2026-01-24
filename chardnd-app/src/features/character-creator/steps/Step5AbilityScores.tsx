@@ -6,9 +6,11 @@ import styles from '../CharacterCreator.module.css';
 interface Props {
   character: any;
   updateField: (field: string, value: any) => void;
+  speciesList?: any[];
+  dndClasses?: any[];
 }
 
-const Step5AbilityScores: React.FC<Props> = ({ character, updateField }) => {
+const Step5AbilityScores: React.FC<Props> = ({ character, updateField, speciesList = [], dndClasses = [] }) => {
   const abilities = [
     { key: 'str', label: 'Strength (STR)' },
     { key: 'dex', label: 'Dexterity (DEX)' },
@@ -17,6 +19,37 @@ const Step5AbilityScores: React.FC<Props> = ({ character, updateField }) => {
     { key: 'wis', label: 'Wisdom (WIS)' },
     { key: 'cha', label: 'Charisma (CHA)' },
   ];
+
+  // Get species bonuses
+  const selectedSpecies = speciesList.find(s => s.name === character.species);
+  const speciesBonuses: Record<string, number> = {};
+  
+  // Add static ability bonuses from species
+  if (selectedSpecies?.ability_bonuses) {
+    Object.entries(selectedSpecies.ability_bonuses).forEach(([ability, bonus]) => {
+      const key = ability.toLowerCase();
+      speciesBonuses[key] = (speciesBonuses[key] || 0) + (bonus as number);
+    });
+  }
+  
+  // Add bonuses from species ability choices (e.g., Human chooses +1 to 2 abilities)
+  if (character.speciesChoices && selectedSpecies?.ability_choices) {
+    Object.entries(character.speciesChoices).forEach(([key, value]) => {
+      if (typeof value === 'number' && value > 0) {
+        speciesBonuses[key.toLowerCase()] = (speciesBonuses[key.toLowerCase()] || 0) + value;
+      }
+    });
+  }
+
+  // Get class bonuses (from all selected classes)
+  const classBonuses: Record<string, number> = {};
+  if (character.classes && character.classes.length > 0) {
+    character.classes.forEach((classLevel: any) => {
+      const classData = dndClasses.find(c => c.name === classLevel.className);
+      // For now, classes don't have ability bonuses in the current model
+      // but this is set up if they're added in the future
+    });
+  }
 
   const handleAbilityChange = (key: string, value: string) => {
     const num = parseInt(value) || 10;
@@ -57,6 +90,13 @@ const Step5AbilityScores: React.FC<Props> = ({ character, updateField }) => {
             const score = character.abilityScores[ability.key];
             const modifier = Math.floor((score - 10) / 2);
             const displayMod = modifier >= 0 ? `+${modifier}` : `${modifier}`;
+            const speciesBonus = speciesBonuses[ability.key] || 0;
+            const classBonus = classBonuses[ability.key] || 0;
+            const totalBonus = speciesBonus + classBonus;
+            const finalScore = score + totalBonus;
+            const finalModifier = Math.floor((finalScore - 10) / 2);
+            const displayFinalMod = finalModifier >= 0 ? `+${finalModifier}` : `${finalModifier}`;
+            
             return (
               <div key={ability.key} className={styles.abilityItem}>
                 <label>{ability.label}</label>
@@ -68,7 +108,26 @@ const Step5AbilityScores: React.FC<Props> = ({ character, updateField }) => {
                   onChange={e => handleAbilityChange(ability.key, e.target.value)}
                   className={styles.numberInput}
                 />
-                <div className={styles.modifier}>Modifier: {displayMod}</div>
+                <div style={{ fontSize: '0.85em' }}>
+                  <div className={styles.modifier}>Base: {score} (Mod: {displayMod})</div>
+                  {totalBonus !== 0 && (
+                    <>
+                      {speciesBonus !== 0 && (
+                        <div style={{ color: '#5a3921', fontSize: '0.9em' }}>
+                          Species: +{speciesBonus}
+                        </div>
+                      )}
+                      {classBonus !== 0 && (
+                        <div style={{ color: '#5a3921', fontSize: '0.9em' }}>
+                          Class: +{classBonus}
+                        </div>
+                      )}
+                      <div style={{ color: '#2d5016', fontWeight: 'bold', fontSize: '0.95em', marginTop: '0.25rem' }}>
+                        Final: {finalScore} (Mod: {displayFinalMod})
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             );
           })}
