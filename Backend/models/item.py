@@ -41,11 +41,11 @@ class Item(Base):
             "desc": self.desc,
             "weight": self.weight,
             "cost": self.cost,
-            "type": self.item_type,              # ✅ renamed to "type" for frontend consistency
+            "type": self.item_type,              # renamed to "type" for frontend consistency
             "item_category": self.item_category,
             "rarity": self.rarity,
             "properties": self.properties or [],
-            # ✅ Include new fields
+            # Include new fields
             "damageDice": self.damage_dice,
             "damageType": self.damage_type,
             "specialAbilities": self.special_abilities or [],

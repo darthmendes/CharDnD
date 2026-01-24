@@ -142,8 +142,8 @@ def get_species(id):
 
 @app.route('/API/species', methods=['GET'])
 def list_species():
-    all_species = Species.get_all()
-    result = [{"id": s.id, "name": s.name} for s in all_species]
+    all_species = Species.get_all()  # This MUST load subspecies
+    result = [s.to_dict() for s in all_species]
     return jsonify(result), HTTPStatus.OK
 
 

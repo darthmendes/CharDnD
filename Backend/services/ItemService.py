@@ -109,7 +109,7 @@ class ItemService:
 
         return True, ""
 
-    # ✅ RESTORED: Add item without character validation
+    # [RESTORED] Add item without character validation
     @classmethod
     def add_item_to_character(cls, char_id: int, item_id: int, quantity: int = 1) -> Dict[str, Any]:
         try:
@@ -120,7 +120,7 @@ class ItemService:
             session.rollback()
             return {"success": False, "error": f"Failed to add item: {str(e)}"}
 
-    # ✅ RESTORED: Add pack without character validation
+    # [RESTORED] Add pack without character validation
     @classmethod
     def add_pack_to_character(cls, char_id: int, pack_name: str) -> Dict[str, Any]:
         if pack_name not in PACK_DEFINITIONS:

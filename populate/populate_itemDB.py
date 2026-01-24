@@ -131,9 +131,9 @@ def add_items():
     if new_items:
         session.add_all(new_items)
         session.commit()
-        print(f"✅ Added {len(new_items)} items (e.g., Backpack, Torch, Rations, etc.)")
+        print(f"[SUCCESS] Added {len(new_items)} items (e.g., Backpack, Torch, Rations, etc.)")
     else:
-        print("ℹ️  All items already exist.")
+        print("[INFO] All items already exist.")
 
 if __name__ == "__main__":
     add_items()

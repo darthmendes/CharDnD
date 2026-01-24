@@ -11,14 +11,14 @@ class Features(Base):
     properties = Column(JSONType) # ac_modifiers, damage, class specifics, etcs
     
     classFeatures = relationship("ClassFeatures", back_populates="features")
-    speciesTraits = relationship("SpeciesTraits", back_populates="features")
+    species_traits = relationship("SpeciesTraits", back_populates="features")
     featureLevels = relationship("FeatureLevel", back_populates="feature")
 
     def to_dict(self):
         return {
             "id" : self.id,
             "name" : self.name,
-            "desc" : self.desc,
+            "description" : self.desc,
             "feature_levels" : [ep.to_dict() for ep in self.featureLevels]
         }
     
