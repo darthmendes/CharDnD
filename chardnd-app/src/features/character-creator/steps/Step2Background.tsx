@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import styles from '../CharacterCreator.module.css';
-import { fetchBackgrounds } from '../../../services/api';
+import { fetchBackgrounds, fetchLanguages } from '../../../services/api';
 
 interface Background {
   id: number;
@@ -14,6 +14,12 @@ interface Background {
   starting_gold_bonus: number;
 }
 
+interface Language {
+  id: number;
+  name: string;
+  desc: string;
+}
+
 interface Props {
   character: any;
   updateField: (field: string, value: any) => void;
@@ -21,25 +27,68 @@ interface Props {
 
 const Step2Background: React.FC<Props> = ({ character, updateField }) => {
   const [backgroundList, setBackgroundList] = useState<Background[]>([]);
+  const [languageList, setLanguageList] = useState<Language[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingLanguages, setLoadingLanguages] = useState(true);
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>(
+    character.backgroundLanguages || []
+  );
 
   useEffect(() => {
+    // Fetch backgrounds
     fetchBackgrounds().then((data: any) => {
       setBackgroundList(Array.isArray(data) ? data : data?.data || []);
       setLoading(false);
+    });
+
+    // Fetch languages
+    fetchLanguages().then((languages: Language[]) => {
+      setLanguageList(languages);
+      setLoadingLanguages(false);
+    }).catch(err => {
+      console.error("Failed to fetch languages:", err);
+      setLoadingLanguages(false);
     });
   }, []);
 
   const handleBackgroundChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     updateField('background', e.target.value);
+    // Reset languages when background changes
+    setSelectedLanguages([]);
+    updateField('backgroundLanguages', []);
+  };
+
+  const handleLanguageChange = (languageName: string, isChecked: boolean) => {
+    let newLanguages: string[];
+    
+    if (isChecked) {
+      // Add language (respect max limit)
+      const selectedBackground = backgroundList.find(b => b.name === character.background);
+      const maxLangs = selectedBackground?.languages || 0;
+      
+      if (selectedLanguages.length < maxLangs) {
+        newLanguages = [...selectedLanguages, languageName];
+      } else {
+        newLanguages = selectedLanguages;
+      }
+    } else {
+      // Remove language
+      newLanguages = selectedLanguages.filter(lang => lang !== languageName);
+    }
+    
+    setSelectedLanguages(newLanguages);
+    updateField('backgroundLanguages', newLanguages);
   };
 
   const selectedBackground = backgroundList.find(b => b.name === character.background);
 
+  // Filter out languages already known from species
+  const availableLanguages = languageList.map(lang => lang.name);
+
   return (
     <div className={styles.formGroup}>
       <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
-        {/* Left: Selector */}
+        {/* Left: Selector + Language Picker */}
         <div style={{ flex: 1, minWidth: '250px' }}>
           <label htmlFor="background-select">Background</label>
           <select
@@ -56,6 +105,41 @@ const Step2Background: React.FC<Props> = ({ character, updateField }) => {
               </option>
             ))}
           </select>
+
+          {/* Language Selection */}
+          {selectedBackground && selectedBackground.languages > 0 && (
+            <div style={{ marginTop: '1.5rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem' }}>
+                Choose {selectedBackground.languages} {selectedBackground.languages === 1 ? 'language' : 'languages'}
+              </label>
+              {loadingLanguages ? (
+                <p>Loading languages...</p>
+              ) : (
+                <div style={{ 
+                  maxHeight: '200px', 
+                  overflowY: 'auto', 
+                  border: '1px solid #d9c8a9', 
+                  borderRadius: '4px',
+                  padding: '0.5rem'
+                }}>
+                  {availableLanguages.map(lang => (
+                    <label key={lang} style={{ display: 'block', margin: '0.25rem 0' }}>
+                      <input
+                        type="checkbox"
+                        checked={selectedLanguages.includes(lang)}
+                        onChange={(e) => handleLanguageChange(lang, e.target.checked)}
+                        disabled={
+                          !selectedLanguages.includes(lang) && 
+                          selectedLanguages.length >= selectedBackground.languages
+                        }
+                      />
+                      {' '} {lang}
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Right: Preview Panel */}
@@ -104,9 +188,17 @@ const Step2Background: React.FC<Props> = ({ character, updateField }) => {
               {selectedBackground.languages > 0 && (
                 <div style={{ marginBottom: '1rem' }}>
                   <strong>Languages</strong>
-                  <p style={{ margin: '0.5rem 0 0 0' }}>
-                    Choose {selectedBackground.languages} {selectedBackground.languages === 1 ? 'language' : 'languages'}
-                  </p>
+                  {selectedLanguages.length > 0 ? (
+                    <ul style={{ paddingLeft: '1.2rem', margin: '0.5rem 0 0 0' }}>
+                      {selectedLanguages.map((lang, idx) => (
+                        <li key={idx}>{lang}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p style={{ margin: '0.5rem 0 0 0' }}>
+                      Choose {selectedBackground.languages} {selectedBackground.languages === 1 ? 'language' : 'languages'} from the list on the left.
+                    </p>
+                  )}
                 </div>
               )}
 

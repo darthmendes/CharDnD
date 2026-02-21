@@ -51,18 +51,25 @@ const Step3Class: React.FC<Props> = ({ character, updateClasses, dndClasses }) =
 
   // Add a new class level (multiclass)
   const addClassLevel = () => {
-    updateClasses([...characterClasses, { className: '', level: 1, subclass: '' }]);
+    const newClasses = [...characterClasses, { className: '', level: 1, subclass: '', chosenSkills: [] }];
+    updateClasses(newClasses);
+    // Auto-preview the new class
+    setPreviewIndex(newClasses.length - 1);
   };
 
   // Update a specific class entry
   const updateClassEntry = (index: number, field: string, value: any) => {
     const updated = [...characterClasses];
     updated[index] = { ...updated[index], [field]: value };
-    updateClasses(updated);
-    // Switch preview to this class when it's selected
-    if (field === 'className') {
-      setPreviewIndex(index);
+    
+    // Only reset chosenSkills when changing the FIRST class (index 0)
+    if (field === 'className' && index === 0) {
+      updated[0] = { ...updated[0], chosenSkills: [] };
     }
+    
+    updateClasses(updated);
+    // ✅ Auto-preview the class that was just modified
+    setPreviewIndex(index);
   };
 
   // Remove a class level
@@ -88,6 +95,31 @@ const Step3Class: React.FC<Props> = ({ character, updateClasses, dndClasses }) =
 
   const handleSubclassChange = (index: number, e: React.ChangeEvent<HTMLSelectElement>) => {
     updateClassEntry(index, 'subclass', e.target.value);
+  };
+
+  // ✅ Handle skill toggle and auto-preview first class
+  const handleSkillToggle = (skill: string, isChecked: boolean) => {
+    const currentFirstClass = character.classes?.[0] || {};
+    const currentSkills = currentFirstClass.chosenSkills || [];
+    const firstClassData = dndClasses.find(c => c.name === currentFirstClass.className);
+    const maxChoices = firstClassData?.skill_choices?.n_choices || 1;
+    
+    let newSkills: string[];
+    if (isChecked) {
+      if (currentSkills.length < maxChoices) {
+        newSkills = [...currentSkills, skill];
+      } else {
+        return;
+      }
+    } else {
+      newSkills = currentSkills.filter((s: string) => s !== skill);
+    }
+    
+    const updated = [...character.classes || []];
+    updated[0] = { ...updated[0], chosenSkills: newSkills };
+    updateClasses(updated);
+    // ✅ Auto-preview the first class when skills are modified
+    setPreviewIndex(0);
   };
 
   const safeArray = (arr: any) => Array.isArray(arr) ? arr : [];
@@ -128,6 +160,12 @@ const Step3Class: React.FC<Props> = ({ character, updateClasses, dndClasses }) =
   );
   const previewLevel = previewClass?.level || 1;
   const subclassAvailableLevel = selectedClassData?.subclass_level || 3;
+
+  // Get FIRST class data for skill selection (independent of preview)
+  const firstClass = characterClasses[0];
+  const firstClassData = firstClass && firstClass.className 
+    ? classList.find(c => c.name === firstClass.className) 
+    : null;
 
   return (
     <div className={styles.formGroup}>
@@ -182,6 +220,33 @@ const Step3Class: React.FC<Props> = ({ character, updateClasses, dndClasses }) =
                 className={styles.input}
                 style={{ marginBottom: '0.5rem' }}
               />
+
+              {/* SKILL SELECTION ONLY FOR FIRST CLASS - using firstClassData */}
+              {index === 0 && firstClassData?.skill_choices?.options && (
+                <div style={{ marginTop: '0.5rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.9em' }}>
+                    Choose {firstClassData.skill_choices.n_choices} skill{firstClassData.skill_choices.n_choices > 1 ? 's' : ''}
+                  </label>
+                  <div style={{ 
+                    maxHeight: '150px', 
+                    overflowY: 'auto', 
+                    border: '1px solid #d9c8a9', 
+                    borderRadius: '4px',
+                    padding: '0.25rem'
+                  }}>
+                    {safeArray(firstClassData.skill_choices.options).map((skill: string) => (
+                      <label key={skill} style={{ display: 'block', margin: '0.15rem 0' }}>
+                        <input
+                          type="checkbox"
+                          checked={(character.classes?.[0]?.chosenSkills || []).includes(skill)}
+                          onChange={(e) => handleSkillToggle(skill, e.target.checked)}
+                        />
+                        {' '} {skill}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <button

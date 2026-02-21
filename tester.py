@@ -13,8 +13,8 @@ Recommended order: Languages -> Features -> Proficiencies -> Species -> Classes 
 """
 
 # === Step 1: Populate Languages ===
-# from populate.populate_languagesDB import add_languages
-# add_languages()
+from populate.populate_languagesDB import add_languages
+add_languages()
 
 # === Step 2: Populate Features ===
 from populate.populate_featuresDB import add_features

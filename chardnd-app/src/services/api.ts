@@ -60,6 +60,17 @@ export const fetchBackgrounds = async (): Promise<any[]> => {
 };
 
 /**
+ * Fetch all languages
+ */
+export const fetchLanguages = async (): Promise<any[]> => {
+  const response = await fetch('http://127.0.0.1:8001/API/languages');
+  if (!response.ok) {
+    throw new Error('Failed to fetch languages');
+  }
+  return response.json();
+};
+
+/**
  * Fetch a specific character by ID
  */
 export const fetchCharacter = async (id: number): Promise<any> => {

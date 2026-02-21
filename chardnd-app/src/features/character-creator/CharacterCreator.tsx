@@ -14,7 +14,7 @@ import Step6Equipment from './steps/Step6Equipment';
 
 // Types & API
 import { CharacterData } from './types';
-import { createCharacter, fetchSpecies, fetchClasses } from '../../services/api';
+import { createCharacter, fetchSpecies, fetchClasses, fetchBackgrounds } from '../../services/api'; // ✅ Add fetchBackgrounds
 
 // Define types for fetched data
 interface SpeciesOption {
@@ -30,6 +30,17 @@ interface ClassOption {
   hasSubclass?: boolean;
   subclasses?: string[];
   equipmentOptions?: string[];
+}
+
+// ✅ Add Background type
+interface BackgroundOption {
+  id: number;
+  name: string;
+  description: string;
+  skill_proficiencies: string[];
+  tool_proficiencies: string[];
+  languages: number;
+  starting_gold_bonus: number;
 }
 
 const CharacterCreator: React.FC = () => {
@@ -49,19 +60,22 @@ const CharacterCreator: React.FC = () => {
   // Fetch data once on mount
   const [speciesList, setSpeciesList] = useState<SpeciesOption[]>([]);
   const [classList, setClassList] = useState<ClassOption[]>([]);
+  const [backgroundList, setBackgroundList] = useState<BackgroundOption[]>([]); // ✅ Add this
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [species, classes] = await Promise.all([
+        const [species, classes, backgrounds] = await Promise.all([ // ✅ Add backgrounds
           fetchSpecies(),
           fetchClasses(),
+          fetchBackgrounds(), // ✅ Add this
         ]);
         setSpeciesList(Array.isArray(species) ? species : species?.data || []);
         setClassList(Array.isArray(classes) ? classes : classes?.data || []);
+        setBackgroundList(Array.isArray(backgrounds) ? backgrounds : backgrounds?.data || []); // ✅ Add this
       } catch (err) {
-        console.error('Failed to load species or classes:', err);
+        console.error('Failed to load data:', err);
       } finally {
         setLoading(false);
       }
@@ -113,10 +127,11 @@ const CharacterCreator: React.FC = () => {
     updateClasses,
     speciesList,
     dndClasses: classList,
+    backgroundList, // ✅ Add this
   };
 
   const renderStep = () => {
-    if (loading && (step === 3)) {
+    if (loading && (step === 3 || step === 5)) { // ✅ Update loading condition
       return <div className={styles.loading}>Loading options...</div>;
     }
 

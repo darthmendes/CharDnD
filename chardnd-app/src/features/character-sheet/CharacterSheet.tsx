@@ -9,33 +9,13 @@ import ProficiencyList from './components/ProficiencyList/ProficiencyList';
 import styles from './CharacterSheet.module.css';
 import ItemModal from '../Items/ItemModal/ItemModal';
 import SpellModal from './components/SpellModal/SpellModal';
-import { fetchItems } from '../../services/api'; // ✅ Import API function
+import { fetchItems } from '../../services/api';
 
 // 🔽 D&D 5e XP Thresholds
 const LEVEL_XP_TABLE = [
   0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000,
   85000, 100000, 120000, 140000, 165000, 195000, 225000, 265000, 305000, 355000
 ];
-
-// 🧠 Class Features (Example: Barbarian)
-export const classFeatures = {
-  Barbarian: [
-    { name: "Rage", level: 1 },
-    { name: "Unarmored Defense", level: 1 },
-    { name: "Reckless Attack", level: 2 },
-    { name: "Danger Sense", level: 2 },
-    { name: "Extra Attack", level: 5 },
-    { name: "Fast Movement", level: 5 },
-    { name: "Feral Instinct", level: 7 },
-    { name: "Brutal Critical", level: 9 }
-  ],
-  Wizard: [
-    { name: "Arcane Recovery", level: 1 },
-    { name: "Arcane Tradition", level: 2 },
-    { name: "Ability Score Improvement", level: 4 },
-    { name: "Spell Mastery", level: 18 }
-  ]
-};
 
 const CharacterDisplay = () => {
   const { id } = useParams<{ id: string }>();
@@ -175,8 +155,8 @@ const CharacterDisplay = () => {
         setLocalAbilityScores(data.abilityScores);
         setLocalLevel(data.level);
         setLocalXp(data.xp);
-        setHpCurrent(data.hpCurrent);
-        setHpMax(data.hpMax);
+        setHpCurrent(data.hpCurrent || data.hitPoints || 0);
+        setHpMax(data.hpMax || data.hitPoints || 10);
         setHpTmp(data.hpTmp || 0);
       } catch (err: any) {
         setError(err.message || 'Failed to load character');
@@ -284,17 +264,79 @@ const CharacterDisplay = () => {
     }
   }, [location.search, addItem, id, navigate]);
 
-  // Class features
-  const unlockedFeatures = [];
-  if (character?.char_class && localLevel) {
-    const className = character.char_class;
-    const featuresForClass = classFeatures[className as keyof typeof classFeatures];
-    if (featuresForClass) {
-      unlockedFeatures.push(
-        ...featuresForClass.filter(feat => feat.level <= localLevel)
-      );
+  // ✅ Calculate proficiency bonus based on level
+  const getProficiencyBonus = () => {
+    if (localLevel <= 4) return 2;
+    if (localLevel <= 8) return 3;
+    if (localLevel <= 12) return 4;
+    if (localLevel <= 16) return 5;
+    return 6;
+  };
+
+  const proficiencyBonus = getProficiencyBonus();
+
+  // ✅ Helper: Map skills to abilities
+  const getSkillAbility = (skillName: string): string => {
+    const skillMap: Record<string, string> = {
+      'Acrobatics': 'dex',
+      'Animal Handling': 'wis',
+      'Arcana': 'int',
+      'Athletics': 'str',
+      'Deception': 'cha',
+      'History': 'int',
+      'Insight': 'wis',
+      'Intimidation': 'cha',
+      'Investigation': 'int',
+      'Medicine': 'wis',
+      'Nature': 'int',
+      'Perception': 'wis',
+      'Performance': 'cha',
+      'Persuasion': 'cha',
+      'Religion': 'int',
+      'Sleight of Hand': 'dex',
+      'Stealth': 'dex',
+      'Survival': 'wis'
+    };
+    return skillMap[skillName] || 'varies';
+  };
+
+  // ✅ Get all proficiencies from character data
+  const getAllProficiencies = () => {
+    const skills: string[] = [];
+    const weapons: string[] = [];
+    const tools: string[] = [];
+    const languages: string[] = [];
+
+    // Extract from character data
+    if (character?.proficientSkills) {
+      skills.push(...character.proficientSkills);
     }
-  }
+    if (character?.proficientWeapons) {
+      weapons.push(...character.proficientWeapons);
+    }
+    if (character?.proficientTools) {
+      tools.push(...character.proficientTools);
+    }
+    if (character?.knownLanguages) {
+      languages.push(...character.knownLanguages);
+    }
+
+    return { skills, weapons, tools, languages };
+  };
+
+  const { skills: proficientSkills, weapons: proficientWeapons, tools: proficientTools, languages: knownLanguages } = getAllProficiencies();
+
+  // ✅ Calculate final ability scores with bonuses
+  const getFinalAbilityScore = (baseKey: string) => {
+    const baseScore = localAbilityScores?.[baseKey] || 10;
+    // In a real implementation, you'd add species/subspecies bonuses here
+    // For now, just return base score since bonuses are already applied during creation
+    return baseScore;
+  };
+
+  const getAbilityModifier = (score: number) => {
+    return Math.floor((score - 10) / 2);
+  };
 
   // Render
   if (loading) return <p className={styles.loading}>Loading character...</p>;
@@ -315,6 +357,8 @@ const CharacterDisplay = () => {
       <section className={styles.section}>
         <h2>Species & Level</h2>
         <label><strong>Species:</strong> {character.species}</label>
+        {character.subspecies && <label><strong>Subspecies:</strong> {character.subspecies}</label>}
+        {character.background && <label><strong>Background:</strong> {character.background}</label>}
 
         {/* Level & XP */}
         <div className={styles.levelXpGroup}>
@@ -381,8 +425,13 @@ const CharacterDisplay = () => {
           </button>
         </div>
 
-        <label><strong>Class:</strong></label>
-        <ClassList classes={character.char_class} />
+        {/* ✅ Multiclass Display */}
+        <label><strong>Classes:</strong></label>
+        {character.classes ? (
+          <ClassList classes={character.classes} />
+        ) : (
+          <p>{character.char_class}</p>
+        )}
 
         <div>
           <strong>Ability Scores:</strong>
@@ -392,29 +441,86 @@ const CharacterDisplay = () => {
           </button>
         </div>
 
+        {/* ✅ Updated Proficiency Display */}
         <div>
           <strong>Proficiencies:</strong>
-          <ProficiencyList proficiencies={character.proficiencies} />
+          
+          {/* Skills */}
+          {proficientSkills.length > 0 && (
+            <div style={{ marginBottom: '1rem' }}>
+              <strong>Skills:</strong>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '0.5rem', marginTop: '0.5rem' }}>
+                {proficientSkills.map(skill => {
+                  const ability = getSkillAbility(skill);
+                  const finalScore = getFinalAbilityScore(ability);
+                  const abilityMod = getAbilityModifier(finalScore);
+                  const totalMod = abilityMod + proficiencyBonus;
+                  const displayMod = totalMod >= 0 ? `+${totalMod}` : `${totalMod}`;
+                  
+                  return (
+                    <div key={skill} style={{ padding: '0.25rem', backgroundColor: '#f0f0f0', borderRadius: '4px' }}>
+                      <strong>{skill}</strong>: {displayMod}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Weapons & Armor */}
+          {proficientWeapons.length > 0 && (
+            <div style={{ marginBottom: '1rem' }}>
+              <strong>Weapons & Armor:</strong>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
+                {proficientWeapons.map(weapon => (
+                  <span key={weapon} style={{ padding: '0.25rem 0.5rem', backgroundColor: '#e0e0e0', borderRadius: '4px' }}>
+                    {weapon}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Tools */}
+          {proficientTools.length > 0 && (
+            <div style={{ marginBottom: '1rem' }}>
+              <strong>Tools:</strong>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
+                {proficientTools.map(tool => (
+                  <span key={tool} style={{ padding: '0.25rem 0.5rem', backgroundColor: '#e0e0e0', borderRadius: '4px' }}>
+                    {tool}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
+        {/* Languages */}
         <div>
           <strong>Languages:</strong>
-          <p>{character.languages?.join(', ') || 'None'}</p>
+          {knownLanguages.length > 0 ? (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
+              {knownLanguages.map(lang => (
+                <span key={lang} style={{ padding: '0.25rem 0.5rem', backgroundColor: '#e0e0e0', borderRadius: '4px' }}>
+                  {lang}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p>None</p>
+          )}
         </div>
 
+        {/* Hit Points */}
         <div>
-          <strong>Features:</strong>
-          {unlockedFeatures.length === 0 ? (
-            <p>No features yet.</p>
-          ) : (
-            <ul style={{ margin: '8px 0', paddingLeft: '20px' }}>
-              {unlockedFeatures.map((feat, index) => (
-                <li key={index}>
-                  <strong>{feat.name}</strong> (unlocked at Level {feat.level})
-                </li>
-              ))}
-            </ul>
-          )}
+          <strong>Hit Points:</strong>
+          <p>{hpMax} (current: {hpCurrent})</p>
+        </div>
+
+        {/* Proficiency Bonus */}
+        <div>
+          <strong>Proficiency Bonus:</strong> +{proficiencyBonus}
         </div>
       </section>
 

@@ -14,6 +14,7 @@ from Backend.services.CharacterService import CharacterService as Character
 from Backend.services.SpeciesService import SpeciesService as Species
 from Backend.services.ClassService import ClassService as DnDClass
 from Backend.services.ItemService import ItemService as Item
+from Backend.services.LanguageService import LanguageService as Language
 
 from Backend.constants import PACK_DEFINITIONS
 from Backend.config import FLASK_DEBUG, FLASK_PORT, CORS_ORIGINS, SECRET_KEY
@@ -246,6 +247,20 @@ def delete_item(id):
     if not result["success"]:
         return jsonify({"error": result["error"]}), HTTPStatus.NOT_FOUND
     return jsonify({"message": "Item deleted"}), HTTPStatus.OK
+
+################################################################
+# Language Routes
+################################################################
+
+
+@app.route('/API/languages', methods=['GET'])
+def get_languages():
+    try:
+        languages = Language.get_all_languages()
+        result = [lang.to_dict() for lang in languages]
+        return jsonify(result), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 ################################################################
 # App Entry
