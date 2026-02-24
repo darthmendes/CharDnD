@@ -4,10 +4,11 @@ import styles from './AbsScores.module.css';
 const AbsScores = ({ abilityScores, onScoreChange }) => {
   const abilityOrder = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
 
-  // 🔹 Ensure valid scores
+  // 🔹 Ensure valid scores with defaults
   const validScores = abilityOrder.reduce((acc, ability) => {
     const val = abilityScores?.[ability];
-    acc[ability] = parseInt(val)
+    const score = parseInt(val) || 10;
+    acc[ability] = Math.max(1, Math.min(20, score));
     return acc;
   }, {});
 

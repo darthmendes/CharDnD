@@ -234,6 +234,38 @@ label {
   background-color: #65543f;
 }
 
+.secondary {
+  padding: 10px 20px;
+  background-color: #6c757d; /* Gray */
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.secondary:hover {
+  background-color: #5a6268;
+}
+
+.danger {
+  padding: 10px 20px;
+  background-color: #c0392b; /* Red */
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.danger:hover {
+  background-color: #a93226;
+}
+
 /* HP Section */
 .hpSection {
   margin: 12px 0;
@@ -246,55 +278,1526 @@ label {
 
 .hpRow {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 8px 0;
+  gap: 16px;
+  align-items: flex-start;
   flex-wrap: wrap;
+  margin-bottom: 12px;
 }
 
-.hpMain {
-  font-size: 1.25rem;
+.hpContainer {
+  flex: 2;
+  min-width: 250px;
+}
+
+.hpContainer strong {
+  display: block;
+  margin-bottom: 10px;
+  color: #5a3921;
+  font-weight: 700;
+}
+
+.totalHpContainer {
+  flex: 1;
+  min-width: 140px;
+  background-color: #fffef9;
+  border: 2px solid #d6c38a;
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+}
+
+.totalHpContainer strong {
+  display: block;
+  color: #5a3921;
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: 8px;
+}
+
+.hpDisplay {
+  margin: 12px 0;
+}
+
+.hpMainDisplay {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.2rem;
   font-weight: bold;
   color: #5a3921;
-}
-
-.tempHpBadge {
   background-color: #f0e6d2;
-  color: #5a3921;
-  padding: 4px 10px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 2px solid #d6c38a;
+}
+
+.hpCurrent {
+  color: #c0392b;
+  font-size: 1.5rem;
+}
+
+.hpSeparator {
+  color: #a88b5e;
+}
+
+.hpMax {
+  color: #27ae60;
+}
+
+.hpTemp {
+  margin-left: 8px;
+  color: #e67e22;
+  font-size: 0.8rem;
+  background-color: rgba(230, 126, 34, 0.1);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.totalHpDisplay {
+  background-color: #f0e6d2;
+  border: 2px solid #d6c38a;
   border-radius: 6px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  border: 1px solid #d6c38a;
+  padding: 10px;
+  text-align: center;
 }
 
-.hpControls {
-  display: flex;
-  gap: 8px;
-  margin: 10px 0;
+.totalHpValue {
+  display: block;
+  color: #c0392b;
+  font-size: 1.3rem;
+  font-weight: bold;
 }
 
-.hpControls button {
-  width: 36px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #e0d3b9;
-  border: 1px solid #c9b47e;
+/* New HP Buttons */
+.hpButton {
+  padding: 10px 16px;
+  background-color: #e8d9c3;
+  border: 2px solid #d6c38a;
   border-radius: 6px;
   font-size: 14px;
+  font-weight: 600;
   color: #5a3921;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.hpControls button:hover:not(:disabled) {
+.hpButton:hover:not(:disabled) {
   background-color: #d6c38a;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
-.hpControls button:disabled {
-  opacity: 0.6;
+.hpButton:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.hpButton:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
+}
+
+.hpControls {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+/* HP Modal */
+.hpModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.hpModalContent {
+  background-color: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  min-width: 300px;
+  border: 2px solid #d6c38a;
+}
+
+.hpModalContent label {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #5a3921;
+}
+
+.hpModalInput {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 16px;
+  border: 2px solid #d6c38a;
+  border-radius: 6px;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+.hpModalInput:focus {
+  outline: none;
+  border-color: #a88b5e;
+  box-shadow: 0 0 0 3px rgba(168, 139, 94, 0.2);
+}
+
+.hpModalButtons {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.confirmBtn {
+  padding: 10px 20px;
+  background-color: #27ae60;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.confirmBtn:hover {
+  background-color: #229954;
+}
+
+.cancelBtn {
+  padding: 10px 20px;
+  background-color: #e8d9c3;
+  color: #5a3921;
+  border: 1px solid #d6c38a;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.cancelBtn:hover {
+  background-color: #d6c38a;
+}
+
+/* Combat Stats Row */
+.combatStats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 20px 0;
+}
+
+@media (max-width: 768px) {
+  .combatStats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.statBox {
+  background-color: #f8f4e9;
+  border: 2px solid #d6c38a;
+  border-radius: 8px;
+  padding: 14px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.statBox strong {
+  display: block;
+  color: #5a3921;
+  font-weight: 700;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+}
+
+.statBox span {
+  display: block;
+  color: #27ae60;
+  font-size: 1.4rem;
+  font-weight: bold;
+}
+
+.statBox.clickable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.statBox.clickable:hover {
+  background-color: #fef8f0;
+  border-color: #4a90e2;
+  box-shadow: 0 4px 8px rgba(74, 144, 226, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Attacks Section */
+.attacksSection {
+  margin-top: 24px;
+}
+
+.attacksSection h3 {
+  color: #5a3921;
+  font-size: 1.1rem;
+  margin: 16px 0 12px 0;
+  border-bottom: 2px solid #d6c38a;
+  padding-bottom: 8px;
+}
+
+.attacksList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.attackBox {
+  background-color: #f8f4e9;
+  border: 2px solid #d6c38a;
+  border-radius: 8px;
+  padding: 12px;
+  transition: all 0.2s ease;
+}
+
+.attackBox:hover {
+  background-color: #f0e6d2;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.attackName {
+  font-weight: bold;
+  color: #5a3921;
+  font-size: 0.95rem;
+  margin-bottom: 8px;
+}
+
+.attackDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+}
+
+.attackHit {
+  color: #c0392b;
+  font-weight: 600;
+}
+
+.attackDamage {
+  color: #e67e22;
+  font-weight: 600;
+}
+
+.noAttacks {
+  color: #7a684f;
+  font-size: 0.95rem;
+  font-style: italic;
+  padding: 12px;
+  background-color: #f0e6d2;
+  border-radius: 6px;
+  text-align: center;
+}
+
+/* Inventory List */
+.inventoryList {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.inventoryItem {
+  background-color: #f8f4e9;
+  border: 2px solid #d6c38a;
+  border-radius: 8px;
+  padding: 12px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.inventoryItem:hover {
+  background-color: #f0e6d2;
+  transform: translateX(4px);
+}
+
+.inventoryItemName {
+  font-weight: bold;
+  color: #5a3921;
+  font-size: 1rem;
+  margin-bottom: 6px;
+}
+
+.inventoryItemDetails {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.itemType {
+  background-color: #e0d3b9;
+  color: #5a3921;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.itemWeight {
+  color: #7a684f;
+  font-size: 0.9rem;
+}
+
+.itemCost {
+  color: #d4af37;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.inventoryItemDesc {
+  color: #666;
+  font-size: 0.9rem;
+  font-style: italic;
+  margin-top: 6px;
+}
+
+.emptyInventory {
+  color: #7a684f;
+  font-size: 0.95rem;
+  font-style: italic;
+  padding: 16px;
+  background-color: #f0e6d2;
+  border-radius: 6px;
+  text-align: center;
+  margin-top: 12px;
+}
+
+/* ===== EXPANDABLE INVENTORY ITEMS ===== */
+
+.inventoryItemContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.inventoryItemHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background-color: #f8f4e9;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+  user-select: none;
+}
+
+.inventoryItemHeader:hover {
+  background-color: #f0e6d2;
+}
+
+.inventoryItemQuickInfo {
+  display: flex;
+  gap: 12px;
+  margin-left: auto;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.chargesIndicator {
+  background-color: #e67e22;
+  color: white;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.inventoryItemExpanded {
+  background-color: #fffef9;
+  border: 2px solid #d6c38a;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  padding: 14px;
+  margin-top: -2px;
+}
+
+.selectedForDelete {
+  background-color: rgba(192, 57, 43, 0.15) !important;
+  border: 2px solid #c0392b !important;
+}
+
+.itemFullDetails {
+  margin-bottom: 14px;
+}
+
+.itemFullDesc {
+  color: #333;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #d6c38a;
+  white-space: pre-wrap;
+}
+
+.itemStats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+}
+
+.itemStats span {
+  display: flex;
+  gap: 6px;
+}
+
+.itemProperties {
+  margin-bottom: 12px;
+}
+
+.itemProperties strong {
+  display: block;
+  margin-bottom: 6px;
+  color: #5a3921;
+}
+
+.propertiesList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.propertyTag {
+  background-color: #e0d3b9;
+  color: #5a3921;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.damageInfo {
+  background-color: #f0e6d2;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+}
+
+.onHitEffect {
+  background-color: #fff3cd;
+  padding: 10px;
+  border-left: 4px solid #ffc107;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+}
+
+.onHitEffect strong {
+  display: block;
+  margin-bottom: 6px;
+  color: #5a3921;
+}
+
+.onHitEffect p {
+  margin: 0;
+  color: #666;
+}
+
+.chargesControl {
+  background-color: #e8f5e9;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.chargesControl strong {
+  display: block;
+  color: #27ae60;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+}
+
+.chargesButtons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.chargesButtons button {
+  width: 32px;
+  height: 32px;
+  border: 2px solid #27ae60;
+  background-color: white;
+  color: #27ae60;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.chargesButtons button:hover:not(:disabled) {
+  background-color: #27ae60;
+  color: white;
+}
+
+.chargesButtons button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.inventoryActions {
+  display: flex;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid #d6c38a;
+}
+
+.addMoreBtn {
+  flex: 1;
+  padding: 10px;
+  background-color: #27ae60;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.addMoreBtn:hover {
+  background-color: #229954;
+}
+
+.detailsBtn {
+  flex: 1;
+  padding: 10px;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.detailsBtn:hover {
+  background-color: #2980b9;
+}
+
+.removeOneBtn {
+  flex: 1;
+  padding: 10px;
+  background-color: #f39c12;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.removeOneBtn:hover {
+  background-color: #e67e22;
+}
+
+.deleteBtn {
+  flex: 1;
+  padding: 10px;
+  background-color: #c0392b;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.deleteBtn:hover {
+  background-color: #a93226;
+}
+
+/* ===== COMBAT ATTACKS - ROW LAYOUT ===== */
+
+.attacksList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.attackRow {
+  background-color: #f8f4e9;
+  border: 2px solid #d6c38a;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.attackRow:hover {
+  background-color: #f0e6d2;
+  transform: translateX(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.attackRowName {
+  flex: 2;
+  font-weight: bold;
+  color: #5a3921;
+  font-size: 1rem;
+  min-width: 120px;
+}
+
+.attackRowBonus {
+  flex: 1;
+  text-align: center;
+  color: #c0392b;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.attackRowDamage {
+  flex: 1;
+  text-align: center;
+  color: #e67e22;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.attackRowType {
+  flex: 1;
+  text-align: center;
+  color: #7a684f;
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+.attackRowHeader {
+  background-color: #e8d5c4;
+  border: 2px solid #8b7355;
+  border-radius: 8px 8px 0 0;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-weight: bold;
+  color: #5a3921;
+  margin-bottom: -2px;
+  font-size: 0.95rem;
+}
+
+/* ===== COMBAT ATTACKS - DEPRECATED BOX LAYOUT (kept for reference) ===== */
+
+.attackBox {
+  background-color: #f8f4e9;
+  border: 2px solid #d6c38a;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.attackBox:hover {
+  background-color: #f0e6d2;
+  transform: translateX(2px);
+}
+
+.attackBoxSelected {
+  border-color: #c0392b;
+  background-color: #f0e6d2;
+  box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.1);
+}
+
+.attackHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.attackName {
+  font-weight: bold;
+  color: #5a3921;
+  font-size: 1.05rem;
+}
+
+.chargesSmall {
+  background-color: #e67e22;
+  color: white;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.attackDetails {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 0.9rem;
+}
+
+.attackHit {
+  color: #c0392b;
+  font-weight: 600;
+}
+
+.attackDamage {
+  color: #e67e22;
+  font-weight: 600;
+}
+
+.attackType {
+  color: #7a684f;
+  font-style: italic;
+}
+
+.expandedAttackDetails {
+  background-color: #fffef9;
+  border: 1px solid #d6c38a;
+  border-top: 2px solid #c0392b;
+  border-radius: 4px;
+  padding: 12px;
+  margin-top: 10px;
+}
+
+.weaponDesc {
+  color: #333;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #d6c38a;
+  white-space: pre-wrap;
+}
+
+.attackCalc {
+  background-color: #f0e6d2;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+.attackCalc h4 {
+  margin: 0 0 8px 0;
+  color: #5a3921;
+  font-size: 0.95rem;
+}
+
+.calcRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  margin-bottom: 6px;
+  color: #333;
+}
+
+.onHitSection {
+  background-color: #fff3cd;
+  padding: 10px;
+  border-left: 4px solid #ffc107;
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+
+.onHitSection h4 {
+  margin: 0 0 6px 0;
+  color: #5a3921;
+  font-size: 0.95rem;
+}
+
+.onHitSection p {
+  margin: 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.chargesSection {
+  margin-bottom: 12px;
+}
+
+.expendChargeBtn {
+  width: 100%;
+  padding: 10px;
+  background-color: #e67e22;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  margin-bottom: 6px;
+  transition: background-color 0.2s;
+}
+
+.expendChargeBtn:hover {
+  background-color: #d35400;
+}
+
+.makeAttackBtn {
+  width: 100%;
+  padding: 10px;
+  background-color: #5a3921;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.makeAttackBtn:hover {
+  background-color: #442c18;
+}
+
+/* ===== ATTACK MODAL ===== */
+
+.attackModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.attackModalContent {
+  background-color: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  max-width: 500px;
+  width: 90%;
+  border: 3px solid #c0392b;
+  position: relative;
+}
+
+.attackModalClose {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  color: #5a3921;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.attackModalClose:hover {
+  color: #c0392b;
+}
+
+.attackModalContent h3 {
+  color: #5a3921;
+  margin: 0 0 20px 0;
+  font-size: 1.3rem;
+  border-bottom: 2px solid #d6c38a;
+  padding-bottom: 10px;
+}
+
+.attackModalData {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.attackModalBox {
+  background-color: #f8f4e9;
+  border: 2px solid #d6c38a;
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+}
+
+.attackModalBox h4 {
+  margin: 0 0 8px 0;
+  color: #5a3921;
+  font-size: 0.95rem;
+}
+
+.attackModalValue {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #c0392b;
+  margin-bottom: 8px;
+}
+
+.diceLabel {
+  color: #666;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.damageTypeLabel {
+  color: #e67e22;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin: 4px 0 0 0;
+}
+
+.attackModalEffect {
+  background-color: #fff3cd;
+  border-left: 4px solid #ffc107;
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+.attackModalEffect h4 {
+  margin: 0 0 6px 0;
+  color: #5a3921;
+  font-size: 0.95rem;
+}
+
+.attackModalEffect p {
+  margin: 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.chargesExpendPrompt {
+  background-color: #e8f5e9;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+
+.chargesExpendPrompt label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #27ae60;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.chargesExpendPrompt input {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+}
+
+.attackModalButtons {
+  display: flex;
+  gap: 12px;
+}
+
+.confirmBtn {
+  flex: 1;
+  padding: 12px;
+  background-color: #27ae60;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.confirmBtn:hover {
+  background-color: #229954;
+}
+
+.cancelBtn {
+  flex: 1;
+  padding: 12px;
+  background-color: #e8d9c3;
+  color: #5a3921;
+  border: 1px solid #d6c38a;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.cancelBtn:hover {
+  background-color: #d6c38a;
+}
+
+/* ===== WEAPON VARIANT SELECTOR MODAL ===== */
+
+.variantSelectorOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+}
+
+.variantSelectorContent {
+  background: linear-gradient(135deg, #f5e6d3 0%, #e8d5c4 100%);
+  border: 3px solid #8b7355;
+  border-radius: 15px;
+  max-width: 90vw;
+  width: 500px;
+  padding: 30px;
+  position: relative;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.variantSelectorContent h2 {
+  margin: 0 0 10px 0;
+  color: #2c3e50;
+  font-size: 24px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.variantDescription {
+  text-align: center;
+  color: #555;
+  margin: 0 0 25px 0;
+  font-size: 14px;
+}
+
+.variantOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 25px;
+}
+
+.variantOption {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.5));
+  border: 2px solid #d6c38a;
+  border-radius: 8px;
+  padding: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.variantOption:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.8));
+  border-color: #8b7355;
+  box-shadow: 0 4px 12px rgba(139, 115, 85, 0.2);
+}
+
+.variantOptionSelected {
+  background: linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%);
+  border-color: #2e7d32;
+  box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+}
+
+.variantOptionName {
+  font-weight: 700;
+  color: #2c3e50;
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.variantOptionDetails {
+  display: flex;
+  gap: 15px;
+  font-size: 13px;
+  color: #555;
+  flex-wrap: wrap;
+}
+
+.variantOptionDetails span {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.variantActions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.confirmVariantBtn {
+  padding: 12px 24px;
+  background-color: #2e7d32;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background-color 0.3s;
+}
+
+.confirmVariantBtn:hover {
+  background-color: #1b5e20;
+}
+
+/* ===== ATTACK DETAILS MODAL ===== */
+
+.attackDetailsModalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.attackDetailsModalContent {
+  background: linear-gradient(135deg, #f5e6d3 0%, #e8d5c4 100%);
+  border: 3px solid #8b7355;
+  border-radius: 15px;
+  max-width: 90vw;
+  width: 1200px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.attackDetailsHeader {
+  padding: 25px;
+  border-bottom: 2px solid #8b7355;
+  text-align: center;
+}
+
+.attackDetailsHeader h2 {
+  margin: 0 0 10px 0;
+  color: #2c3e50;
+  font-size: 28px;
+  font-weight: 700;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+.attackDetailsContent {
+  padding: 25px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.attackStatsSection {
+  background-color: rgba(255, 255, 255, 0.3);
+  border: 1px solid #8b7355;
+  border-radius: 8px;
+  padding: 15px;
+}
+
+.attackStatsSection h3 {
+  margin: 0 0 16px 0;
+  color: #5d4e37;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.attackStatRow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid rgba(139, 115, 85, 0.1);
+  border-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.4);
+  min-width: 130px;
+}
+
+.attackStatRow strong {
+  color: #5d4e37;
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-bottom: 6px;
+  text-align: center;
+}
+
+.attackStatRow span {
+  color: #34495e;
+  font-weight: 600;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+.attackStatsSection > *:not(h3) {
+  display: contents;
+}
+
+.attackStatsSection {
+  display: grid;
+}
+
+.attackStatsSection h3 {
+  grid-column: 1 / -1;
+}
+
+.attackStatsSection > div {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  grid-column: 1 / -1;
+}
+
+.attackCalcSection {
+  background-color: rgba(255, 255, 255, 0.3);
+  border: 1px solid #8b7355;
+  border-radius: 8px;
+  padding: 15px;
+}
+
+.attackCalcSection h3 {
+  margin: 0 0 16px 0;
+  color: #5d4e37;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.attackCalcSection > div {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.calcRow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid rgba(139, 115, 85, 0.1);
+  border-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.4);
+  min-width: 140px;
+}
+
+.calcRow strong {
+  color: #5d4e37;
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-bottom: 6px;
+  text-align: center;
+}
+
+.calcRow span {
+  color: #34495e;
+  font-weight: 600;
+  font-size: 1rem;
+  text-align: center;
+}
+
+.chargesInfoSection {
+  background-color: rgba(230, 126, 34, 0.1);
+  border: 1px solid #e67e22;
+  border-radius: 8px;
+  padding: 15px;
+}
+
+.chargesInfoSection h3 {
+  margin: 0 0 16px 0;
+  color: #d68910;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.chargesInfo {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.chargesInfo span {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid rgba(230, 126, 34, 0.3);
+  border-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.4);
+  color: #2c3e50;
+  font-weight: 500;
+  min-width: 130px;
+}
+
+.chargesInfo strong {
+  font-size: 0.85rem;
+  margin-bottom: 6px;
+  color: #d68910;
+  text-align: center;
+}
+
+.abilitiesSection {
+  background-color: rgba(255, 255, 255, 0.3);
+  border: 1px solid #8b7355;
+  border-radius: 8px;
+  padding: 15px;
+}
+
+.abilitiesSection h3 {
+  margin: 0 0 12px 0;
+  color: #5d4e37;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.abilitiesList {
+  margin: 0;
+  padding-left: 20px;
+  color: #2c3e50;
+  line-height: 1.8;
+}
+
+.abilitiesList li {
+  margin-bottom: 8px;
+}
+
+.otherStatsSection {
+  background-color: rgba(255, 255, 255, 0.3);
+  border: 1px solid #8b7355;
+  border-radius: 8px;
+  padding: 15px;
+}
+
+.otherStatsSection > div {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.otherStatsSection .statRow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid rgba(139, 115, 85, 0.1);
+  border-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.4);
+  min-width: 120px;
+}
+
+.otherStatsSection .statRow strong {
+  color: #5d4e37;
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-bottom: 6px;
+  text-align: center;
+}
+
+.otherStatsSection .statRow span {
+  color: #34495e;
+  font-weight: 600;
+  font-size: 1rem;
+  text-align: center;
+}
+
+.propertiesSection {
+  background-color: rgba(255, 255, 255, 0.3);
+  border: 1px solid #8b7355;
+  border-radius: 8px;
+  padding: 15px;
+}
+
+.propertiesSection h3 {
+  margin: 0 0 12px 0;
+  color: #5d4e37;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.propertiesList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.propertyTag {
+  display: inline-block;
+  background-color: #3498db;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid #2980b9;
+}
+
+.onHitSection {
+  background-color: rgba(255, 100, 100, 0.1);
+  border: 1px solid #c0392b;
+  border-radius: 8px;
+  padding: 15px;
+}
+
+.onHitSection h3 {
+  margin: 0 0 10px 0;
+  color: #c0392b;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.onHitSection p {
+  margin: 0;
+  color: #2c3e50;
+  line-height: 1.6;
+}
+
+.damageCalcSection {
+  background-color: rgba(255, 200, 100, 0.15);
+  border: 1px solid #e67e22;
+  border-radius: 8px;
+  padding: 15px;
+}
+
+.damageCalcSection h3 {
+  margin: 0 0 16px 0;
+  color: #5d4e37;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.damageCalcSection > div {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.attackDetailsActions {
+  padding: 20px;
+  border-top: 2px solid #8b7355;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
 }

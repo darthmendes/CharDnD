@@ -14,33 +14,20 @@ import Step6Equipment from './steps/Step6Equipment';
 
 // Types & API
 import { CharacterData } from './types';
-import { createCharacter, fetchSpecies, fetchClasses, fetchBackgrounds } from '../../services/api'; // ✅ Add fetchBackgrounds
+import { createCharacter, fetchSpecies, fetchClasses, fetchBackgrounds } from '../../services/api';
 
 // Define types for fetched data
 interface SpeciesOption {
-  id: number;
-  name: string;
-  hasSubrace?: boolean;
-  subraces?: string[];
+  [key: string]: any;
 }
 
 interface ClassOption {
-  id: number;
-  name: string;
-  hasSubclass?: boolean;
-  subclasses?: string[];
-  equipmentOptions?: string[];
+  [key: string]: any;
 }
 
 // ✅ Add Background type
 interface BackgroundOption {
-  id: number;
-  name: string;
-  description: string;
-  skill_proficiencies: string[];
-  tool_proficiencies: string[];
-  languages: number;
-  starting_gold_bonus: number;
+  [key: string]: any;
 }
 
 const CharacterCreator: React.FC = () => {
@@ -50,7 +37,9 @@ const CharacterCreator: React.FC = () => {
     name: '',
     background: '',
     species: '',
+    subspecies: '',
     speciesChoices: {},
+    speciesLanguages: [],
     classes: [{ className: '', level: 1, subclass: '' }],
     abilityScores: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
     equipment: [],
@@ -60,20 +49,20 @@ const CharacterCreator: React.FC = () => {
   // Fetch data once on mount
   const [speciesList, setSpeciesList] = useState<SpeciesOption[]>([]);
   const [classList, setClassList] = useState<ClassOption[]>([]);
-  const [backgroundList, setBackgroundList] = useState<BackgroundOption[]>([]); // ✅ Add this
+  const [backgroundList, setBackgroundList] = useState<BackgroundOption[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [species, classes, backgrounds] = await Promise.all([ // ✅ Add backgrounds
+        const [species, classes, backgrounds] = await Promise.all([
           fetchSpecies(),
           fetchClasses(),
-          fetchBackgrounds(), // ✅ Add this
+          fetchBackgrounds(),
         ]);
-        setSpeciesList(Array.isArray(species) ? species : species?.data || []);
-        setClassList(Array.isArray(classes) ? classes : classes?.data || []);
-        setBackgroundList(Array.isArray(backgrounds) ? backgrounds : backgrounds?.data || []); // ✅ Add this
+        setSpeciesList(Array.isArray(species) ? species : []);
+        setClassList(Array.isArray(classes) ? classes : []);
+        setBackgroundList(Array.isArray(backgrounds) ? backgrounds : []);
       } catch (err) {
         console.error('Failed to load data:', err);
       } finally {
@@ -90,7 +79,7 @@ const CharacterCreator: React.FC = () => {
   const goToMain = () => navigate('/');
   const goToItemCreator = () => navigate('/items/creator');
 
-  const updateField = (field: keyof CharacterData, value: any) => {
+  const updateField = (field: string, value: any) => {
     setCharacter(prev => ({ ...prev, [field]: value }));
   };
 
@@ -98,21 +87,106 @@ const CharacterCreator: React.FC = () => {
     setCharacter(prev => ({ ...prev, classes }));
   };
 
+  // ✅ Helper function to get all proficiencies
+  const getAllProficiencies = () => {
+    const skills: string[] = [];
+    const weapons: string[] = [];
+    const tools: string[] = [];
+    const allLanguages: string[] = [];
+
+    // Class proficiencies (ONLY FIRST CLASS)
+    if (character.classes && character.classes.length > 0) {
+      // firstClass access removed as chosenSkills no longer exists
+    }
+
+    // Background proficiencies
+    if (backgroundList.length > 0 && character.background) {
+      const backgroundData = backgroundList.find((bg: any) => bg.name === (typeof character.background === 'string' ? character.background : character.background?.name));
+      if (backgroundData) {
+        if (backgroundData.skill_proficiencies) {
+          backgroundData.skill_proficiencies.forEach((skill: string) => skills.push(skill));
+        }
+        if (backgroundData.tool_proficiencies) {
+          backgroundData.tool_proficiencies.forEach((tool: string) => tools.push(tool));
+        }
+      }
+    }
+
+    // ✅ Collect all languages from all sources
+    // Background languages
+    if (character.backgroundLanguages && Array.isArray(character.backgroundLanguages)) {
+      character.backgroundLanguages.forEach((lang: string) => {
+        if (!allLanguages.includes(lang)) allLanguages.push(lang);
+      });
+    }
+
+    // Human guaranteed language (Common)
+    if (character.species === 'Human' && !allLanguages.includes('Common')) {
+      allLanguages.push('Common');
+    }
+
+    // Species chosen languages
+    if (character.speciesLanguages && Array.isArray(character.speciesLanguages)) {
+      character.speciesLanguages.forEach((lang: string) => {
+        if (!allLanguages.includes(lang)) allLanguages.push(lang);
+      });
+    }
+
+    return { skills, weapons, tools, allLanguages };
+  };
+  
+  const { allLanguages: langList } = getAllProficiencies();
+  const allLanguages = langList || [];
+
   const submitCharacter = async () => {
     try {
+      // ✅ Simple validation
+      if (!character.name) {
+        alert('Please enter a character name');
+        return;
+      }
+      if (!character.species) {
+        alert('Please select a species');
+        return;
+      }
+      if (!character.classes || !character.classes[0]?.className) {
+        alert('Please select a class');
+        return;
+      }
+      if (!character.abilityScores?.str) {
+        alert('Please set ability scores');
+        return;
+      }
+
+      // ✅ Get all proficiencies for submission
+      const { skills, weapons, tools } = getAllProficiencies();
+      
       const payload = {
         name: character.name,
         species: character.species,
-        char_class: character.classes[0].className,
+        subspecies: character.subspecies,
+        background: character.background,
+        classes: character.classes.map(cls => ({
+          className: cls.className,
+          level: cls.level,
+          subclass: cls.subclass
+        })),
         level: character.classes.reduce((sum, c) => sum + c.level, 0),
-        STR: character.abilityScores.str,
-        DEX: character.abilityScores.dex,
-        CON: character.abilityScores.con,
-        INT: character.abilityScores.int,
-        WIS: character.abilityScores.wis,
-        CHA: character.abilityScores.cha,
+        xp: 300,
+        abilityScores: character.abilityScores,
+        proficientSkills: skills,
+        proficientWeapons: weapons,
+        proficientTools: tools,
+        knownLanguages: allLanguages,
+        equipment: character.equipment.map((item: any) => ({
+          id: item.id,
+          name: item.name,
+          quantity: item.quantity,
+          isCustom: item.isCustom
+        }))
       };
 
+      console.log('Submitting payload:', JSON.stringify(payload, null, 2));
       const result = await createCharacter(payload);
       navigate(`/characters/${result.id}`);
     } catch (err) {
@@ -121,17 +195,17 @@ const CharacterCreator: React.FC = () => {
   };
 
   // Shared props for steps
-  const commonProps = {
+  const commonProps: any = {
     character,
     updateField,
     updateClasses,
     speciesList,
     dndClasses: classList,
-    backgroundList, // ✅ Add this
+    backgroundList,
   };
 
   const renderStep = () => {
-    if (loading && (step === 3 || step === 5)) { // ✅ Update loading condition
+    if (loading && (step === 3 || step === 5)) {
       return <div className={styles.loading}>Loading options...</div>;
     }
 

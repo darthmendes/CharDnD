@@ -40,19 +40,7 @@ def create_character():
     if not data:
         return jsonify({"error": "Request body must be valid JSON"}), HTTPStatus.BAD_REQUEST
 
-    # Map frontend ability fields to internal format
-    try:
-        data['abilityScores'] = {
-            "str": data.pop('STR'),
-            "dex": data.pop('DEX'),
-            "con": data.pop('CON'),
-            "int": data.pop('INT'),
-            "wis": data.pop('WIS'),
-            "cha": data.pop('CHA')
-        }
-    except KeyError as e:
-        return jsonify({"error": f"Missing ability score: {e}"}), HTTPStatus.BAD_REQUEST
-
+    # Frontend already sends lowercase ability scores, no transformation needed
     result = Character.new(data)
     if not result["success"]:
         if "already exists" in result["error"]:
@@ -103,9 +91,84 @@ def add_item_to_character(char_id):
         return jsonify({"error": "Missing itemID or pack_name"}), HTTPStatus.BAD_REQUEST
 
     if result["success"]:
+        # Fetch and return the updated character
+        char = Character.get_by_id(char_id)
+        if char:
+            return jsonify(char.to_dict()), HTTPStatus.OK
+        else:
+            return jsonify(result), HTTPStatus.OK
+    else:
+        return jsonify(result), HTTPStatus.BAD_REQUEST
+
+
+@app.route('/API/characters/<int:char_id>/inventory/<int:inventory_id>', methods=['DELETE'])
+def delete_inventory_item(char_id, inventory_id):
+    """Delete an item from character's inventory."""
+    result = Item.delete_inventory_item(inventory_id, char_id)
+    if result["success"]:
+        char = Character.get_by_id(char_id)
+        if char:
+            return jsonify(char.to_dict()), HTTPStatus.OK
         return jsonify(result), HTTPStatus.OK
     else:
         return jsonify(result), HTTPStatus.BAD_REQUEST
+
+
+@app.route('/API/characters/<int:char_id>/inventory/<int:inventory_id>/charges', methods=['PATCH'])
+def update_item_charges(char_id, inventory_id):
+    """Update current charges of an inventory item."""
+    data = request.json
+    if not data or 'currentCharges' not in data:
+        return jsonify({"error": "Missing currentCharges field"}), HTTPStatus.BAD_REQUEST
+    
+    result = Item.update_item_charges(inventory_id, char_id, data['currentCharges'])
+    if result["success"]:
+        char = Character.get_by_id(char_id)
+        if char:
+            return jsonify(char.to_dict()), HTTPStatus.OK
+        return jsonify(result), HTTPStatus.OK
+    else:
+        return jsonify(result), HTTPStatus.BAD_REQUEST
+
+
+@app.route('/API/characters/<int:char_id>/inventory/<int:inventory_id>/remove-one', methods=['PATCH'])
+def remove_one_item(char_id, inventory_id):
+    """Remove 1 item from inventory (or delete entire entry if quantity is 1)."""
+    result = Item.remove_one_item(inventory_id, char_id)
+    if result["success"]:
+        char = Character.get_by_id(char_id)
+        if char:
+            return jsonify(char.to_dict()), HTTPStatus.OK
+        return jsonify(result), HTTPStatus.OK
+    else:
+        return jsonify(result), HTTPStatus.BAD_REQUEST
+
+
+@app.route('/API/characters/<int:char_id>/inventory/<int:inventory_id>/equip', methods=['PATCH'])
+def equip_item(char_id, inventory_id):
+    """Equip an armor/shield item. Automatically unequips conflicting items."""
+    result = Item.equip_item(inventory_id, char_id)
+    if result["success"]:
+        char = Character.get_by_id(char_id)
+        if char:
+            return jsonify(char.to_dict()), HTTPStatus.OK
+        return jsonify(result), HTTPStatus.OK
+    else:
+        return jsonify(result), HTTPStatus.BAD_REQUEST
+
+
+@app.route('/API/characters/<int:char_id>/inventory/<int:inventory_id>/unequip', methods=['PATCH'])
+def unequip_item(char_id, inventory_id):
+    """Unequip an armor/shield item."""
+    result = Item.unequip_item(inventory_id, char_id)
+    if result["success"]:
+        char = Character.get_by_id(char_id)
+        if char:
+            return jsonify(char.to_dict()), HTTPStatus.OK
+        return jsonify(result), HTTPStatus.OK
+    else:
+        return jsonify(result), HTTPStatus.BAD_REQUEST
+
     
 ################################################################
 # Species Routes

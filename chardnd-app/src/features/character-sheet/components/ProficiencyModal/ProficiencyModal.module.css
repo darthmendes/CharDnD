@@ -1,0 +1,158 @@
+/* ProficiencyModal.module.css */
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+  border: 2px solid #4a90e2;
+  border-radius: 12px;
+  padding: 25px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  color: #f0f0f0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.closeBtn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #f0f0f0;
+  transition: color 0.2s;
+}
+
+.closeBtn:hover {
+  color: #ff6b6b;
+}
+
+.modalHeader {
+  margin-bottom: 25px;
+  text-align: center;
+}
+
+.modalHeader h2 {
+  margin: 0 0 10px 0;
+  font-size: 24px;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.icon {
+  font-size: 28px;
+}
+
+.count {
+  font-size: 14px;
+  color: #b0d4ff;
+  margin: 5px 0 0 0;
+}
+
+.proficienciesContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.emptyMessage {
+  text-align: center;
+  color: #999;
+  font-style: italic;
+  padding: 40px 20px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+}
+
+.proficienciesList {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.itemGroup {
+  background: rgba(255, 255, 255, 0.05);
+  border-left: 4px solid #4a90e2;
+  padding: 15px;
+  border-radius: 6px;
+}
+
+.itemName {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #b0d4ff;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.itemIcon {
+  font-size: 18px;
+}
+
+.proficienciesInItem {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.proficiencyTag {
+  background: linear-gradient(135deg, rgba(74, 222, 128, 0.2) 0%, rgba(100, 150, 255, 0.2) 100%);
+  border: 1px solid rgba(74, 222, 128, 0.4);
+  color: #a0e7ff;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.proficiencyTag:hover {
+  background: linear-gradient(135deg, rgba(74, 222, 128, 0.3) 0%, rgba(100, 150, 255, 0.3) 100%);
+  border-color: rgba(74, 222, 128, 0.6);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(74, 144, 226, 0.2);
+}
+
+/* Scrollbar styling */
+.modalContent::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modalContent::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+.modalContent::-webkit-scrollbar-thumb {
+  background: rgba(74, 144, 226, 0.5);
+  border-radius: 4px;
+}
+
+.modalContent::-webkit-scrollbar-thumb:hover {
+  background: rgba(74, 144, 226, 0.7);
+}

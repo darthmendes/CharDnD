@@ -40,9 +40,12 @@ export interface EquipmentItem {
 
 export interface CharacterData {
   name: string;
-  background: string;
+  background?: string | any;
   species: string;
+  subspecies?: string;
   speciesChoices?: Record<string, string>;
+  speciesLanguages?: string[]; // ✅ Languages selected during species choice
+  optionalLanguages?: string[]; // ✅ Track which optional languages were selected
   classes: CharacterClassLevel[];
   abilityScores: AbilityScores;
   equipment: EquipmentItem[];

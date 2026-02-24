@@ -258,6 +258,28 @@ const Step5AbilityScores: React.FC<Props> = ({ character, updateField, speciesLi
       character.backgroundLanguages.forEach((lang: string) => languages.add(lang));
     }
 
+    // Species guaranteed languages
+    if (character.species) {
+      const speciesData = speciesList.find(s => s.name === character.species);
+      
+      // Human always speaks Common
+      if (character.species === 'Human') {
+        languages.add('Common');
+      }
+      
+      if (speciesData?.languages && Array.isArray(speciesData.languages)) {
+        speciesData.languages.forEach((lang: any) => {
+          const langName = typeof lang === 'string' ? lang : lang.name;
+          if (langName) languages.add(langName);
+        });
+      }
+    }
+
+    // Species chosen languages (optional)
+    if (character.speciesLanguages && character.speciesLanguages.length > 0) {
+      character.speciesLanguages.forEach((lang: string) => languages.add(lang));
+    }
+
     return { skills: Array.from(skills), weapons: Array.from(weapons), tools: Array.from(tools), languages: Array.from(languages) };
   };
 

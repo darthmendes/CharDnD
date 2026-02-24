@@ -51,52 +51,20 @@ const ItemModal: React.FC<ItemModalProps> = ({
 
   if (!isOpen) return null;
 
-  const sendAddRequest = async (body: any): Promise<boolean> => {
-    try {
-      const response = await fetch(
-        `http://127.0.0.1:8001/API/characters/${characterId}/items`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        }
-      );
-
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        alert(`Error: ${err.error || 'Unknown error'}`);
-        return false;
-      }
-      return true;
-    } catch (err) {
-      console.error('Network error:', err);
-      alert('Failed to connect to server.');
-      return false;
-    }
-  };
-
   const handleAddItemOrPack = async (closeAfter: boolean) => {
     if (!selectedItem) return;
 
     const isPack = PACK_NAMES.includes(selectedItem.name);
-    let success = false;
 
     if (isPack) {
-      success = await sendAddRequest({ pack_name: selectedItem.name });
-      if (success) {
-        onAddPack?.(selectedItem.name); // ✅ Call new prop
+      onAddPack?.(selectedItem.name);
+      onClose();
+    } else {
+      onAddItem(selectedItem, quantity);
+      setQuantity(1);
+      if (closeAfter) {
         onClose();
       }
-    } else {
-      success = await sendAddRequest({ itemID: selectedItem.id, quantity });
-      if (success) {
-        onAddItem(selectedItem, quantity);
-        setQuantity(1);
-      }
-    }
-
-    if (success && closeAfter) {
-      onClose();
     }
   };
 

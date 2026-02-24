@@ -148,8 +148,141 @@ class ItemService:
         if existing:
             existing.quantity += quantity
         else:
-            session.add(CharacterInventory(
+            inv_entry = CharacterInventory(
                 characterID=char_id,
                 itemID=item_id,
                 quantity=quantity
-            ))
+            )
+            # Set initial charges if item has max_charges
+            item = cls.get_by_id(item_id)
+            if item and item.max_charges:
+                inv_entry.current_charges = item.max_charges
+            session.add(inv_entry)
+
+    # ✅ NEW: Delete inventory item
+    @classmethod
+    def delete_inventory_item(cls, inventory_id: int, char_id: int) -> Dict[str, Any]:
+        try:
+            inv_entry = session.query(CharacterInventory).filter_by(
+                id=inventory_id,
+                characterID=char_id
+            ).first()
+            if not inv_entry:
+                return {"success": False, "error": "Inventory item not found"}
+            session.delete(inv_entry)
+            session.commit()
+            return {"success": True, "message": "Item deleted from inventory"}
+        except Exception as e:
+            session.rollback()
+            return {"success": False, "error": f"Failed to delete item: {str(e)}"}
+
+    # ✅ NEW: Update item charges
+    @classmethod
+    def update_item_charges(cls, inventory_id: int, char_id: int, new_charges: int) -> Dict[str, Any]:
+        try:
+            inv_entry = session.query(CharacterInventory).filter_by(
+                id=inventory_id,
+                characterID=char_id
+            ).first()
+            if not inv_entry:
+                return {"success": False, "error": "Inventory item not found"}
+            
+            # Validate charges don't exceed max
+            item = inv_entry.item
+            if item.max_charges and new_charges > item.max_charges:
+                return {"success": False, "error": f"Charges cannot exceed {item.max_charges}"}
+            
+            inv_entry.current_charges = max(0, new_charges)
+            session.commit()
+            return {"success": True, "message": "Charges updated"}
+        except Exception as e:
+            session.rollback()
+            return {"success": False, "error": f"Failed to update charges: {str(e)}"}
+
+    # ✅ NEW: Remove one item from inventory
+    @classmethod
+    def remove_one_item(cls, inventory_id: int, char_id: int) -> Dict[str, Any]:
+        try:
+            inv_entry = session.query(CharacterInventory).filter_by(
+                id=inventory_id,
+                characterID=char_id
+            ).first()
+            if not inv_entry:
+                return {"success": False, "error": "Inventory item not found"}
+            
+            if inv_entry.quantity > 1:
+                inv_entry.quantity -= 1
+                session.commit()
+                return {"success": True, "message": "Item quantity decreased by 1"}
+            else:
+                # If quantity is 1, delete the entire entry
+                session.delete(inv_entry)
+                session.commit()
+                return {"success": True, "message": "Item removed from inventory"}
+        except Exception as e:
+            session.rollback()
+            return {"success": False, "error": f"Failed to remove item: {str(e)}"}
+
+    # ✅ NEW: Equip armor/shield item
+    @classmethod
+    def equip_item(cls, inventory_id: int, char_id: int) -> Dict[str, Any]:
+        try:
+            inv_entry = session.query(CharacterInventory).filter_by(
+                id=inventory_id,
+                characterID=char_id
+            ).first()
+            if not inv_entry:
+                return {"success": False, "error": "Inventory item not found"}
+            
+            item = inv_entry.item
+            if item.item_type != "Armor":
+                return {"success": False, "error": "Only armor items can be equipped"}
+            
+            # Get item category to determine slot type
+            item_category = item.item_category or ""
+            
+            # Unequip conflicting items based on armor type
+            if "Shield" in item_category:
+                # Unequip any other shields
+                conflicting = session.query(CharacterInventory).join(Item).filter(
+                    CharacterInventory.characterID == char_id,
+                    CharacterInventory.is_equipped == True,
+                    Item.item_category.contains("Shield")
+                ).all()
+            else:
+                # Unequip any other armor (but not shields)
+                conflicting = session.query(CharacterInventory).join(Item).filter(
+                    CharacterInventory.characterID == char_id,
+                    CharacterInventory.is_equipped == True,
+                    ~Item.item_category.contains("Shield"),
+                    Item.item_type == "Armor"
+                ).all()
+            
+            for conflict in conflicting:
+                conflict.is_equipped = False
+            
+            # Equip the new item
+            inv_entry.is_equipped = True
+            session.commit()
+            return {"success": True, "message": f"{item.name} equipped"}
+        except Exception as e:
+            session.rollback()
+            return {"success": False, "error": f"Failed to equip item: {str(e)}"}
+
+    # ✅ NEW: Unequip armor/shield item
+    @classmethod
+    def unequip_item(cls, inventory_id: int, char_id: int) -> Dict[str, Any]:
+        try:
+            inv_entry = session.query(CharacterInventory).filter_by(
+                id=inventory_id,
+                characterID=char_id
+            ).first()
+            if not inv_entry:
+                return {"success": False, "error": "Inventory item not found"}
+            
+            inv_entry.is_equipped = False
+            session.commit()
+            return {"success": True, "message": f"{inv_entry.item.name} unequipped"}
+        except Exception as e:
+            session.rollback()
+            return {"success": False, "error": f"Failed to unequip item: {str(e)}"}
