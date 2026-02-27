@@ -1,5 +1,4 @@
 // src/features/character-sheet/CharacterDisplay.tsx
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Character } from '../../types/Character';
@@ -18,55 +17,88 @@ const LEVEL_XP_TABLE = [
   85000, 100000, 120000, 140000, 165000, 195000, 225000, 265000, 305000, 355000
 ];
 
+// ✅ Default attunement slot limit
+const DEFAULT_ATTUNEMENT_SLOTS = 4;
+
 const CharacterDisplay = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-
   const [character, setCharacter] = useState<Character | null>(null);
   const [localAbilityScores, setLocalAbilityScores] = useState<{ [key: string]: number } | null>(null);
-
+  
   // ✅ Level & XP
   const [localLevel, setLocalLevel] = useState<number>(1);
   const [localXp, setLocalXp] = useState<number>(0);
-
+  
   // ✅ HP Controls
   const [hpCurrent, setHpCurrent] = useState<number>(0);
   const [hpMax, setHpMax] = useState<number>(0);
   const [hpTmp, setHpTmp] = useState<number>(0);
-
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
   const [isSpellModalOpen, setIsSpellModalOpen] = useState(false);
-
-  // ✅ NEW: State for items
+  
+  // ✅ State for items
   const [availableItems, setAvailableItems] = useState<any[]>([]);
   const [itemsLoading, setItemsLoading] = useState(true);
   const [selectedAttackItem, setSelectedAttackItem] = useState<any | null>(null);
   const [attackModalData, setAttackModalData] = useState<any | null>(null);
   const [selectedItemForDetails, setSelectedItemForDetails] = useState<any | null>(null);
-
-  // ✅ NEW: State for bulk delete
+  
+  // ✅ State for bulk delete
   const [isBulkDeleteMode, setIsBulkDeleteMode] = useState(false);
   const [selectedItemsForDelete, setSelectedItemsForDelete] = useState<Set<number>>(new Set());
-
-  // ✅ NEW: State for attack details modal
+  
+  // ✅ State for attack details modal
   const [selectedAttackForModal, setSelectedAttackForModal] = useState<any | null>(null);
   const [selectedAttackData, setSelectedAttackData] = useState<any | null>(null);
-
-  // ✅ NEW: State for weapon variant selector
+  
+  // ✅ State for weapon variant selector
   const [weaponVariantSelectorOpen, setWeaponVariantSelectorOpen] = useState(false);
   const [weaponToVariantSelect, setWeaponToVariantSelect] = useState<any | null>(null);
   const [selectedWeaponVariant, setSelectedWeaponVariant] = useState<string | null>(null);
-
-  // ✅ NEW: HP Modal State
+  
+  // ✅ HP Modal State
   const [hpModalType, setHpModalType] = useState<'heal' | 'damage' | 'temp' | null>(null);
   const [hpModalInput, setHpModalInput] = useState<string>('');
-
-  // ✅ NEW: Charge expend checkbox state
+  
+  // ✅ Charge expend checkbox state
   const [expendCharge, setExpendCharge] = useState(false);
+  
+  // ✅ State for stat modifiers modal
+  const [statModifiersModal, setStatModifiersModal] = useState<{
+    isOpen: boolean;
+    stat: 'AC' | 'Speed' | 'Initiative' | 'AbilityScore';
+    abilityKey?: string;
+  }>({
+    isOpen: false,
+    stat: 'AC',
+  });
+  
+  // ✅ State for proficiency modals
+  const [proficiencyModal, setProficiencyModal] = useState<{
+    isOpen: boolean;
+    type: 'skills' | 'weapons' | 'tools' | 'languages';
+  }>({
+    isOpen: false,
+    type: 'skills',
+  });
+  
+  // ✅ State for equipped items filter
+  const [showEquippedOnly, setShowEquippedOnly] = useState(false);
+  
+  // ✅ Attunement slot limit
+  const [attunementSlotLimit, setAttunementSlotLimit] = useState<number>(DEFAULT_ATTUNEMENT_SLOTS);
+  
+  // ✅ State for expanded trait (for collapsible display)
+  const [expandedTrait, setExpandedTrait] = useState<string | null>(null);
+  
+  // ✅ State for expanded skill advantage (for collapsible display)
+  const [expandedAdvantage, setExpandedAdvantage] = useState<string | null>(null);
 
   // Navigation
   const goToMain = () => navigate('/');
@@ -204,6 +236,10 @@ const CharacterDisplay = () => {
         setHpMax(data.hpMax || data.hitPoints || 10);
         setHpCurrent(data.hpCurrent !== undefined ? data.hpCurrent : (data.hpMax || data.hitPoints || 10));
         setHpTmp(data.hpTmp || 0);
+        
+        // ✅ Check for attunement slot modifiers
+        const attunementBonus = data.attunementSlotBonus || 0;
+        setAttunementSlotLimit(DEFAULT_ATTUNEMENT_SLOTS + attunementBonus);
       } catch (err: any) {
         setError(err.message || 'Failed to load character');
       } finally {
@@ -410,55 +446,97 @@ const CharacterDisplay = () => {
     setSelectedItemsForDelete(newSelection);
   };
 
-  // ✅ NEW: Calculate AC based on equipped armor
+  // ✅ Check if item requires attunement
+  const requiresAttunement = (item: any): boolean => {
+    if (!item) return false;
+    const itemData = item.item || item;
+    return itemData.requires_attunement === true || 
+           itemData.property_data?.requires_attunement === true ||
+           (itemData.rarity && ['Rare', 'Very Rare', 'Legendary', 'Artifact'].includes(itemData.rarity));
+  };
+
+  // ✅ Check if item can be equipped (Wondrous Item, Ring, Armor, Shield)
+  const canEquip = (item: any): boolean => {
+    if (!item) return false;
+    const itemData = item.item || item;
+    const itemType = itemData.item_type || itemData.type || '';
+    const itemCategory = itemData.item_category || '';
+    
+    return (
+      itemType === 'Wondrous Item' ||
+      itemType === 'Ring' ||
+      itemCategory.includes('Ring') ||
+      itemType === 'Armor' ||
+      (itemType === 'Armor' && itemCategory.includes('Shield'))
+    );
+  };
+
+  // ✅ Count currently attuned equipped items
+  const getAttunedEquippedCount = (): number => {
+    if (!character || !character.items) return 0;
+    return character.items.filter((inv: any) => 
+      inv.is_equipped === true && requiresAttunement(inv)
+    ).length;
+  };
+
+  // ✅ Check if character can attune to more items
+  const canAttuneMore = (): boolean => {
+    return getAttunedEquippedCount() < attunementSlotLimit;
+  };
+
+  // ✅ Calculate AC based on equipped armor
   const calculateAC = (): number => {
     if (!character || !character.items) return 10;
-    
     let baseAC = 10;
     let armorAC = 0;
     let shieldBonus = 0;
     let dexMod = 0;
-    
-    // Get DEX modifier
+
     if (character.abilityScores) {
       dexMod = Math.floor((character.abilityScores.dex - 10) / 2);
     }
-    
-    // Find equipped armor and shield
+
     for (const inv of character.items) {
       if (inv.is_equipped) {
         const armorItem = inv.item || inv;
-        
         if (armorItem.item_category && armorItem.item_category.includes('Shield')) {
-          // Shield adds flat bonus
           if (armorItem.property_data?.ac_bonus) {
             shieldBonus += armorItem.property_data.ac_bonus;
           }
         } else if (armorItem.item_type === 'Armor') {
-          // Armor sets base AC
           if (armorItem.property_data?.ac_base) {
             armorAC = armorItem.property_data.ac_base;
           }
         }
       }
     }
-    
-    // Apply armor AC if equipped, otherwise use 10 + DEX
+
     if (armorAC > 0) {
       baseAC = armorAC;
-      // Check if armor allows DEX modifier
       if (!character.items?.some(inv => inv.is_equipped && inv.item?.property_data?.ac_type === 'dex_no')) {
         baseAC += dexMod;
       }
     } else {
       baseAC = 10 + dexMod;
     }
-    
+
     return Math.max(10, baseAC + shieldBonus);
   };
 
-  // ✅ NEW: Equip item
-  const equipItem = async (inventoryId: number, itemName: string) => {
+  // ✅ Equip item
+  const equipItem = async (inventoryId: number, itemName: string, itemData: any) => {
+    if (requiresAttunement(itemData)) {
+      const attunedCount = getAttunedEquippedCount();
+      const isAlreadyAttuned = character?.items?.some(
+        (inv: any) => inv.inventoryId === inventoryId && inv.is_equipped === true
+      );
+      
+      if (!isAlreadyAttuned && attunedCount >= attunementSlotLimit) {
+        alert(`❌ Cannot equip: You already have ${attunedCount} attuned items (max: ${attunementSlotLimit}). Unequip an attuned item first.`);
+        return;
+      }
+    }
+
     try {
       const response = await fetch(
         `http://127.0.0.1:8001/API/characters/${id}/inventory/${inventoryId}/equip`,
@@ -471,14 +549,18 @@ const CharacterDisplay = () => {
       const updatedCharacter: Character = await response.json();
       setCharacter(updatedCharacter);
       setSelectedItemForDetails(null);
-      alert(`✅ ${itemName} equipped!`);
+      
+      const attunementInfo = requiresAttunement(itemData) 
+        ? ` (Attunement: ${getAttunedEquippedCount() + 1}/${attunementSlotLimit})` 
+        : '';
+      alert(`✅ ${itemName} equipped!${attunementInfo}`);
     } catch (err: any) {
       console.error(err);
       alert('❌ Could not equip item');
     }
   };
 
-  // ✅ NEW: Unequip item
+  // ✅ Unequip item
   const unequipItem = async (inventoryId: number, itemName: string) => {
     try {
       const response = await fetch(
@@ -492,33 +574,19 @@ const CharacterDisplay = () => {
       const updatedCharacter: Character = await response.json();
       setCharacter(updatedCharacter);
       setSelectedItemForDetails(null);
-      alert(`✅ ${itemName} unequipped!`);
+      
+      const item = character?.items?.find((inv: any) => inv.inventoryId === inventoryId);
+      const attunementInfo = item && requiresAttunement(item)
+        ? ` (Attunement: ${getAttunedEquippedCount()}/${attunementSlotLimit})`
+        : '';
+      alert(`✅ ${itemName} unequipped!${attunementInfo}`);
     } catch (err: any) {
       console.error(err);
       alert('❌ Could not unequip item');
     }
   };
 
-  // ✅ NEW: State for stat modifiers modal
-  const [statModifiersModal, setStatModifiersModal] = useState<{
-    isOpen: boolean;
-    stat: 'AC' | 'Speed' | 'Initiative' | 'AbilityScore';
-    abilityKey?: string;
-  }>({
-    isOpen: false,
-    stat: 'AC',
-  });
-
-  // ✅ NEW: State for proficiency modals
-  const [proficiencyModal, setProficiencyModal] = useState<{
-    isOpen: boolean;
-    type: 'skills' | 'weapons' | 'tools' | 'languages';
-  }>({
-    isOpen: false,
-    type: 'skills',
-  });
-
-  // ✅ NEW: Get AC modifiers
+  // ✅ Get AC modifiers (only from equipped items)
   const getACModifiers = (): Array<{ itemName: string; value: number; type: 'bonus' | 'penalty' | 'base' }> => {
     if (!character || !character.items) return [];
     const modifiers: Array<{ itemName: string; value: number; type: 'bonus' | 'penalty' | 'base' }> = [];
@@ -527,7 +595,6 @@ const CharacterDisplay = () => {
     for (const inv of character.items) {
       if (inv.is_equipped) {
         const item = inv.item || inv;
-        
         if (item.item_category?.includes('Shield') && item.property_data?.ac_bonus) {
           modifiers.push({
             itemName: item.name,
@@ -545,7 +612,6 @@ const CharacterDisplay = () => {
       }
     }
 
-    // Add DEX modifier if applicable
     if (character.abilityScores) {
       const dexMod = Math.floor((character.abilityScores.dex - 10) / 2);
       if (dexMod !== 0) {
@@ -560,7 +626,7 @@ const CharacterDisplay = () => {
     return modifiers;
   };
 
-  // ✅ NEW: Get Speed modifiers
+  // ✅ Get Speed modifiers (only from equipped items)
   const getSpeedModifiers = (): Array<{ itemName: string; value: number; type: 'bonus' | 'penalty' | 'base' }> => {
     if (!character || !character.items) return [];
     const modifiers: Array<{ itemName: string; value: number; type: 'bonus' | 'penalty' | 'base' }> = [];
@@ -581,12 +647,11 @@ const CharacterDisplay = () => {
     return modifiers;
   };
 
-  // ✅ NEW: Get Initiative modifiers
+  // ✅ Get Initiative modifiers (only from equipped items)
   const getInitiativeModifiers = (): Array<{ itemName: string; value: number; type: 'bonus' | 'penalty' | 'base' }> => {
     if (!character || !character.items) return [];
     const modifiers: Array<{ itemName: string; value: number; type: 'bonus' | 'penalty' | 'base' }> = [];
 
-    // DEX modifier (base)
     if (character.abilityScores) {
       const dexMod = Math.floor((character.abilityScores.dex - 10) / 2);
       modifiers.push({
@@ -596,7 +661,6 @@ const CharacterDisplay = () => {
       });
     }
 
-    // Item modifiers
     for (const inv of character.items) {
       if (inv.is_equipped) {
         const item = inv.item || inv;
@@ -613,7 +677,7 @@ const CharacterDisplay = () => {
     return modifiers;
   };
 
-  // ✅ NEW: Get Ability Score modifiers
+  // ✅ Get Ability Score modifiers (only from equipped items)
   const getAbilityModifiers = (abilityKey: string): Array<{ itemName: string; value: number; type: 'bonus' | 'penalty' | 'base' }> => {
     if (!character || !character.items) return [];
     const modifiers: Array<{ itemName: string; value: number; type: 'bonus' | 'penalty' | 'base' }> = [];
@@ -635,7 +699,7 @@ const CharacterDisplay = () => {
     return modifiers;
   };
 
-  // ✅ NEW: Get skill proficiencies from equipped items
+  // ✅ Get skill proficiencies from equipped items only
   const getSkillProficiencies = (): Array<{ itemName: string; proficiency: string }> => {
     if (!character || !character.items) return [];
     const proficiencies: Array<{ itemName: string; proficiency: string }> = [];
@@ -657,7 +721,53 @@ const CharacterDisplay = () => {
     return proficiencies;
   };
 
-  // ✅ NEW: Get weapon proficiencies from equipped items
+  // ✅ Get skill modifiers from equipped items (e.g., +5 to Sleight of Hand)
+  const getSkillModifiers = (): Array<{ skillName: string; modifier: number; itemName: string }> => {
+    if (!character || !character.items) return [];
+    const modifiers: Array<{ skillName: string; modifier: number; itemName: string }> = [];
+
+    for (const inv of character.items) {
+      if (inv.is_equipped) {
+        const item = inv.item || inv;
+        if (item.property_data?.skill_modifiers && Array.isArray(item.property_data.skill_modifiers)) {
+          for (const mod of item.property_data.skill_modifiers) {
+            modifiers.push({
+              skillName: mod.skill || mod.name,
+              modifier: mod.modifier || mod.value || 0,
+              itemName: item.name,
+            });
+          }
+        }
+      }
+    }
+
+    return modifiers;
+  };
+
+  // ✅ NEW: Get skill advantages from equipped items (e.g., Advantage on Perception)
+  const getSkillAdvantages = (): Array<{ skillName: string; itemName: string; description?: string }> => {
+    if (!character || !character.items) return [];
+    const advantages: Array<{ skillName: string; itemName: string; description?: string }> = [];
+
+    for (const inv of character.items) {
+      if (inv.is_equipped) {
+        const item = inv.item || inv;
+        if (item.property_data?.skill_advantages && Array.isArray(item.property_data.skill_advantages)) {
+          for (const adv of item.property_data.skill_advantages) {
+            advantages.push({
+              skillName: adv.skill || adv.name,
+              itemName: item.name,
+              description: adv.description || adv.note,
+            });
+          }
+        }
+      }
+    }
+
+    return advantages;
+  };
+
+  // ✅ Get weapon proficiencies from equipped items only
   const getWeaponProficiencies = (): Array<{ itemName: string; proficiency: string }> => {
     if (!character || !character.items) return [];
     const proficiencies: Array<{ itemName: string; proficiency: string }> = [];
@@ -679,7 +789,7 @@ const CharacterDisplay = () => {
     return proficiencies;
   };
 
-  // ✅ NEW: Get tool proficiencies from equipped items
+  // ✅ Get tool proficiencies from equipped items only
   const getToolProficiencies = (): Array<{ itemName: string; proficiency: string }> => {
     if (!character || !character.items) return [];
     const proficiencies: Array<{ itemName: string; proficiency: string }> = [];
@@ -701,7 +811,7 @@ const CharacterDisplay = () => {
     return proficiencies;
   };
 
-  // ✅ NEW: Get languages from equipped items
+  // ✅ Get languages from equipped items only
   const getLanguages = (): Array<{ itemName: string; proficiency: string }> => {
     if (!character || !character.items) return [];
     const languages: Array<{ itemName: string; proficiency: string }> = [];
@@ -721,6 +831,57 @@ const CharacterDisplay = () => {
     }
 
     return languages;
+  };
+
+  // ✅ Get all traits (from character + equipped items)
+  const getAllTraits = (): Array<{ name: string; description: string; source: string }> => {
+    const traits: Array<{ name: string; description: string; source: string }> = [];
+    const traitNames = new Set<string>();
+
+    if (character?.traits && Array.isArray(character.traits)) {
+      for (const trait of character.traits) {
+        if (!traitNames.has(trait.name)) {
+          traits.push({
+            name: trait.name,
+            description: trait.description || 'No description available',
+            source: trait.source || 'Character',
+          });
+          traitNames.add(trait.name);
+        }
+      }
+    }
+
+    if (character?.items) {
+      for (const inv of character.items) {
+        if (inv.is_equipped) {
+          const item = inv.item || inv;
+          if (item.property_data?.traits && Array.isArray(item.property_data.traits)) {
+            for (const trait of item.property_data.traits) {
+              if (!traitNames.has(trait.name)) {
+                traits.push({
+                  name: trait.name,
+                  description: trait.description || 'No description available',
+                  source: item.name,
+                });
+                traitNames.add(trait.name);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return traits;
+  };
+
+  // ✅ Toggle trait expansion
+  const toggleTraitExpand = (traitName: string) => {
+    setExpandedTrait(expandedTrait === traitName ? null : traitName);
+  };
+
+  // ✅ Toggle skill advantage expansion
+  const toggleAdvantageExpand = (skillName: string) => {
+    setExpandedAdvantage(expandedAdvantage === skillName ? null : skillName);
   };
 
   const availableSpells = [...availableItems];
@@ -777,7 +938,6 @@ const CharacterDisplay = () => {
       return properties.some((p: string) => p.includes(keyword.toLowerCase()));
     };
 
-    // 1️⃣ Melee attack (always available)
     variants.push({
       id: 'melee',
       name: 'Melee Attack',
@@ -785,7 +945,6 @@ const CharacterDisplay = () => {
       damageType: weapon.damageType || 'bludgeoning'
     });
 
-    // 2️⃣ Thrown attack
     if (hasProperty('thrown')) {
       const range = propertyData.thrown?.range || '20/60';
       variants.push({
@@ -797,7 +956,6 @@ const CharacterDisplay = () => {
       });
     }
 
-    // 3️⃣ Versatile attack
     if (hasProperty('versatile')) {
       const versatileDamage = propertyData.versatile?.damage_dice ||
         (weapon.damageDice ? weapon.damageDice.replace('d4', 'd6').replace('d6', 'd8').replace('d8', 'd10') : '1d8');
@@ -837,16 +995,38 @@ const CharacterDisplay = () => {
     return skillMap[skillName] || 'varies';
   };
 
-  // ✅ Get all proficiencies from character data
+  // ✅ Get all proficiencies from character data (includes species, background, class)
   const getAllProficiencies = () => {
     const skills: string[] = [];
     const weapons: string[] = [];
     const tools: string[] = [];
     const languages: string[] = [];
 
+    // ✅ Get skills from all sources (species, background, class)
     if (character?.proficientSkills && Array.isArray(character.proficientSkills)) {
-      skills.push(...character.proficientSkills);
+      for (const skill of character.proficientSkills) {
+        if (!skills.includes(skill)) {
+          skills.push(skill);
+        }
+      }
     }
+    // ✅ Also check speciesSkills if available
+    if (character?.speciesSkills && Array.isArray(character.speciesSkills)) {
+      for (const skill of character.speciesSkills) {
+        if (!skills.includes(skill)) {
+          skills.push(skill);
+        }
+      }
+    }
+    // ✅ Also check backgroundSkills if available
+    if (character?.backgroundSkills && Array.isArray(character.backgroundSkills)) {
+      for (const skill of character.backgroundSkills) {
+        if (!skills.includes(skill)) {
+          skills.push(skill);
+        }
+      }
+    }
+    
     if (character?.proficientWeapons && Array.isArray(character.proficientWeapons)) {
       weapons.push(...character.proficientWeapons);
     }
@@ -872,12 +1052,11 @@ const CharacterDisplay = () => {
     return Math.floor((score - 10) / 2);
   };
 
-  // ✅ NEW: Helper for Finesse weapons - returns best ability (STR or DEX)
+  // ✅ Helper for Finesse weapons
   const getBestAbilityForWeapon = (weapon: any) => {
     const properties = (weapon.properties || []).map((p: any) =>
       typeof p === 'string' ? p.toLowerCase() : (p.name || '').toLowerCase()
     );
-
     const hasFinesse = properties.some((p: string) => p.includes('finesse'));
 
     if (hasFinesse) {
@@ -891,6 +1070,48 @@ const CharacterDisplay = () => {
     const strMod = getAbilityModifier(character.abilityScores?.str || 10);
     return { modifier: strMod, ability: 'STR' };
   };
+
+  // ✅ NEW: Get all displayed skills (character + item-granted)
+  const getAllDisplayedSkills = () => {
+    const skillSet = new Set<string>();
+    const skillSources: Record<string, string[]> = {};
+    
+    // Add character base proficient skills (from species, background, class)
+    if (proficientSkills.length > 0) {
+      for (const skill of proficientSkills) {
+        skillSet.add(skill);
+        if (!skillSources[skill]) skillSources[skill] = [];
+        skillSources[skill].push('Character');
+      }
+    }
+    
+    // Add skill proficiencies from equipped items
+    const itemSkillProficiencies = getSkillProficiencies();
+    if (itemSkillProficiencies.length > 0) {
+      for (const itemProf of itemSkillProficiencies) {
+        skillSet.add(itemProf.proficiency);
+        if (!skillSources[itemProf.proficiency]) skillSources[itemProf.proficiency] = [];
+        if (!skillSources[itemProf.proficiency].includes(itemProf.itemName)) {
+          skillSources[itemProf.proficiency].push(itemProf.itemName);
+        }
+      }
+    }
+    
+    return {
+      skills: Array.from(skillSet),
+      sources: skillSources
+    };
+  };
+
+  const displayedSkills = getAllDisplayedSkills();
+
+  // Get all traits for display
+  const allTraits = getAllTraits();
+  const attunedCount = getAttunedEquippedCount();
+  // ✅ Get skill modifiers for display
+  const skillModifiers = getSkillModifiers();
+  // ✅ Get skill advantages for display
+  const skillAdvantages = getSkillAdvantages();
 
   // Render
   if (loading) return <p className={styles.loading}>Loading character...</p>;
@@ -1006,28 +1227,130 @@ const CharacterDisplay = () => {
         {/* Proficiency Display */}
         <div>
           <strong>Proficiencies:</strong>
-          {proficientSkills.length > 0 && (
+          {displayedSkills.skills.length > 0 && (
             <div style={{ marginBottom: '1rem' }}>
-              <strong 
+              <strong
                 style={{ cursor: 'pointer', color: '#4a90e2', textDecoration: 'underline' }}
                 onClick={() => setProficiencyModal({ isOpen: true, type: 'skills' })}
                 title="Click to see skill proficiency sources"
               >
-                Skills: {getSkillProficiencies().length > 0 && `(+${getSkillProficiencies().length})`}
+                Skills: {getSkillProficiencies().length > 0 && `(+${getSkillProficiencies().length} from items)`}
+                {skillModifiers.length > 0 && ` | Item Bonuses: ${skillModifiers.length}`}
               </strong>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '0.5rem', marginTop: '0.5rem' }}>
-                {proficientSkills.map(skill => {
+                {displayedSkills.skills.map(skill => {
                   const ability = getSkillAbility(skill);
                   const finalScore = getFinalAbilityScore(ability);
                   const abilityMod = getAbilityModifier(finalScore);
-                  const totalMod = abilityMod + proficiencyBonus;
+                  const isProficient = proficientSkills.includes(skill);
+                  // ✅ Add item skill modifiers to the total
+                  const itemModifier = skillModifiers
+                    .filter(mod => mod.skillName.toLowerCase() === skill.toLowerCase())
+                    .reduce((sum, mod) => sum + mod.modifier, 0);
+                  const totalMod = abilityMod + (isProficient ? proficiencyBonus : 0) + itemModifier;
                   const displayMod = totalMod >= 0 ? `+${totalMod}` : `${totalMod}`;
+                  const hasItemBonus = itemModifier !== 0;
+                  // ✅ Check if this skill has advantage
+                  const hasAdvantage = skillAdvantages.some(adv => adv.skillName.toLowerCase() === skill.toLowerCase());
+                  // ✅ Check if skill comes from items
+                  const isFromItems = displayedSkills.sources[skill]?.some(source => source !== 'Character');
+                  const itemSources = displayedSkills.sources[skill]?.filter(source => source !== 'Character') || [];
                   return (
-                    <div key={skill} style={{ padding: '0.25rem', backgroundColor: '#f0f0f0', borderRadius: '4px' }}>
-                      <strong>{skill}</strong>: {displayMod}
+                    <div 
+                      key={skill} 
+                      className={`${styles.skillCard} ${hasItemBonus ? styles.skillCardWithBonus : ''} ${hasAdvantage ? styles.skillCardWithAdvantage : ''} ${isFromItems ? styles.skillCardFromItem : ''}`}
+                      style={{ 
+                        padding: '0.25rem', 
+                        backgroundColor: hasAdvantage ? '#fff3e0' : (hasItemBonus ? '#e8f5e9' : (isFromItems ? '#e3f2fd' : '#f0f0f0')), 
+                        borderRadius: '4px',
+                        border: hasAdvantage ? '2px solid #ff9800' : (hasItemBonus ? '1px solid #4caf50' : (isFromItems ? '1px solid #2196f3' : 'none'))
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <strong>{skill}</strong>
+                        <span>{displayMod}</span>
+                      </div>
+                      {hasItemBonus && (
+                        <span className={styles.itemBonusBadge}>
+                          +{itemModifier} {skillModifiers
+                            .filter(mod => mod.skillName.toLowerCase() === skill.toLowerCase())
+                            .map(mod => mod.itemName)
+                            .join(', ')}
+                        </span>
+                      )}
+                      {isFromItems && !hasItemBonus && (
+                        <span className={styles.itemSourceBadge}>
+                          📦 {itemSources.join(', ')}
+                        </span>
+                      )}
+                      {hasAdvantage && <span className={styles.advantageBadge}>🎲 ADV</span>}
                     </div>
                   );
                 })}
+              </div>
+              {/* ✅ Show skill modifiers from items */}
+              {skillModifiers.length > 0 && (
+                <div style={{ marginTop: '0.5rem', padding: '0.5rem', backgroundColor: '#e8f5e9', borderRadius: '4px', border: '1px solid #4caf50' }}>
+                  <strong>📦 Item Skill Bonuses:</strong>
+                  <ul style={{ margin: '0.25rem 0 0 1rem', padding: 0 }}>
+                    {skillModifiers.map((mod, idx) => (
+                      <li key={idx} style={{ fontSize: '0.9em', color: '#2e7d32' }}>
+                        {mod.skillName}: +{mod.modifier} (from {mod.itemName})
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {/* ✅ Show item-granted skill proficiencies */}
+              {getSkillProficiencies().length > 0 && (
+                <div style={{ marginTop: '0.5rem', padding: '0.5rem', backgroundColor: '#e3f2fd', borderRadius: '4px', border: '1px solid #2196f3' }}>
+                  <strong>📜 Item-Granted Proficiencies:</strong>
+                  <ul style={{ margin: '0.25rem 0 0 1rem', padding: 0 }}>
+                    {getSkillProficiencies().map((prof, idx) => (
+                      <li key={idx} style={{ fontSize: '0.9em', color: '#1565c0' }}>
+                        {prof.proficiency} (from {prof.itemName})
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ✅ Skill Advantages Section */}
+          {skillAdvantages.length > 0 && (
+            <div style={{ marginBottom: '1rem' }}>
+              <strong style={{ color: '#ff9800' }}>🎲 Skill Advantages:</strong>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
+                {skillAdvantages.map((adv, idx) => (
+                  <div
+                    key={idx}
+                    className={`${styles.advantageCard} ${expandedAdvantage === adv.skillName ? styles.advantageCardExpanded : ''}`}
+                    onClick={() => toggleAdvantageExpand(adv.skillName)}
+                    style={{
+                      cursor: 'pointer',
+                      padding: '0.5rem',
+                      backgroundColor: '#fff3e0',
+                      border: '2px solid #ff9800',
+                      borderRadius: '4px',
+                      flex: '1 1 200px',
+                      maxWidth: '300px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <strong style={{ color: '#e65100' }}>{adv.skillName}</strong>
+                      <span style={{ fontSize: '0.75em', color: '#ff9800' }}>
+                        {expandedAdvantage === adv.skillName ? '▲' : '▼'}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '0.85em', color: '#f57c00' }}>from {adv.itemName}</div>
+                    {expandedAdvantage === adv.skillName && adv.description && (
+                      <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid #ffcc80', fontSize: '0.85em', color: '#e65100' }}>
+                        {adv.description}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -1103,6 +1426,49 @@ const CharacterDisplay = () => {
         <div>
           <strong>Proficiency Bonus:</strong> +{proficiencyBonus}
         </div>
+
+        {/* Attunement Slots Display */}
+        <div className={styles.attunementDisplay}>
+          <strong>Attunement Slots:</strong>
+          <span className={attunedCount >= attunementSlotLimit ? styles.attunementFull : styles.attunementAvailable}>
+            {attunedCount} / {attunementSlotLimit}
+          </span>
+          {attunedCount >= attunementSlotLimit && (
+            <span className={styles.attunementWarning}> ⚠️ Max attuned items reached!</span>
+          )}
+        </div>
+      </section>
+
+      {/* Traits Section */}
+      <section className={styles.section}>
+        <h2>Traits</h2>
+        {allTraits.length > 0 ? (
+          <div className={styles.traitsList}>
+            {allTraits.map((trait, index) => (
+              <div
+                key={index}
+                className={`${styles.traitCard} ${expandedTrait === trait.name ? styles.traitCardExpanded : ''}`}
+                onClick={() => toggleTraitExpand(trait.name)}
+                style={{ cursor: 'pointer' }}
+              >
+                <div className={styles.traitCardHeader}>
+                  <span className={styles.traitName}>{trait.name}</span>
+                  <span className={styles.traitSource}>{trait.source}</span>
+                  <span className={styles.traitExpandIcon}>
+                    {expandedTrait === trait.name ? '▲' : '▼'}
+                  </span>
+                </div>
+                {expandedTrait === trait.name && (
+                  <div className={styles.traitDescription}>
+                    {trait.description}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className={styles.emptyInventory}>No traits yet. Traits will appear from your species, background, class, or equipped items!</p>
+        )}
       </section>
 
       {/* Spellcasting */}
@@ -1121,7 +1487,7 @@ const CharacterDisplay = () => {
       {/* Inventory */}
       <section className={styles.section}>
         <h2>Inventory</h2>
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '10px', flexWrap: 'wrap' }}>
           <button
             className={styles.primary}
             onClick={() => setIsItemModalOpen(true)}
@@ -1130,19 +1496,29 @@ const CharacterDisplay = () => {
             {itemsLoading ? 'Loading Items...' : 'Add Item'}
           </button>
           {character.items && Array.isArray(character.items) && character.items.length > 0 && (
-            <button
-              className={isBulkDeleteMode ? styles.danger : styles.secondary}
-              onClick={() => {
-                if (isBulkDeleteMode) {
-                  setIsBulkDeleteMode(false);
-                  setSelectedItemsForDelete(new Set());
-                } else {
-                  setIsBulkDeleteMode(true);
-                }
-              }}
-            >
-              {isBulkDeleteMode ? 'Cancel Bulk Delete' : '🗑️ Bulk Delete'}
-            </button>
+            <>
+              <button
+                className={isBulkDeleteMode ? styles.danger : styles.secondary}
+                onClick={() => {
+                  if (isBulkDeleteMode) {
+                    setIsBulkDeleteMode(false);
+                    setSelectedItemsForDelete(new Set());
+                  } else {
+                    setIsBulkDeleteMode(true);
+                  }
+                }}
+              >
+                {isBulkDeleteMode ? 'Cancel Bulk Delete' : '🗑️ Bulk Delete'}
+              </button>
+              {/* Equipped Items Filter Button */}
+              <button
+                className={showEquippedOnly ? styles.active : styles.secondary}
+                onClick={() => setShowEquippedOnly(!showEquippedOnly)}
+                title={showEquippedOnly ? 'Show all items' : 'Show only equipped items'}
+              >
+                {showEquippedOnly ? '🛡️ Show All Items' : '🛡️ Equipped Only'}
+              </button>
+            </>
           )}
           {isBulkDeleteMode && selectedItemsForDelete.size > 0 && (
             <button
@@ -1164,61 +1540,112 @@ const CharacterDisplay = () => {
 
         {character.items && Array.isArray(character.items) && character.items.length > 0 ? (
           <div className={styles.inventoryList}>
-            {character.items.map((item: any) => {
-              const isSelected = selectedItemsForDelete.has(item.inventoryId);
-              return (
-                <div
-                  key={item.inventoryId}
-                  className={`${styles.inventoryItem} ${isBulkDeleteMode && isSelected ? styles.selectedForDelete : ''}`}
-                  onClick={() => {
-                    if (isBulkDeleteMode) {
-                      toggleItemSelection(item.inventoryId);
-                    } else {
-                      setSelectedItemForDetails(item);
-                    }
-                  }}
-                  style={{
-                    cursor: 'pointer',
-                    backgroundColor: isBulkDeleteMode && isSelected ? 'rgba(255, 100, 100, 0.2)' : 'transparent'
-                  }}
-                >
-                  {isBulkDeleteMode && (
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onChange={(e) => {
-                        e.stopPropagation();
+            {character.items
+              .filter((item: any) => {
+                if (showEquippedOnly) {
+                  return item.is_equipped === true;
+                }
+                return true;
+              })
+              .map((item: any) => {
+                const isSelected = selectedItemsForDelete.has(item.inventoryId);
+                const itemData = item.item || item;
+                const isEquippable = canEquip(item);
+                const isEquipped = item.is_equipped || false;
+                const needsAttunement = requiresAttunement(item);
+                const isAttunedAndFull = needsAttunement && attunedCount >= attunementSlotLimit && !isEquipped;
+                
+                return (
+                  <div
+                    key={item.inventoryId}
+                    className={`${styles.inventoryItem} ${isBulkDeleteMode && isSelected ? styles.selectedForDelete : ''} ${isEquipped ? styles.equippedItem : ''}`}
+                    onClick={() => {
+                      if (isBulkDeleteMode) {
                         toggleItemSelection(item.inventoryId);
-                      }}
-                      style={{ cursor: 'pointer', flexShrink: 0, marginTop: '2px' }}
-                    />
-                  )}
-                  <div className={styles.inventoryItemContent}>
-                    <div className={styles.inventoryItemHeader}>
-                      <span className={styles.inventoryItemName}>
-                        {item.name} {item.quantity > 1 && `(x${item.quantity})`}
-                      </span>
-                      <div className={styles.inventoryItemQuickInfo}>
-                        {item.item_type && <span className={styles.itemType}>{item.item_type}</span>}
-                        {item.maxCharges && (
-                          <span className={styles.chargesIndicator}>
-                            Charges: {item.currentCharges}/{item.maxCharges}
-                          </span>
-                        )}
+                      } else {
+                        setSelectedItemForDetails(item);
+                      }
+                    }}
+                    style={{
+                      cursor: 'pointer',
+                      backgroundColor: isBulkDeleteMode && isSelected ? 'rgba(255, 100, 100, 0.2)' : (isEquipped ? 'rgba(100, 255, 100, 0.1)' : 'transparent')
+                    }}
+                  >
+                    {isBulkDeleteMode && (
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          toggleItemSelection(item.inventoryId);
+                        }}
+                        style={{ cursor: 'pointer', flexShrink: 0, marginTop: '2px' }}
+                      />
+                    )}
+                    <div className={styles.inventoryItemContent}>
+                      <div className={styles.inventoryItemHeader}>
+                        <span className={styles.inventoryItemName}>
+                          {item.name} {item.quantity > 1 && `(x${item.quantity})`}
+                          {isEquipped && <span className={styles.equippedBadge}>Equipped</span>}
+                          {needsAttunement && <span className={styles.attunementBadge}>⚡ Attunement</span>}
+                        </span>
+                        <div className={styles.inventoryItemQuickInfo}>
+                          {item.item_type && <span className={styles.itemType}>{item.item_type}</span>}
+                          {/* EQUIP/UNEQUIP BUTTON for Wondrous Items and Rings */}
+                          {isEquippable && !isBulkDeleteMode && (
+                            isEquipped ? (
+                              <button
+                                className={styles.unequipButton}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  unequipItem(item.inventoryId, item.name);
+                                }}
+                                title="Unequip this item"
+                              >
+                                🔓 Unequip
+                              </button>
+                            ) : (
+                              <button
+                                className={`${styles.equipButton} ${isAttunedAndFull ? styles.equipButtonDisabled : ''}`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (!isAttunedAndFull) {
+                                    equipItem(item.inventoryId, item.name, itemData);
+                                  } else {
+                                    alert(`❌ Cannot equip: You already have ${attunedCount} attuned items (max: ${attunementSlotLimit}). Unequip an attuned item first.`);
+                                  }
+                                }}
+                                disabled={isAttunedAndFull}
+                                title={isAttunedAndFull ? 'Attunement slots full' : 'Equip this item'}
+                              >
+                                🔒 Equip
+                              </button>
+                            )
+                          )}
+                          {isEquipped && <span className={styles.equippedBadge}>Equipped</span>}
+                          {item.maxCharges && (
+                            <span className={styles.chargesIndicator}>
+                              Charges: {item.currentCharges}/{item.maxCharges}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className={styles.inventoryActions} style={{ display: 'none' }}>
+                        <button className={styles.addMoreBtn} onClick={(e) => { e.stopPropagation(); addMoreItem(item); }}>+ Add 1 More</button>
+                        <button className={styles.removeOneBtn} onClick={(e) => { e.stopPropagation(); removeOneItem(item.inventoryId, item.name, item.quantity); }}>− Remove 1</button>
+                        <button className={styles.deleteBtn} onClick={(e) => { e.stopPropagation(); deleteInventoryItem(item.inventoryId, item.name); }}>🗑️ Delete</button>
                       </div>
                     </div>
-                    <div className={styles.inventoryActions} style={{ display: 'none' }}>
-                      <button className={styles.addMoreBtn} onClick={(e) => { e.stopPropagation(); addMoreItem(item); }}>+ Add 1 More</button>
-                      <button className={styles.removeOneBtn} onClick={(e) => { e.stopPropagation(); removeOneItem(item.inventoryId, item.name, item.quantity); }}>− Remove 1</button>
-                      <button className={styles.deleteBtn} onClick={(e) => { e.stopPropagation(); deleteInventoryItem(item.inventoryId, item.name); }}>🗑️ Delete</button>
-                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
           </div>
         ) : (
           <p className={styles.emptyInventory}>No items yet. Add items to get started!</p>
+        )}
+
+        {showEquippedOnly && character.items.filter((item: any) => item.is_equipped === true).length === 0 && (
+          <p className={styles.emptyInventory}>No equipped items. Equip items to see them here!</p>
         )}
       </section>
 
@@ -1245,6 +1672,7 @@ const CharacterDisplay = () => {
                 <button type="button" onClick={() => setHpModalType('temp')} disabled={saving} className={styles.hpButton}>🛡️ Temp HP</button>
               </div>
             </div>
+
             <div className={styles.totalHpContainer}>
               <strong>Total HP:</strong>
               <div className={styles.totalHpDisplay}>
@@ -1285,18 +1713,18 @@ const CharacterDisplay = () => {
 
         {/* Combat Stats */}
         <div className={styles.combatStats}>
-          <div 
+          <div
             className={`${styles.statBox} ${styles.clickable}`}
             onClick={() => setStatModifiersModal({ isOpen: true, stat: 'AC' })}
-            title="Click to see AC modifiers"
+            title="Click to see AC modifiers (from equipped items only)"
           >
             <strong>AC:</strong>
             <span>{calculateAC()}</span>
           </div>
-          <div 
+          <div
             className={`${styles.statBox} ${styles.clickable}`}
             onClick={() => setStatModifiersModal({ isOpen: true, stat: 'Initiative' })}
-            title="Click to see Initiative modifiers"
+            title="Click to see Initiative modifiers (from equipped items only)"
           >
             <strong>Initiative:</strong>
             <span>{(() => {
@@ -1304,10 +1732,10 @@ const CharacterDisplay = () => {
               return (dexModifier >= 0 ? '+' : '') + dexModifier;
             })()}</span>
           </div>
-          <div 
+          <div
             className={`${styles.statBox} ${styles.clickable}`}
             onClick={() => setStatModifiersModal({ isOpen: true, stat: 'Speed' })}
-            title="Click to see Speed modifiers"
+            title="Click to see Speed modifiers (from equipped items only)"
           >
             <strong>Speed:</strong>
             <span>{character.speed || 30} ft</span>
@@ -1329,12 +1757,10 @@ const CharacterDisplay = () => {
                 {character.items
                   .filter((item: any) => item.item_type === 'Weapon' || item.type === 'Weapon')
                   .map((weapon: any, index: number) => {
-                    // ✅ Use Finesse helper for attack bonus
                     const bestAbility = getBestAbilityForWeapon(weapon);
                     const attackBonus = bestAbility.modifier + proficiencyBonus;
                     const damageDice = weapon.damageDice || '1d4';
                     const damageType = weapon.damageType || 'bludgeoning';
-
                     return (
                       <div
                         key={index}
@@ -1389,11 +1815,11 @@ const CharacterDisplay = () => {
                   <h4>Damage Roll</h4>
                   <div className={styles.attackModalValue}>{attackModalData.damageDice}</div>
                   <p className={styles.diceLabel}>
-                    Add +{attackModalData.abilityModifier || getAbilityModifier(character.abilityScores?.str || 10)} 
+                    Add +{attackModalData.abilityModifier || getAbilityModifier(character.abilityScores?.str || 10)}
                     ({attackModalData.abilityUsed || 'STR'} mod)
                   </p>
                   <p className={styles.damageTypeLabel}>Type: {attackModalData.damageType}</p>
-                  {attackModalData.weapon.properties?.some((p: string) => 
+                  {attackModalData.weapon.properties?.some((p: string) =>
                     typeof p === 'string' ? p.toLowerCase().includes('finesse') : false
                   ) && (
                     <p className={styles.finesseNote} style={{ color: '#2d5016', fontSize: '0.85em' }}>
@@ -1421,9 +1847,9 @@ const CharacterDisplay = () => {
                 </div>
               )}
               <div className={styles.attackModalButtons}>
-                <button className={styles.confirmBtn} onClick={() => { 
+                <button className={styles.confirmBtn} onClick={() => {
                   if (expendCharge && attackModalData.weapon.currentCharges > 0) {
-                      updateItemCharges(attackModalData.weapon.inventoryId, attackModalData.weapon.currentCharges - 1);
+                    updateItemCharges(attackModalData.weapon.inventoryId, attackModalData.weapon.currentCharges - 1);
                   }
                   setAttackModalData(null);
                   setExpendCharge(false);
@@ -1469,7 +1895,6 @@ const CharacterDisplay = () => {
                   onClick={() => {
                     const selectedVariantObj = getWeaponVariants(weaponToVariantSelect).find(v => v.id === selectedWeaponVariant);
                     if (selectedVariantObj) {
-                      // ✅ Use Finesse helper for variant selection too
                       const bestAbility = getBestAbilityForWeapon(weaponToVariantSelect);
                       const attackBonus = bestAbility.modifier + proficiencyBonus;
                       setSelectedAttackForModal(weaponToVariantSelect);
@@ -1541,7 +1966,6 @@ const CharacterDisplay = () => {
                   </div>
                 </div>
 
-                {/* Weapon Properties */}
                 {selectedAttackForModal.properties && selectedAttackForModal.properties.length > 0 && (
                   <div className={styles.propertiesSection}>
                     <h3>Properties</h3>
@@ -1553,7 +1977,6 @@ const CharacterDisplay = () => {
                   </div>
                 )}
 
-                {/* On-Hit Effect */}
                 {selectedAttackForModal.onHitEffect && (
                   <div className={styles.onHitSection}>
                     <h3>On-Hit Effect</h3>
@@ -1561,7 +1984,6 @@ const CharacterDisplay = () => {
                   </div>
                 )}
 
-                {/* Charges */}
                 {selectedAttackForModal.maxCharges && (
                   <div className={styles.chargesInfoSection}>
                     <h3>Charges</h3>
@@ -1574,7 +1996,6 @@ const CharacterDisplay = () => {
                   </div>
                 )}
 
-                {/* Special Abilities */}
                 {selectedAttackForModal.specialAbilities && selectedAttackForModal.specialAbilities.length > 0 && (
                   <div className={styles.abilitiesSection}>
                     <h3>Special Abilities</h3>
@@ -1586,7 +2007,6 @@ const CharacterDisplay = () => {
                   </div>
                 )}
 
-                {/* Other Stats */}
                 {(selectedAttackForModal.weight || selectedAttackForModal.cost || selectedAttackForModal.rarity) && (
                   <div className={styles.otherStatsSection}>
                     <div>
@@ -1604,7 +2024,6 @@ const CharacterDisplay = () => {
                 )}
               </div>
 
-              {/* Action Buttons */}
               <div className={styles.attackDetailsActions}>
                 {getWeaponVariants(selectedAttackForModal).length > 1 && (
                   <button
@@ -1672,7 +2091,7 @@ const CharacterDisplay = () => {
         }}
         onEquip={() => {
           if (selectedItemForDetails) {
-            equipItem(selectedItemForDetails.inventoryId, selectedItemForDetails.name);
+            equipItem(selectedItemForDetails.inventoryId, selectedItemForDetails.name, selectedItemForDetails.item || selectedItemForDetails);
           }
         }}
         onUnequip={() => {
@@ -1680,6 +2099,11 @@ const CharacterDisplay = () => {
             unequipItem(selectedItemForDetails.inventoryId, selectedItemForDetails.name);
           }
         }}
+        canEquip={canEquip(selectedItemForDetails?.item || selectedItemForDetails)}
+        isEquipped={selectedItemForDetails?.is_equipped || false}
+        requiresAttunement={requiresAttunement(selectedItemForDetails?.item || selectedItemForDetails)}
+        attunedCount={attunedCount}
+        attunementLimit={attunementSlotLimit}
       />
 
       {/* Stat Modifiers Modal */}
@@ -1692,19 +2116,19 @@ const CharacterDisplay = () => {
             statModifiersModal.stat === 'AC'
               ? calculateAC()
               : statModifiersModal.stat === 'Initiative'
-              ? getAbilityModifier(character.abilityScores?.dex || 10)
-              : statModifiersModal.stat === 'Speed'
-              ? character.speed || 30
-              : 0
+                ? getAbilityModifier(character.abilityScores?.dex || 10)
+                : statModifiersModal.stat === 'Speed'
+                  ? character.speed || 30
+                  : 0
           }
           modifiers={
             statModifiersModal.stat === 'AC'
               ? getACModifiers()
               : statModifiersModal.stat === 'Initiative'
-              ? getInitiativeModifiers()
-              : statModifiersModal.stat === 'Speed'
-              ? getSpeedModifiers()
-              : []
+                ? getInitiativeModifiers()
+                : statModifiersModal.stat === 'Speed'
+                  ? getSpeedModifiers()
+                  : []
           }
         />
       )}
@@ -1718,10 +2142,10 @@ const CharacterDisplay = () => {
           proficiencyModal.type === 'skills'
             ? getSkillProficiencies()
             : proficiencyModal.type === 'weapons'
-            ? getWeaponProficiencies()
-            : proficiencyModal.type === 'tools'
-            ? getToolProficiencies()
-            : getLanguages()
+              ? getWeaponProficiencies()
+              : proficiencyModal.type === 'tools'
+                ? getToolProficiencies()
+                : getLanguages()
         }
       />
     </div>

@@ -96,7 +96,46 @@ const CharacterCreator: React.FC = () => {
 
     // Class proficiencies (ONLY FIRST CLASS)
     if (character.classes && character.classes.length > 0) {
-      // firstClass access removed as chosenSkills no longer exists
+      const classEntry = character.classes[0];
+      const classData = classList.find(c => c.name === classEntry.className);
+      
+      if (classData) {
+        // ✅ Add chosen skills from skill_choices (stored in chosenSkills array)
+        if (classEntry.chosenSkills && Array.isArray(classEntry.chosenSkills)) {
+          for (const skill of classEntry.chosenSkills) {
+            if (!skills.includes(skill)) {
+              skills.push(skill);
+            }
+          }
+        }
+        
+        // ✅ Add weapon proficiencies from class
+        if (classData.weapon_proficiencies && Array.isArray(classData.weapon_proficiencies)) {
+          for (const weapon of classData.weapon_proficiencies) {
+            if (!weapons.includes(weapon)) {
+              weapons.push(weapon);
+            }
+          }
+        }
+        
+        // ✅ Add tool proficiencies from class
+        if (classData.tool_proficiencies && Array.isArray(classData.tool_proficiencies)) {
+          for (const tool of classData.tool_proficiencies) {
+            if (!tools.includes(tool)) {
+              tools.push(tool);
+            }
+          }
+        }
+        
+        // ✅ Add armor proficiencies as weapons (for display consistency)
+        if (classData.armor_proficiencies && Array.isArray(classData.armor_proficiencies)) {
+          for (const armor of classData.armor_proficiencies) {
+            if (!weapons.includes(armor)) {
+              weapons.push(armor);
+            }
+          }
+        }
+      }
     }
 
     // Background proficiencies

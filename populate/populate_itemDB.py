@@ -2,6 +2,8 @@
 Populate D&D 5e item database with all equipment needed for character creation.
 - ✅ Properties stored as simple keywords only (Thrown, Versatile, Finesse, Light)
 - ✅ Property metadata stored in property_data JSON field
+- ✅ Skill modifiers structured for frontend display
+- ✅ Attunement requirements properly flagged
 - ✅ Scalable for any future weapon properties
 """
 from Backend.models.item import Item
@@ -17,23 +19,43 @@ items_to_add = [
     # === TOOLS ===
     Item(name="Herbalism Kit", item_type="Tool", item_category="Artisan's Tools", rarity="common",
          desc="Used to create antitoxin and potions of healing. Proficiency adds bonus to herb checks.",
-         weight=3, cost=gp(5), properties=[], property_data={}, special_abilities=[]),
+         weight=3, cost=gp(5), properties=[], 
+         property_data={
+             "tool_proficiencies": ["Herbalism Kit"]
+         }, 
+         special_abilities=[]),
     
     Item(name="Smith's Tools", item_type="Tool", item_category="Artisan's Tools", rarity="common",
          desc="For metalworking. Proficiency adds bonus to crafting checks.",
-         weight=8, cost=gp(20), properties=[], property_data={}, special_abilities=[]),
+         weight=8, cost=gp(20), properties=[], 
+         property_data={
+             "tool_proficiencies": ["Smith's Tools"]
+         }, 
+         special_abilities=[]),
     
     Item(name="Thieves' Tools", item_type="Tool", item_category="Tools", rarity="common",
          desc="For picking locks and disarming traps. Proficiency adds bonus to Dexterity checks.",
-         weight=1, cost=gp(25), properties=[], property_data={}, special_abilities=[]),
+         weight=1, cost=gp(25), properties=[], 
+         property_data={
+             "tool_proficiencies": ["Thieves' Tools"]
+         }, 
+         special_abilities=[]),
     
     Item(name="Disguise Kit", item_type="Tool", item_category="Tools", rarity="common",
          desc="For creating disguises. Proficiency adds bonus to Deception checks.",
-         weight=3, cost=gp(25), properties=[], property_data={}, special_abilities=[]),
+         weight=3, cost=gp(25), properties=[], 
+         property_data={
+             "tool_proficiencies": ["Disguise Kit"]
+         }, 
+         special_abilities=[]),
     
     Item(name="Forgery Kit", item_type="Tool", item_category="Tools", rarity="common",
          desc="For creating fake documents. Proficiency adds bonus to Intelligence checks.",
-         weight=5, cost=gp(15), properties=[], property_data={}, special_abilities=[]),
+         weight=5, cost=gp(15), properties=[], 
+         property_data={
+             "tool_proficiencies": ["Forgery Kit"]
+         }, 
+         special_abilities=[]),
 
     # === ADVENTURING GEAR ===
     Item(name="Backpack", item_type="Wondrous Item", item_category="Adventuring Gear", rarity="common",
@@ -57,15 +79,30 @@ items_to_add = [
     # === ARMOR ===
     Item(name="Leather Armor", item_type="Armor", item_category="Light Armor", rarity="common",
          desc="AC = 11 + Dex modifier", weight=10, cost=gp(10),
-         properties=[], property_data={"ac_base": 11, "ac_type": "dex"}, special_abilities=["AC = 11 + Dex modifier"]),
+         properties=[], 
+         property_data={
+             "ac_base": 11, 
+             "ac_type": "dex"
+         }, 
+         special_abilities=["AC = 11 + Dex modifier"]),
     
     Item(name="Padded Armor", item_type="Armor", item_category="Light Armor", rarity="common",
          desc="AC = 11 + Dex modifier. Stealth at disadvantage.", weight=8, cost=gp(5),
-         properties=["Stealth Disadvantage"], property_data={"ac_base": 11, "ac_type": "dex"}, special_abilities=["AC = 11 + Dex modifier"]),
+         properties=["Stealth Disadvantage"], 
+         property_data={
+             "ac_base": 11, 
+             "ac_type": "dex"
+         }, 
+         special_abilities=["AC = 11 + Dex modifier"]),
     
     Item(name="Shield", item_type="Armor", item_category="Shield", rarity="common",
          desc="+2 to AC", weight=6, cost=gp(10),
-         properties=[], property_data={"ac_bonus": 2, "ac_type": "shield"}, special_abilities=["+2 to AC"]),
+         properties=[], 
+         property_data={
+             "ac_bonus": 2, 
+             "ac_type": "shield"
+         }, 
+         special_abilities=["+2 to AC"]),
 
     # === WEAPONS - Simple Melee ===
     Item(name="Club", item_type="Weapon", item_category="Simple Melee", rarity="common",
@@ -319,13 +356,15 @@ items_to_add = [
          special_abilities=["On hit, target is restrained"]),
 
     # === MAGICAL ITEMS ===
-    # ✅ Staff of Withering: Versatile + Magical Focus
+    # ✅ Staff of Withering: Versatile + Magical Focus + Attunement
     Item(name="Staff of Withering", item_type="Weapon", item_category="Staff", rarity="rare",
          desc="Staff (arcane or druidic focus), rare (requires attunement by a cleric, druid or warlock). This staff has 3 charges and regains 1d3 expended charges daily at dawn.",
          weight=4, cost=gp(0),
          properties=["Versatile", "Magical Focus"],
          property_data={
-             "versatile": {"damage_dice": "1d8"}
+             "versatile": {"damage_dice": "1d8"},
+             "requires_attunement": True,
+             "attunement_requirements": ["Cleric", "Druid", "Warlock"]
          },
          damage_dice="1d6", damage_type="bludgeoning",
          max_charges=3,
@@ -333,39 +372,70 @@ items_to_add = [
          on_hit_effect="Expend 1 charge: +2d10 necrotic damage. Target must make DC 15 CON save or have disadvantage on STR/CON checks for 1 hour.",
          special_abilities=["Requires attunement by cleric, druid, or warlock", "3 charges (regain 1d3 at dawn)", "Can be used one-handed (1d6) or two-handed (1d8)"]),
 
-    # ✅ NEW: Cloak of Tongues - Grants languages
+    # ✅ Cloak of Tongues - Grants languages + Attunement
     Item(name="Cloak of Tongues", item_type="Wondrous Item", item_category="Wondrous Item", rarity="uncommon",
          desc="While wearing this cloak, you understand any spoken language that you hear. Moreover, creatures understand any spoken language you speak.",
          weight=1, cost=gp(0),
-         properties=[], property_data={"languages": ["Understand all languages", "Understood by all speakers"]}, 
+         properties=[], 
+         property_data={
+             "requires_attunement": True,
+             "languages": ["Understand all spoken languages", "All speakers understand you"]
+         }, 
          special_abilities=["Grants understanding of all languages"]),
 
-    # ✅ NEW: Goggles of Night - Grants skills
+    # ✅ Goggles of Night - Grants Darkvision trait
     Item(name="Goggles of Night", item_type="Wondrous Item", item_category="Wondrous Item", rarity="uncommon",
          desc="While wearing these dark lenses, you have darkvision out to 60 feet. If you already have darkvision, the range increases by 60 feet.",
          weight=0, cost=gp(0),
-         properties=[], property_data={"skill_proficiencies": ["Perception (Darkvision)"]}, 
+         properties=[], 
+         property_data={
+             "traits": [{
+                 "name": "Darkvision",
+                 "description": "Grants darkvision 60 ft. If you already have darkvision, the range increases by 60 feet."
+             }]
+         }, 
          special_abilities=["Grants darkvision 60 ft"]),
 
-    # ✅ NEW: Gloves of Thievery - Grants tool proficiency
+    # ✅ Gloves of Thievery - Grants tool proficiency + SKILL MODIFIER
     Item(name="Gloves of Thievery", item_type="Wondrous Item", item_category="Wondrous Item", rarity="uncommon",
          desc="These gloves are invisible while worn. You gain a +5 bonus to Dexterity (Sleight of Hand) checks.",
          weight=0, cost=gp(0),
-         properties=[], property_data={"tool_proficiencies": ["Thieves' Tools"]}, 
+         properties=[], 
+         property_data={
+             "tool_proficiencies": ["Thieves' Tools"],
+             # ✅ STRUCTURED SKILL MODIFIER (frontend will read this)
+             "skill_modifiers": [{
+                 "skill": "Sleight of Hand",
+                 "modifier": 5
+             }]
+         }, 
          special_abilities=["+5 bonus to Sleight of Hand checks"]),
 
-    # ✅ NEW: Sentinel Shield - Grants weapon proficiency
-    Item(name="Sentinel Shield", item_type="Armor", item_category="Shield", rarity="uncommon",
-         desc="While holding this shield, you have advantage on Wisdom (Perception) checks while awake. The shield grants weapon proficiency with martial weapons.",
-         weight=6, cost=gp(0),
-         properties=[], property_data={"ac_bonus": 2, "weapon_proficiencies": ["Martial Weapons"]}, 
-         special_abilities=["Advantage on Perception checks", "Grants martial weapon proficiency"]),
-
-    # ✅ NEW: Tome of Understanding - Grants language skill
+    # ✅ Sentinel Shield - Grants weapon proficiency + Attunement
+     Item(name="Sentinel Shield", item_type="Armor", item_category="Shield", rarity="uncommon",
+          desc="While holding this shield, you have advantage on Wisdom (Perception) checks while awake. The shield grants weapon proficiency with martial weapons.",
+          weight=6, cost=gp(0),
+          properties=[], 
+          property_data={
+          "ac_bonus": 2,
+          "requires_attunement": True,
+          "weapon_proficiencies": ["Martial Weapons"],
+          "skill_advantages": [{
+               "skill": "Perception",
+               "description": "Advantage on Perception checks while awake"
+          }]
+          }, 
+          special_abilities=["Advantage on Perception checks", "Grants martial weapon proficiency"]),
+          
+    # ✅ Tome of Understanding - Grants language + Attunement
     Item(name="Tome of Understanding", item_type="Wondrous Item", item_category="Wondrous Item", rarity="very_rare",
          desc="This book contains knowledge of one language. An attuned creature can understand any spoken language.",
          weight=5, cost=gp(0),
-         properties=[], property_data={"languages": ["Draconic"]}, 
+         properties=[], 
+         property_data={
+             "requires_attunement": True,
+             "languages": ["Draconic"]
+         }, 
          special_abilities=["Grants understanding of Draconic"]),
 ]
 
@@ -380,6 +450,8 @@ def add_items():
         print(f"[SUCCESS] Added {len(new_items)} items")
         print(f"✅ Properties format: Simple keywords only")
         print(f"✅ Property data stored in property_data JSON field")
+        print(f"✅ Skill modifiers structured for frontend display")
+        print(f"✅ Attunement requirements properly flagged")
     else:
         print("[INFO] All items already exist.")
 

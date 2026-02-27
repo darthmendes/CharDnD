@@ -1801,3 +1801,183 @@ label {
   flex-wrap: wrap;
   justify-content: center;
 }
+
+/* Attunement Display */
+.attunementDisplay {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: #f0f4f8;
+  border-radius: 6px;
+  border-left: 4px solid #4a90e2;
+}
+
+.attunementAvailable {
+  color: #2d5016;
+  font-weight: bold;
+  margin-left: 0.5rem;
+}
+
+.attunementFull {
+  color: #c0392b;
+  font-weight: bold;
+  margin-left: 0.5rem;
+}
+
+.attunementWarning {
+  color: #c0392b;
+  font-size: 0.85em;
+  margin-left: 0.5rem;
+}
+
+/* Attunement Badge */
+.attunementBadge {
+  background-color: #9b59b6;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.75em;
+  margin-left: 6px;
+}
+
+/* Equip/Unequip Buttons */
+.equipButton {
+  background-color: #27ae60;
+  color: white;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85em;
+  margin-left: 8px;
+}
+
+.equipButton:hover:not(:disabled) {
+  background-color: #219a52;
+}
+
+.equipButtonDisabled {
+  background-color: #95a5a6;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.unequipButton {
+  background-color: #e67e22;
+  color: white;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85em;
+  margin-left: 8px;
+}
+
+.unequipButton:hover {
+  background-color: #d35400;
+}
+/* Traits Section */
+.traitsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.traitCard {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.traitCard:hover {
+  background-color: #e9ecef;
+  border-color: #4a90e2;
+}
+
+.traitCardExpanded {
+  background-color: #e3f2fd;
+  border-color: #4a90e2;
+}
+
+.traitCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.traitName {
+  font-weight: 600;
+  color: #2c3e50;
+  flex: 1;
+}
+
+.traitSource {
+  font-size: 0.85em;
+  color: #6c757d;
+  background-color: #e9ecef;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.traitExpandIcon {
+  color: #4a90e2;
+  font-size: 0.75em;
+}
+
+.traitDescription {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #dee2e6;
+  color: #495057;
+  font-size: 0.95em;
+  line-height: 1.5;
+}
+
+/* Skill card with advantage */
+.skillCardWithAdvantage {
+  border: 2px solid #ff9800 !important;
+  background-color: #fff3e0 !important;
+}
+
+.advantageBadge {
+  display: inline-block;
+  font-size: 0.7em;
+  color: #e65100;
+  background-color: #ffcc80;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+.advantageCard {
+  transition: all 0.2s ease;
+}
+
+.advantageCard:hover {
+  background-color: #ffe0b2 !important;
+}
+
+.advantageCardExpanded {
+  background-color: #ffcc80 !important;
+}
+
+/* Skill card from items */
+.skillCardFromItem {
+  border: 1px solid #2196f3 !important;
+  background-color: #e3f2fd !important;
+}
+
+.itemSourceBadge {
+  display: block;
+  font-size: 0.7em;
+  color: #1565c0;
+  background-color: #bbdefb;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  margin-top: 2px;
+}

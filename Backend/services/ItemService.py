@@ -235,7 +235,7 @@ class ItemService:
                 return {"success": False, "error": "Inventory item not found"}
             
             item = inv_entry.item
-            if item.item_type != "Armor":
+            if item.item_type not in ["Armor", "Ring", "Wondrous Item"]:
                 return {"success": False, "error": "Only armor items can be equipped"}
             
             # Get item category to determine slot type
