@@ -217,6 +217,21 @@ class CharacterService:
 
         return True, ""
 
+    # ✅ Character-level utilities (used by multiple services)
+    @staticmethod
+    def get_proficiency_bonus(level: int) -> int:
+        """Get proficiency bonus based on total character level."""
+        if level <= 4:
+            return 2
+        elif level <= 8:
+            return 3
+        elif level <= 12:
+            return 4
+        elif level <= 16:
+            return 5
+        else:
+            return 6
+    
     @classmethod
     def _validate_ability_scores(cls, scores: Any) -> Tuple[bool, str]:
         if not isinstance(scores, dict):

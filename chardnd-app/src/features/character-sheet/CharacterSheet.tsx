@@ -6,9 +6,11 @@ import AbsScores from './components/AbilityScores/AbsScores';
 import styles from './CharacterSheet.module.css';
 import ItemModal from '../Items/ItemModal/ItemModal';
 import SpellModal from './components/SpellModal/SpellModal';
+import SpellSelectionModal from './components/SpellModal/SpellSelectionModal';
 import ItemDetailsModal from './components/ItemDetailsModal/ItemDetailsModal';
 import StatModifiersModal from './components/StatModifiersModal/StatModifiersModal';
 import ProficiencyModal from './components/ProficiencyModal/ProficiencyModal';
+import SpellManager from './components/SpellManager/SpellManager';
 import { fetchItems } from '../../services/api';
 
 // 🔽 D&D 5e XP Thresholds
@@ -19,6 +21,33 @@ const LEVEL_XP_TABLE = [
 
 // ✅ Default attunement slot limit
 const DEFAULT_ATTUNEMENT_SLOTS = 4;
+
+// ✅ Type for proficiency tabs
+type ProficiencyTab = 'skills' | 'weapons' | 'tools';
+
+// ✅ PHB Multiclass Spellcaster Table
+const MULTICLASS_SLOT_TABLE: { [key: number]: { [key: number]: number } } = {
+  1:  { 1: 2 },
+  2:  { 1: 3 },
+  3:  { 1: 4, 2: 2 },
+  4:  { 1: 4, 2: 3 },
+  5:  { 1: 4, 2: 3, 3: 2 },
+  6:  { 1: 4, 2: 3, 3: 3 },
+  7:  { 1: 4, 2: 3, 3: 3, 4: 1 },
+  8:  { 1: 4, 2: 3, 3: 3, 4: 2 },
+  9:  { 1: 4, 2: 3, 3: 3, 4: 3, 5: 1 },
+  10: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2 },
+  11: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1 },
+  12: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1 },
+  13: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1 },
+  14: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1 },
+  15: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1 },
+  16: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1 },
+  17: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1, 9: 1 },
+  18: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 3, 6: 1, 7: 1, 8: 1, 9: 1 },
+  19: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 3, 6: 2, 7: 1, 8: 1, 9: 1 },
+  20: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 3, 6: 2, 7: 2, 8: 1, 9: 1 }
+};
 
 const CharacterDisplay = () => {
   const { id } = useParams<{ id: string }>();
@@ -72,7 +101,7 @@ const CharacterDisplay = () => {
   // ✅ State for stat modifiers modal
   const [statModifiersModal, setStatModifiersModal] = useState<{
     isOpen: boolean;
-    stat: 'AC' | 'Speed' | 'Initiative' | 'AbilityScore';
+    stat: 'AC' | 'Speed' | 'Initiative' | 'AbilityScore' | 'SpellDC' | 'SpellAttack';
     abilityKey?: string;
   }>({
     isOpen: false,
@@ -88,8 +117,14 @@ const CharacterDisplay = () => {
     type: 'skills',
   });
   
+  // ✅ NEW: State for proficiency tabs
+  const [activeProficiencyTab, setActiveProficiencyTab] = useState<ProficiencyTab>('skills');
+  
   // ✅ State for equipped items filter
   const [showEquippedOnly, setShowEquippedOnly] = useState(false);
+  
+  // ✅ State for attuned items filter
+  const [showAttunedOnly, setShowAttunedOnly] = useState(false);
   
   // ✅ Attunement slot limit
   const [attunementSlotLimit, setAttunementSlotLimit] = useState<number>(DEFAULT_ATTUNEMENT_SLOTS);
@@ -99,6 +134,23 @@ const CharacterDisplay = () => {
   
   // ✅ State for expanded skill advantage (for collapsible display)
   const [expandedAdvantage, setExpandedAdvantage] = useState<string | null>(null);
+  
+  // ✅ NEW: Spell casting state
+  const [spellSlots, setSpellSlots] = useState<{[key: string]: number}>({});
+  const [spellSlotsExpended, setSpellSlotsExpended] = useState<{[key: string]: number}>({});
+  const [spellSlotsRemaining, setSpellSlotsRemaining] = useState<{[key: string]: number}>({});
+  const [spellcasterLevel, setSpellcasterLevel] = useState<number>(0);
+  const [spellcastingAbility, setSpellcastingAbility] = useState<string>('int');
+  const [spellSaveDC, setSpellSaveDC] = useState<number>(10);
+  const [spellAttackBonus, setSpellAttackBonus] = useState<number>(0);
+  const [characterSpells, setCharacterSpells] = useState<any[]>([]);
+  const [isSpellCastModalOpen, setIsSpellCastModalOpen] = useState(false);
+  const [selectedSpellForCast, setSelectedSpellForCast] = useState<any | null>(null);
+  
+  // ✅ NEW: Spell preparation state
+  const [spellPrepareLimit, setSpellPrepareLimit] = useState<number | null>(null);
+  const [spellPreparedCount, setSpellPreparedCount] = useState<number>(0);
+  const [spellPrepareUnlimited, setSpellPrepareUnlimited] = useState<boolean>(false);
 
   // Navigation
   const goToMain = () => navigate('/');
@@ -265,6 +317,48 @@ const CharacterDisplay = () => {
     loadItems();
   }, []);
 
+  // ✅ Load spell slots and character spells
+  useEffect(() => {
+    const loadSpellData = async () => {
+      if (!id || !character) return;
+      
+      try {
+        // Load spell slots
+        const slotsResponse = await fetch(`http://127.0.0.1:8001/API/characters/${id}/spell-slots`);
+        if (slotsResponse.ok) {
+          const slotsData = await slotsResponse.json();
+          setSpellSlots(slotsData.spell_slots);
+          setSpellSlotsExpended(slotsData.spell_slots_expended);
+          setSpellSlotsRemaining(slotsData.spell_slots_remaining);
+          setSpellcasterLevel(slotsData.spellcaster_level);
+          setSpellcastingAbility(slotsData.spellcasting_ability);
+          setSpellSaveDC(slotsData.spell_save_dc);
+          setSpellAttackBonus(slotsData.spell_attack_bonus);
+        }
+        
+        // Load character spells
+        const spellsResponse = await fetch(`http://127.0.0.1:8001/API/characters/${id}/spells`);
+        if (spellsResponse.ok) {
+          const spellsData = await spellsResponse.json();
+          setCharacterSpells(spellsData);
+        }
+        
+        // ✅ NEW: Load prepare limit
+        const prepareResponse = await fetch(`http://127.0.0.1:8001/API/characters/${id}/prepare-limit`);
+        if (prepareResponse.ok) {
+          const prepareData = await prepareResponse.json();
+          setSpellPrepareLimit(prepareData.prepare_limit);
+          setSpellPreparedCount(prepareData.prepared_count);
+          setSpellPrepareUnlimited(prepareData.unlimited);
+        }
+      } catch (err) {
+        console.error('Failed to load spell data:', err);
+      }
+    };
+    
+    loadSpellData();
+  }, [id, character]);
+
   // Ability scores
   const handleScoreChange = (newScores: { [key: string]: number }) => {
     setLocalAbilityScores(newScores);
@@ -310,21 +404,35 @@ const CharacterDisplay = () => {
   };
 
   // Add spell
-  const addSpell = async (spell: { name: string }) => {
+  const addSpell = async (spell: { id?: number; name: string }) => {
     try {
+      // Extract spell_id from spell object
+      const spellId = spell.id;
+      if (!spellId) {
+        alert('❌ Spell ID not found');
+        return;
+      }
+
       const response = await fetch(`http://127.0.0.1:8001/API/characters/${id}/spells`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(spell),
+        body: JSON.stringify({ spell_id: spellId }),
       });
       if (!response.ok) throw new Error('Failed to add spell');
-      const updatedCharacter: Character = await response.json();
-      setCharacter(updatedCharacter);
+      
+      const result = await response.json();
       setIsSpellModalOpen(false);
       alert(`✅ Added ${spell.name} to spells`);
+      
+      // Refresh spell list
+      const spellsResponse = await fetch(`http://127.0.0.1:8001/API/characters/${id}/spells`);
+      if (spellsResponse.ok) {
+        const spellsData = await spellsResponse.json();
+        setCharacterSpells(spellsData);
+      }
     } catch (err: any) {
       console.error(err);
-      alert('❌ Could not add spell');
+      alert('❌ Could not add spell: ' + err.message);
     }
   };
 
@@ -407,6 +515,103 @@ const CharacterDisplay = () => {
     }
   };
 
+  // ✅ NEW: Expend spell slot
+  const expendSpellSlot = async (level: number) => {
+    try {
+      const response = await fetch(`http://127.0.0.1:8001/API/characters/${id}/spell-slots/expended`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ level, amount: 1 }),
+      });
+      if (response.ok) {
+        // Refresh spell slots
+        const slotsResponse = await fetch(`http://127.0.0.1:8001/API/characters/${id}/spell-slots`);
+        if (slotsResponse.ok) {
+          const slotsData = await slotsResponse.json();
+          setSpellSlotsRemaining(slotsData.spell_slots_remaining);
+          setSpellSlotsExpended(slotsData.spell_slots_expended);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to expend spell slot:', err);
+    }
+  };
+
+  // ✅ NEW: Toggle spell prepared status
+  const toggleSpellPrepared = async (spellId: number) => {
+    try {
+      const response = await fetch(`http://127.0.0.1:8001/API/characters/${id}/spells/${spellId}/prepare`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (response.ok) {
+        // Refresh spells and prepare limit
+        const spellsResponse = await fetch(`http://127.0.0.1:8001/API/characters/${id}/spells`);
+        if (spellsResponse.ok) {
+          const spellsData = await spellsResponse.json();
+          setCharacterSpells(spellsData);
+        }
+        
+        // Refresh prepare limit
+        const prepareResponse = await fetch(`http://127.0.0.1:8001/API/characters/${id}/prepare-limit`);
+        if (prepareResponse.ok) {
+          const prepareData = await prepareResponse.json();
+          setSpellPrepareLimit(prepareData.prepare_limit);
+          setSpellPreparedCount(prepareData.prepared_count);
+          setSpellPrepareUnlimited(prepareData.unlimited);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to toggle spell prepared:', err);
+    }
+  };
+
+
+  // ✅ NEW: Attune item (does NOT require equipment)
+  const attuneItem = async (inventoryId: number, itemName: string, itemData: any) => {
+    const attunedCount = getAttunedCount();
+    if (attunedCount >= attunementSlotLimit) {
+      alert(`❌ Cannot attune: You already have ${attunedCount} attuned items (max: ${attunementSlotLimit}). Unattune an item first.`);
+      return;
+    }
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:8001/API/characters/${id}/inventory/${inventoryId}/attune`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+      if (!response.ok) throw new Error('Failed to attune item');
+      const updatedCharacter: Character = await response.json();
+      setCharacter(updatedCharacter);
+      alert(`✅ ${itemName} attuned! (${attunedCount + 1}/${attunementSlotLimit})`);
+    } catch (err: any) {
+      console.error(err);
+      alert('❌ Could not attune item: ' + err.message);
+    }
+  };
+
+  // ✅ NEW: Unattune item
+  const unattuneItem = async (inventoryId: number, itemName: string) => {
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:8001/API/characters/${id}/inventory/${inventoryId}/unattune`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+      if (!response.ok) throw new Error('Failed to unattune item');
+      const updatedCharacter: Character = await response.json();
+      setCharacter(updatedCharacter);
+      alert(`✅ ${itemName} unattuned!`);
+    } catch (err: any) {
+      console.error(err);
+      alert('❌ Could not unattune item');
+    }
+  };
+
   // Bulk delete items
   const bulkDeleteItems = async () => {
     if (selectedItemsForDelete.size === 0) {
@@ -455,6 +660,12 @@ const CharacterDisplay = () => {
            (itemData.rarity && ['Rare', 'Very Rare', 'Legendary', 'Artifact'].includes(itemData.rarity));
   };
 
+  // ✅ Check if item is currently attuned
+  const isItemAttuned = (item: any): boolean => {
+    if (!item) return false;
+    return item.is_attuned === true;
+  };
+
   // ✅ Check if item can be equipped (Wondrous Item, Ring, Armor, Shield)
   const canEquip = (item: any): boolean => {
     if (!item) return false;
@@ -471,17 +682,17 @@ const CharacterDisplay = () => {
     );
   };
 
-  // ✅ Count currently attuned equipped items
-  const getAttunedEquippedCount = (): number => {
+  // ✅ Count currently attuned items (NOT just equipped)
+  const getAttunedCount = (): number => {
     if (!character || !character.items) return 0;
     return character.items.filter((inv: any) => 
-      inv.is_equipped === true && requiresAttunement(inv)
+      inv.is_attuned === true
     ).length;
   };
 
   // ✅ Check if character can attune to more items
   const canAttuneMore = (): boolean => {
-    return getAttunedEquippedCount() < attunementSlotLimit;
+    return getAttunedCount() < attunementSlotLimit;
   };
 
   // ✅ Calculate AC based on equipped armor
@@ -525,18 +736,6 @@ const CharacterDisplay = () => {
 
   // ✅ Equip item
   const equipItem = async (inventoryId: number, itemName: string, itemData: any) => {
-    if (requiresAttunement(itemData)) {
-      const attunedCount = getAttunedEquippedCount();
-      const isAlreadyAttuned = character?.items?.some(
-        (inv: any) => inv.inventoryId === inventoryId && inv.is_equipped === true
-      );
-      
-      if (!isAlreadyAttuned && attunedCount >= attunementSlotLimit) {
-        alert(`❌ Cannot equip: You already have ${attunedCount} attuned items (max: ${attunementSlotLimit}). Unequip an attuned item first.`);
-        return;
-      }
-    }
-
     try {
       const response = await fetch(
         `http://127.0.0.1:8001/API/characters/${id}/inventory/${inventoryId}/equip`,
@@ -550,10 +749,10 @@ const CharacterDisplay = () => {
       setCharacter(updatedCharacter);
       setSelectedItemForDetails(null);
       
-      const attunementInfo = requiresAttunement(itemData) 
-        ? ` (Attunement: ${getAttunedEquippedCount() + 1}/${attunementSlotLimit})` 
+      const attunementNote = requiresAttunement(itemData) 
+        ? ' (Click ⚡ to attune for special abilities)' 
         : '';
-      alert(`✅ ${itemName} equipped!${attunementInfo}`);
+      alert(`✅ ${itemName} equipped!${attunementNote}`);
     } catch (err: any) {
       console.error(err);
       alert('❌ Could not equip item');
@@ -574,12 +773,7 @@ const CharacterDisplay = () => {
       const updatedCharacter: Character = await response.json();
       setCharacter(updatedCharacter);
       setSelectedItemForDetails(null);
-      
-      const item = character?.items?.find((inv: any) => inv.inventoryId === inventoryId);
-      const attunementInfo = item && requiresAttunement(item)
-        ? ` (Attunement: ${getAttunedEquippedCount()}/${attunementSlotLimit})`
-        : '';
-      alert(`✅ ${itemName} unequipped!${attunementInfo}`);
+      alert(`✅ ${itemName} unequipped!`);
     } catch (err: any) {
       console.error(err);
       alert('❌ Could not unequip item');
@@ -677,13 +871,102 @@ const CharacterDisplay = () => {
     return modifiers;
   };
 
-  // ✅ Get Ability Score modifiers (only from equipped items)
+  // ✅ Get Spell Save DC modifiers
+  const getSpellDCModifiers = (): Array<{ itemName: string; value: number; type: 'bonus' | 'penalty' | 'base' }> => {
+    if (!character || !character.abilityScores) return [];
+    const modifiers: Array<{ itemName: string; value: number; type: 'bonus' | 'penalty' | 'base' }> = [];
+
+    // Base: 8 + proficiency bonus
+    const profBonus = Math.floor((character.level - 1) / 4) + 2;
+    modifiers.push({
+      itemName: 'Base (8 + Proficiency)',
+      value: 8 + profBonus,
+      type: 'base',
+    });
+
+    // Ability modifier
+    if (spellcastingAbility && character.abilityScores) {
+      const abilityScore = character.abilityScores[spellcastingAbility] || 10;
+      const abilityMod = Math.floor((abilityScore - 10) / 2);
+      if (abilityMod !== 0) {
+        modifiers.push({
+          itemName: `${spellcastingAbility.toUpperCase()} Modifier`,
+          value: Math.abs(abilityMod),
+          type: abilityMod >= 0 ? 'bonus' : 'penalty',
+        });
+      }
+    }
+
+    // Item modifiers (equipped and attuned)
+    if (character.items) {
+      for (const inv of character.items) {
+        if (inv.is_equipped && (inv.is_attuned || !requiresAttunement(inv))) {
+          const item = inv.item || inv;
+          if (item.property_data?.spell_save_dc_modifier) {
+            modifiers.push({
+              itemName: item.name,
+              value: Math.abs(item.property_data.spell_save_dc_modifier),
+              type: item.property_data.spell_save_dc_modifier >= 0 ? 'bonus' : 'penalty',
+            });
+          }
+        }
+      }
+    }
+
+    return modifiers;
+  };
+
+  // ✅ Get Spell Attack Bonus modifiers
+  const getSpellAttackModifiers = (): Array<{ itemName: string; value: number; type: 'bonus' | 'penalty' | 'base' }> => {
+    if (!character || !character.abilityScores) return [];
+    const modifiers: Array<{ itemName: string; value: number; type: 'bonus' | 'penalty' | 'base' }> = [];
+
+    // Base: proficiency bonus
+    const profBonus = Math.floor((character.level - 1) / 4) + 2;
+    modifiers.push({
+      itemName: 'Proficiency Bonus',
+      value: profBonus,
+      type: 'base',
+    });
+
+    // Ability modifier
+    if (spellcastingAbility && character.abilityScores) {
+      const abilityScore = character.abilityScores[spellcastingAbility] || 10;
+      const abilityMod = Math.floor((abilityScore - 10) / 2);
+      if (abilityMod !== 0) {
+        modifiers.push({
+          itemName: `${spellcastingAbility.toUpperCase()} Modifier`,
+          value: Math.abs(abilityMod),
+          type: abilityMod >= 0 ? 'bonus' : 'penalty',
+        });
+      }
+    }
+
+    // Item modifiers (equipped and attuned)
+    if (character.items) {
+      for (const inv of character.items) {
+        if (inv.is_equipped && (inv.is_attuned || !requiresAttunement(inv))) {
+          const item = inv.item || inv;
+          if (item.property_data?.spell_attack_bonus_modifier) {
+            modifiers.push({
+              itemName: item.name,
+              value: Math.abs(item.property_data.spell_attack_bonus_modifier),
+              type: item.property_data.spell_attack_bonus_modifier >= 0 ? 'bonus' : 'penalty',
+            });
+          }
+        }
+      }
+    }
+
+    return modifiers;
+  };
   const getAbilityModifiers = (abilityKey: string): Array<{ itemName: string; value: number; type: 'bonus' | 'penalty' | 'base' }> => {
     if (!character || !character.items) return [];
     const modifiers: Array<{ itemName: string; value: number; type: 'bonus' | 'penalty' | 'base' }> = [];
 
     for (const inv of character.items) {
-      if (inv.is_equipped) {
+      // ✅ Only count modifiers from equipped AND attuned items
+      if (inv.is_equipped && (inv.is_attuned || !requiresAttunement(inv))) {
         const item = inv.item || inv;
         if (item.property_data?.ability_modifiers?.[abilityKey]) {
           const value = item.property_data.ability_modifiers[abilityKey];
@@ -721,13 +1004,14 @@ const CharacterDisplay = () => {
     return proficiencies;
   };
 
-  // ✅ Get skill modifiers from equipped items (e.g., +5 to Sleight of Hand)
+  // ✅ Get skill modifiers from equipped AND attuned items
   const getSkillModifiers = (): Array<{ skillName: string; modifier: number; itemName: string }> => {
     if (!character || !character.items) return [];
     const modifiers: Array<{ skillName: string; modifier: number; itemName: string }> = [];
 
     for (const inv of character.items) {
-      if (inv.is_equipped) {
+      // ✅ Only count modifiers from equipped AND attuned items
+      if (inv.is_equipped && (inv.is_attuned || !requiresAttunement(inv))) {
         const item = inv.item || inv;
         if (item.property_data?.skill_modifiers && Array.isArray(item.property_data.skill_modifiers)) {
           for (const mod of item.property_data.skill_modifiers) {
@@ -744,13 +1028,14 @@ const CharacterDisplay = () => {
     return modifiers;
   };
 
-  // ✅ NEW: Get skill advantages from equipped items (e.g., Advantage on Perception)
+  // ✅ Get skill advantages from equipped AND attuned items
   const getSkillAdvantages = (): Array<{ skillName: string; itemName: string; description?: string }> => {
     if (!character || !character.items) return [];
     const advantages: Array<{ skillName: string; itemName: string; description?: string }> = [];
 
     for (const inv of character.items) {
-      if (inv.is_equipped) {
+      // ✅ Only count advantages from equipped AND attuned items
+      if (inv.is_equipped && (inv.is_attuned || !requiresAttunement(inv))) {
         const item = inv.item || inv;
         if (item.property_data?.skill_advantages && Array.isArray(item.property_data.skill_advantages)) {
           for (const adv of item.property_data.skill_advantages) {
@@ -811,13 +1096,14 @@ const CharacterDisplay = () => {
     return proficiencies;
   };
 
-  // ✅ Get languages from equipped items only
+  // ✅ Get languages from equipped AND attuned items only
   const getLanguages = (): Array<{ itemName: string; proficiency: string }> => {
     if (!character || !character.items) return [];
     const languages: Array<{ itemName: string; proficiency: string }> = [];
 
     for (const inv of character.items) {
-      if (inv.is_equipped) {
+      // ✅ Only count languages from equipped AND attuned items
+      if (inv.is_equipped && (inv.is_attuned || !requiresAttunement(inv))) {
         const item = inv.item || inv;
         if (item.property_data?.languages && Array.isArray(item.property_data.languages)) {
           for (const lang of item.property_data.languages) {
@@ -833,7 +1119,7 @@ const CharacterDisplay = () => {
     return languages;
   };
 
-  // ✅ Get all traits (from character + equipped items)
+  // ✅ Get all traits (from character + equipped AND attuned items)
   const getAllTraits = (): Array<{ name: string; description: string; source: string }> => {
     const traits: Array<{ name: string; description: string; source: string }> = [];
     const traitNames = new Set<string>();
@@ -853,7 +1139,8 @@ const CharacterDisplay = () => {
 
     if (character?.items) {
       for (const inv of character.items) {
-        if (inv.is_equipped) {
+        // ✅ Only count traits from equipped AND attuned items
+        if (inv.is_equipped && (inv.is_attuned || !requiresAttunement(inv))) {
           const item = inv.item || inv;
           if (item.property_data?.traits && Array.isArray(item.property_data.traits)) {
             for (const trait of item.property_data.traits) {
@@ -884,7 +1171,22 @@ const CharacterDisplay = () => {
     setExpandedAdvantage(expandedAdvantage === skillName ? null : skillName);
   };
 
-  const availableSpells = [...availableItems];
+  const [availableSpells, setAvailableSpells] = useState<any[]>([]);
+
+  useEffect(() => {
+    const loadSpells = async () => {
+      try {
+        const response = await fetch('http://127.0.0.1:8001/API/spells');
+        if (response.ok) {
+          const spells = await response.json();
+          setAvailableSpells(spells);
+        }
+      } catch (err) {
+        console.error('Failed to load spells:', err);
+      }
+    };
+    loadSpells();
+  }, []);
 
   // Auto-add item from creator
   useEffect(() => {
@@ -1002,7 +1304,6 @@ const CharacterDisplay = () => {
     const tools: string[] = [];
     const languages: string[] = [];
 
-    // ✅ Get skills from all sources (species, background, class)
     if (character?.proficientSkills && Array.isArray(character.proficientSkills)) {
       for (const skill of character.proficientSkills) {
         if (!skills.includes(skill)) {
@@ -1010,7 +1311,6 @@ const CharacterDisplay = () => {
         }
       }
     }
-    // ✅ Also check speciesSkills if available
     if (character?.speciesSkills && Array.isArray(character.speciesSkills)) {
       for (const skill of character.speciesSkills) {
         if (!skills.includes(skill)) {
@@ -1018,7 +1318,6 @@ const CharacterDisplay = () => {
         }
       }
     }
-    // ✅ Also check backgroundSkills if available
     if (character?.backgroundSkills && Array.isArray(character.backgroundSkills)) {
       for (const skill of character.backgroundSkills) {
         if (!skills.includes(skill)) {
@@ -1071,7 +1370,7 @@ const CharacterDisplay = () => {
     return { modifier: strMod, ability: 'STR' };
   };
 
-  // ✅ NEW: Get all displayed skills (character + item-granted)
+  // ✅ FIXED: Get all displayed skills (character + item-granted + skill modifiers)
   const getAllDisplayedSkills = () => {
     const skillSet = new Set<string>();
     const skillSources: Record<string, string[]> = {};
@@ -1097,6 +1396,18 @@ const CharacterDisplay = () => {
       }
     }
     
+    // ✅ ADD SKILLS FROM SKILL MODIFIERS (THIS WAS MISSING!)
+    const itemSkillModifiers = getSkillModifiers();
+    if (itemSkillModifiers.length > 0) {
+      for (const mod of itemSkillModifiers) {
+        skillSet.add(mod.skillName);
+        if (!skillSources[mod.skillName]) skillSources[mod.skillName] = [];
+        if (!skillSources[mod.skillName].includes(mod.itemName)) {
+          skillSources[mod.skillName].push(mod.itemName);
+        }
+      }
+    }
+    
     return {
       skills: Array.from(skillSet),
       sources: skillSources
@@ -1107,11 +1418,36 @@ const CharacterDisplay = () => {
 
   // Get all traits for display
   const allTraits = getAllTraits();
-  const attunedCount = getAttunedEquippedCount();
-  // ✅ Get skill modifiers for display
+  const attunedCount = getAttunedCount();
   const skillModifiers = getSkillModifiers();
-  // ✅ Get skill advantages for display
   const skillAdvantages = getSkillAdvantages();
+
+  // ✅ Helper: Get ordinal suffix for spell levels
+  const getOrdinal = (n: number) => {
+    const s = ["th", "st", "nd", "rd"];
+    const v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+  };
+
+  // ✅ Helper: Calculate damage for spell at given slot level
+  const getDamageForLevel = (spell: any, slotLevel: number) => {
+    if (!spell.damage_dice) return null;
+    
+    if (slotLevel <= spell.level) {
+      return spell.damage_dice;
+    }
+    
+    // Add upcast damage
+    const extraDice = slotLevel - spell.level;
+    const upcastDie = spell.upcast_damage_per_level || '1d6';
+    return `${spell.damage_dice} + ${extraDice}${upcastDie}`;
+  };
+
+  // ✅ Helper: Check if slot is available
+  const hasAvailableSlot = (level: number) => {
+    if (level === 0) return true; // Cantrips don't use slots
+    return (spellSlotsRemaining[level] || 0) > 0;
+  };
 
   // Render
   if (loading) return <p className={styles.loading}>Loading character...</p>;
@@ -1224,11 +1560,75 @@ const CharacterDisplay = () => {
           </button>
         </div>
 
-        {/* Proficiency Display */}
+        {/* Proficiency Bonus */}
+        <div>
+          <strong>Proficiency Bonus:</strong> +{proficiencyBonus}
+        </div>
+
+        {/* ✅ NEW: Proficiency Display with Tabs */}
         <div>
           <strong>Proficiencies:</strong>
-          {displayedSkills.skills.length > 0 && (
-            <div style={{ marginBottom: '1rem' }}>
+          
+          {/* ✅ Tab Buttons */}
+          <div className={styles.proficiencyTabs} style={{ 
+            display: 'flex', 
+            gap: '0.5rem', 
+            marginTop: '0.5rem',
+            marginBottom: '1rem'
+          }}>
+            <button
+              onClick={() => setActiveProficiencyTab('skills')}
+              className={`${styles.tabButton} ${activeProficiencyTab === 'skills' ? styles.activeTab : ''}`}
+              style={{
+                padding: '0.5rem 1rem',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                backgroundColor: activeProficiencyTab === 'skills' ? '#4a90e2' : '#e0e0e0',
+                color: activeProficiencyTab === 'skills' ? 'white' : '#333',
+                fontWeight: activeProficiencyTab === 'skills' ? 'bold' : 'normal',
+                transition: 'all 0.2s'
+              }}
+            >
+              Skills {displayedSkills.skills.length > 0 && `(${displayedSkills.skills.length})`}
+            </button>
+            <button
+              onClick={() => setActiveProficiencyTab('weapons')}
+              className={`${styles.tabButton} ${activeProficiencyTab === 'weapons' ? styles.activeTab : ''}`}
+              style={{
+                padding: '0.5rem 1rem',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                backgroundColor: activeProficiencyTab === 'weapons' ? '#4a90e2' : '#e0e0e0',
+                color: activeProficiencyTab === 'weapons' ? 'white' : '#333',
+                fontWeight: activeProficiencyTab === 'weapons' ? 'bold' : 'normal',
+                transition: 'all 0.2s'
+              }}
+            >
+              Weapons {proficientWeapons.length > 0 && `(${proficientWeapons.length})`}
+            </button>
+            <button
+              onClick={() => setActiveProficiencyTab('tools')}
+              className={`${styles.tabButton} ${activeProficiencyTab === 'tools' ? styles.activeTab : ''}`}
+              style={{
+                padding: '0.5rem 1rem',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                backgroundColor: activeProficiencyTab === 'tools' ? '#4a90e2' : '#e0e0e0',
+                color: activeProficiencyTab === 'tools' ? 'white' : '#333',
+                fontWeight: activeProficiencyTab === 'tools' ? 'bold' : 'normal',
+                transition: 'all 0.2s'
+              }}
+            >
+              Tools {proficientTools.length > 0 && `(${proficientTools.length})`}
+            </button>
+          </div>
+
+          {/* ✅ Tab Content - Skills */}
+          {activeProficiencyTab === 'skills' && displayedSkills.skills.length > 0 && (
+            <div>
               <strong
                 style={{ cursor: 'pointer', color: '#4a90e2', textDecoration: 'underline' }}
                 onClick={() => setProficiencyModal({ isOpen: true, type: 'skills' })}
@@ -1238,70 +1638,71 @@ const CharacterDisplay = () => {
                 {skillModifiers.length > 0 && ` | Item Bonuses: ${skillModifiers.length}`}
               </strong>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '0.5rem', marginTop: '0.5rem' }}>
-                {displayedSkills.skills.map(skill => {
-                  const ability = getSkillAbility(skill);
-                  const finalScore = getFinalAbilityScore(ability);
-                  const abilityMod = getAbilityModifier(finalScore);
-                  const isProficient = proficientSkills.includes(skill);
-                  // ✅ Add item skill modifiers to the total
-                  const itemModifier = skillModifiers
-                    .filter(mod => mod.skillName.toLowerCase() === skill.toLowerCase())
-                    .reduce((sum, mod) => sum + mod.modifier, 0);
-                  const totalMod = abilityMod + (isProficient ? proficiencyBonus : 0) + itemModifier;
-                  const displayMod = totalMod >= 0 ? `+${totalMod}` : `${totalMod}`;
-                  const hasItemBonus = itemModifier !== 0;
-                  // ✅ Check if this skill has advantage
-                  const hasAdvantage = skillAdvantages.some(adv => adv.skillName.toLowerCase() === skill.toLowerCase());
-                  // ✅ Check if skill comes from items
-                  const isFromItems = displayedSkills.sources[skill]?.some(source => source !== 'Character');
-                  const itemSources = displayedSkills.sources[skill]?.filter(source => source !== 'Character') || [];
-                  return (
-                    <div 
-                      key={skill} 
-                      className={`${styles.skillCard} ${hasItemBonus ? styles.skillCardWithBonus : ''} ${hasAdvantage ? styles.skillCardWithAdvantage : ''} ${isFromItems ? styles.skillCardFromItem : ''}`}
-                      style={{ 
-                        padding: '0.25rem', 
-                        backgroundColor: hasAdvantage ? '#fff3e0' : (hasItemBonus ? '#e8f5e9' : (isFromItems ? '#e3f2fd' : '#f0f0f0')), 
+                {/* ✅ Filter to only show skills with proficiency OR item bonuses */}
+                {displayedSkills.skills
+                  .map(skill => {
+                    const ability = getSkillAbility(skill);
+                    const finalScore = getFinalAbilityScore(ability);
+                    const abilityMod = getAbilityModifier(finalScore);
+                    const isProficient = proficientSkills.includes(skill);
+                    const itemModifier = skillModifiers
+                      .filter(mod => mod.skillName.toLowerCase() === skill.toLowerCase())
+                      .reduce((sum, mod) => sum + mod.modifier, 0);
+                    const totalMod = abilityMod + (isProficient ? proficiencyBonus : 0) + itemModifier;
+                    const displayMod = totalMod >= 0 ? `+${totalMod}` : `${totalMod}`;
+                    const hasItemBonus = itemModifier !== 0;
+                    const hasAdvantage = skillAdvantages.some(adv => adv.skillName.toLowerCase() === skill.toLowerCase());
+                    const isFromItems = displayedSkills.sources[skill]?.some(source => source !== 'Character');
+                    const itemSources = displayedSkills.sources[skill]?.filter(source => source !== 'Character') || [];
+                    return {
+                      skill,
+                      abilityMod,
+                      isProficient,
+                      itemModifier,
+                      totalMod,
+                      displayMod,
+                      hasItemBonus,
+                      hasAdvantage,
+                      isFromItems,
+                      itemSources
+                    };
+                  })
+                  .filter(skillData =>
+                    // ✅ Only show if proficient OR has item bonus OR has advantage
+                    skillData.isProficient || skillData.hasItemBonus || skillData.hasAdvantage
+                  )
+                  .map(skillData => (
+                    <div
+                      key={skillData.skill}
+                      className={`${styles.skillCard} ${skillData.hasItemBonus ? styles.skillCardWithBonus : ''} ${skillData.hasAdvantage ? styles.skillCardWithAdvantage : ''} ${skillData.isFromItems ? styles.skillCardFromItem : ''}`}
+                      style={{
+                        padding: '0.25rem',
+                        backgroundColor: skillData.hasAdvantage ? '#fff3e0' : (skillData.hasItemBonus ? '#e8f5e9' : (skillData.isFromItems ? '#e3f2fd' : '#f0f0f0')),
                         borderRadius: '4px',
-                        border: hasAdvantage ? '2px solid #ff9800' : (hasItemBonus ? '1px solid #4caf50' : (isFromItems ? '1px solid #2196f3' : 'none'))
+                        border: skillData.hasAdvantage ? '2px solid #ff9800' : (skillData.hasItemBonus ? '1px solid #4caf50' : (skillData.isFromItems ? '1px solid #2196f3' : 'none'))
                       }}
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <strong>{skill}</strong>
-                        <span>{displayMod}</span>
+                        <strong>{skillData.skill}</strong>
+                        <span>{skillData.displayMod}</span>
                       </div>
-                      {hasItemBonus && (
+                      {skillData.hasItemBonus && (
                         <span className={styles.itemBonusBadge}>
-                          +{itemModifier} {skillModifiers
-                            .filter(mod => mod.skillName.toLowerCase() === skill.toLowerCase())
+                          +{skillData.itemModifier} {skillModifiers
+                            .filter(mod => mod.skillName.toLowerCase() === skillData.skill.toLowerCase())
                             .map(mod => mod.itemName)
                             .join(', ')}
                         </span>
                       )}
-                      {isFromItems && !hasItemBonus && (
+                      {skillData.isFromItems && !skillData.hasItemBonus && (
                         <span className={styles.itemSourceBadge}>
-                          📦 {itemSources.join(', ')}
+                          📦 {skillData.itemSources.join(', ')}
                         </span>
                       )}
-                      {hasAdvantage && <span className={styles.advantageBadge}>🎲 ADV</span>}
+                      {skillData.hasAdvantage && <span className={styles.advantageBadge}>🎲 ADV</span>}
                     </div>
-                  );
-                })}
+                  ))}
               </div>
-              {/* ✅ Show skill modifiers from items */}
-              {skillModifiers.length > 0 && (
-                <div style={{ marginTop: '0.5rem', padding: '0.5rem', backgroundColor: '#e8f5e9', borderRadius: '4px', border: '1px solid #4caf50' }}>
-                  <strong>📦 Item Skill Bonuses:</strong>
-                  <ul style={{ margin: '0.25rem 0 0 1rem', padding: 0 }}>
-                    {skillModifiers.map((mod, idx) => (
-                      <li key={idx} style={{ fontSize: '0.9em', color: '#2e7d32' }}>
-                        {mod.skillName}: +{mod.modifier} (from {mod.itemName})
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {/* ✅ Show item-granted skill proficiencies */}
               {getSkillProficiencies().length > 0 && (
                 <div style={{ marginTop: '0.5rem', padding: '0.5rem', backgroundColor: '#e3f2fd', borderRadius: '4px', border: '1px solid #2196f3' }}>
                   <strong>📜 Item-Granted Proficiencies:</strong>
@@ -1314,49 +1715,49 @@ const CharacterDisplay = () => {
                   </ul>
                 </div>
               )}
-            </div>
-          )}
-
-          {/* ✅ Skill Advantages Section */}
-          {skillAdvantages.length > 0 && (
-            <div style={{ marginBottom: '1rem' }}>
-              <strong style={{ color: '#ff9800' }}>🎲 Skill Advantages:</strong>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
-                {skillAdvantages.map((adv, idx) => (
-                  <div
-                    key={idx}
-                    className={`${styles.advantageCard} ${expandedAdvantage === adv.skillName ? styles.advantageCardExpanded : ''}`}
-                    onClick={() => toggleAdvantageExpand(adv.skillName)}
-                    style={{
-                      cursor: 'pointer',
-                      padding: '0.5rem',
-                      backgroundColor: '#fff3e0',
-                      border: '2px solid #ff9800',
-                      borderRadius: '4px',
-                      flex: '1 1 200px',
-                      maxWidth: '300px'
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <strong style={{ color: '#e65100' }}>{adv.skillName}</strong>
-                      <span style={{ fontSize: '0.75em', color: '#ff9800' }}>
-                        {expandedAdvantage === adv.skillName ? '▲' : '▼'}
-                      </span>
-                    </div>
-                    <div style={{ fontSize: '0.85em', color: '#f57c00' }}>from {adv.itemName}</div>
-                    {expandedAdvantage === adv.skillName && adv.description && (
-                      <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid #ffcc80', fontSize: '0.85em', color: '#e65100' }}>
-                        {adv.description}
+              {/* Skill Advantages - Always visible */}
+              {skillAdvantages.length > 0 && (
+                <div style={{ marginBottom: '1rem' }}>
+                  <strong style={{ color: '#ff9800' }}>🎲 Skill Advantages:</strong>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
+                    {skillAdvantages.map((adv, idx) => (
+                      <div
+                        key={idx}
+                        className={`${styles.advantageCard} ${expandedAdvantage === adv.skillName ? styles.advantageCardExpanded : ''}`}
+                        onClick={() => toggleAdvantageExpand(adv.skillName)}
+                        style={{
+                          cursor: 'pointer',
+                          padding: '0.5rem',
+                          backgroundColor: '#fff3e0',
+                          border: '2px solid #ff9800',
+                          borderRadius: '4px',
+                          flex: '1 1 200px',
+                          maxWidth: '300px'
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <strong style={{ color: '#e65100' }}>{adv.skillName}</strong>
+                          <span style={{ fontSize: '0.75em', color: '#ff9800' }}>
+                            {expandedAdvantage === adv.skillName ? '▲' : '▼'}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '0.85em', color: '#f57c00' }}>from {adv.itemName}</div>
+                        {expandedAdvantage === adv.skillName && adv.description && (
+                          <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid #ffcc80', fontSize: '0.85em', color: '#e65100' }}>
+                            {adv.description}
+                          </div>
+                        )}
                       </div>
-                    )}
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
+                </div>
+              )}
+            </div>            
           )}
 
-          {proficientWeapons.length > 0 && (
-            <div style={{ marginBottom: '1rem' }}>
+          {/* ✅ Tab Content - Weapons */}
+          {activeProficiencyTab === 'weapons' && proficientWeapons.length > 0 && (
+            <div>
               <strong
                 style={{ cursor: 'pointer', color: '#4a90e2', textDecoration: 'underline' }}
                 onClick={() => setProficiencyModal({ isOpen: true, type: 'weapons' })}
@@ -1374,8 +1775,9 @@ const CharacterDisplay = () => {
             </div>
           )}
 
-          {proficientTools.length > 0 && (
-            <div style={{ marginBottom: '1rem' }}>
+          {/* ✅ Tab Content - Tools */}
+          {activeProficiencyTab === 'tools' && proficientTools.length > 0 && (
+            <div>
               <strong
                 style={{ cursor: 'pointer', color: '#4a90e2', textDecoration: 'underline' }}
                 onClick={() => setProficiencyModal({ isOpen: true, type: 'tools' })}
@@ -1391,6 +1793,15 @@ const CharacterDisplay = () => {
                 ))}
               </div>
             </div>
+          )}
+
+          {/* ✅ Show message if no proficiencies in active tab */}
+          {((activeProficiencyTab === 'skills' && displayedSkills.skills.length === 0) ||
+            (activeProficiencyTab === 'weapons' && proficientWeapons.length === 0) ||
+            (activeProficiencyTab === 'tools' && proficientTools.length === 0)) && (
+            <p style={{ color: '#666', marginTop: '0.5rem' }}>
+              No {activeProficiencyTab} proficiencies yet.
+            </p>
           )}
         </div>
 
@@ -1414,17 +1825,6 @@ const CharacterDisplay = () => {
           ) : (
             <p>None</p>
           )}
-        </div>
-
-        {/* Hit Points */}
-        <div>
-          <strong>Hit Points:</strong>
-          <p>{character.hitPoints || character.hpMax || 'Not set'} (current: {hpCurrent})</p>
-        </div>
-
-        {/* Proficiency Bonus */}
-        <div>
-          <strong>Proficiency Bonus:</strong> +{proficiencyBonus}
         </div>
 
         {/* Attunement Slots Display */}
@@ -1471,17 +1871,350 @@ const CharacterDisplay = () => {
         )}
       </section>
 
-      {/* Spellcasting */}
+      {/* ✅ UPDATED: Spellcasting Section with Slots */}
       <section className={styles.section}>
         <h2>Spellcasting</h2>
-        <button className={styles.primary} onClick={() => setIsSpellModalOpen(true)}>Add Spell</button>
-        <SpellModal
+        
+        {/* Spellcasting Stats */}
+        {spellcasterLevel > 0 && (
+          <div className={styles.spellcastingStats} style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', 
+            gap: '0.5rem',
+            marginBottom: '1rem',
+            padding: '1rem',
+            backgroundColor: '#f0f4f8',
+            borderRadius: '8px'
+          }}>
+            <div className={`${styles.statBox} ${styles.clickable}`} 
+            onClick={() => setStatModifiersModal({ isOpen: true, stat: 'SpellDC' })}
+            title="Click to see how Spell Save DC is calculated" >
+              <strong>Spell Save DC</strong>
+              <span style={{ fontSize: '1.5em', color: '#4a90e2' }}>{spellSaveDC}</span>
+            </div>
+            <div className={`${styles.statBox} ${styles.clickable}`}
+            onClick={() => setStatModifiersModal({ isOpen: true, stat: 'SpellAttack' })}
+            title="Click to see how Spell Attack is calculated" >
+              <strong>Spell Attack</strong>
+              <span style={{ fontSize: '1.5em', color: '#4a90e2' }}>+{spellAttackBonus}</span>
+            </div>
+            <div className={styles.statBox}>
+              <strong>Ability</strong>
+              <span style={{ fontSize: '1.5em', color: '#4a90e2' }}>{spellcastingAbility.toUpperCase()}</span>
+            </div>
+            <div className={styles.statBox}>
+              <strong>Caster Level</strong>
+              <span style={{ fontSize: '1.5em', color: '#4a90e2' }}>{spellcasterLevel}</span>
+            </div>
+          </div>
+        )}
+        
+        {/* Spell Slots */}
+        {spellcasterLevel > 0 && (
+          <div className={styles.spellSlots} style={{ marginBottom: '1rem' }}>
+            <h3>Spell Slots</h3>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              {Object.entries(spellSlots).map(([level, total]) => {
+                const expended = spellSlotsExpended[level] || 0;
+                const remaining = total - expended;
+                return (
+                  <div key={level} style={{ 
+                    padding: '0.5rem', 
+                    backgroundColor: '#fff',
+                    border: '2px solid #4a90e2',
+                    borderRadius: '8px',
+                    textAlign: 'center',
+                    minWidth: '80px'
+                  }}>
+                    <div style={{ fontWeight: 'bold', marginBottom: '0.25rem' }}>
+                      {level === '1' ? '1st' : level === '2' ? '2nd' : level === '3' ? '3rd' : level === '4' ? '4th' : level === '5' ? '5th' : `${level}th`}
+                    </div>
+                    <div style={{ fontSize: '1.5em', fontWeight: 'bold' }}>
+                      {remaining}/{total}
+                    </div>
+                    <div style={{ display: 'flex', gap: '2px', justifyContent: 'center', marginTop: '0.25rem' }}>
+                      {Array.from({ length: total }).map((_, i) => (
+                        <div
+                          key={i}
+                          onClick={() => expendSpellSlot(parseInt(level))}
+                          style={{
+                            width: '12px',
+                            height: '12px',
+                            borderRadius: '2px',
+                            backgroundColor: i < expended ? '#ccc' : '#4a90e2',
+                            cursor: i < expended ? 'default' : 'pointer',
+                            border: '1px solid #333'
+                          }}
+                          title={i < expended ? 'Expended' : 'Available'}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+        
+        {/* ✅ NEW: Spell Manager with Known/Prepared tabs */}
+        {spellcasterLevel > 0 && (
+          <SpellManager
+            characterSpells={characterSpells}
+            spellSlots={spellSlots}
+            spellSaveDC={spellSaveDC}
+            spellAttackBonus={spellAttackBonus}
+            spellcastingAbility={spellcastingAbility}
+            character={character}
+            prepareLimit={spellPrepareLimit}
+            preparedCount={spellPreparedCount}
+            isPrepareUnlimited={spellPrepareUnlimited}
+            onTogglePrepare={toggleSpellPrepared}
+            onCastSpell={expendSpellSlot}
+          />
+        )}
+        
+        {spellcasterLevel > 0 && (
+          <button className={styles.primary} onClick={() => setIsSpellModalOpen(true)} style={{ marginTop: '1rem' }}>
+            Add Spell
+          </button>
+        )}
+        
+        <SpellSelectionModal
           isOpen={isSpellModalOpen}
           onClose={() => setIsSpellModalOpen(false)}
           onAddSpell={addSpell}
           availableSpells={availableSpells}
           characterId={character?.id || 0}
         />
+        
+        {/* ✅ NEW: Spell Cast Modal */}
+        {selectedSpellForCast && isSpellCastModalOpen && (
+          <div className={styles.spellCastModal} style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}>
+            <div className={styles.spellCastContent} style={{
+              background: 'white',
+              padding: '2rem',
+              borderRadius: '8px',
+              maxWidth: '600px',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              position: 'relative'
+            }}>
+              <button className={styles.closeBtn} onClick={() => {
+                setIsSpellCastModalOpen(false);
+                setSelectedSpellForCast(null);
+              }} style={{
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                background: 'none',
+                border: 'none',
+                fontSize: '1.5em',
+                cursor: 'pointer',
+                color: '#666'
+              }}>✕</button>
+              
+              <h2>{selectedSpellForCast.name}</h2>
+              <p className={styles.spellInfo} style={{ color: '#666', marginBottom: '1rem' }}>
+                {selectedSpellForCast.level === 0 ? 'Cantrip' : `${selectedSpellForCast.level}${getOrdinal(selectedSpellForCast.level)} Level`} 
+                {' • '}{selectedSpellForCast.school}
+              </p>
+              
+              {/* Spell Details */}
+              <div className={styles.spellDetails} style={{
+                background: '#f0f4f8',
+                padding: '1rem',
+                borderRadius: '4px',
+                marginBottom: '1rem'
+              }}>
+                <div><strong>Casting Time:</strong> {selectedSpellForCast.casting_time}</div>
+                <div><strong>Range:</strong> {selectedSpellForCast.range}</div>
+                <div><strong>Components:</strong> {selectedSpellForCast.components}</div>
+                <div><strong>Duration:</strong> {selectedSpellForCast.duration}</div>
+                {selectedSpellForCast.concentration && <div className={styles.concentration} style={{ color: '#ff9800', fontWeight: 'bold', marginTop: '0.5rem' }}>⚠️ Concentration</div>}
+              </div>
+              
+              {/* Saving Throw Info */}
+              {selectedSpellForCast.save_ability && (
+                <div className={styles.saveInfo} style={{
+                  marginBottom: '1rem',
+                  padding: '1rem',
+                  borderRadius: '4px',
+                  background: '#fff3e0',
+                  border: '1px solid #ff9800'
+                }}>
+                  <h4>💾 Saving Throw</h4>
+                  <div className={styles.saveBox}>
+                    <div className={styles.saveDC} style={{ fontSize: '1.2em', fontWeight: 'bold' }}>
+                      <strong>DC {spellSaveDC}</strong> {selectedSpellForCast.save_ability.toUpperCase()} save
+                    </div>
+                    <div className={styles.saveEffect}>
+                      {selectedSpellForCast.save_half_on_success ? 'Half damage on success' : 'No effect on success'}
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Spell Attack Info */}
+              {selectedSpellForCast.attack_type === 'spell_attack' && (
+                <div className={styles.attackInfo} style={{
+                  marginBottom: '1rem',
+                  padding: '1rem',
+                  borderRadius: '4px',
+                  background: '#e8f5e9',
+                  border: '1px solid #4caf50'
+                }}>
+                  <h4>⚔️ Spell Attack</h4>
+                  <div className={styles.attackBox}>
+                    <div className={styles.attackBonus} style={{ fontSize: '1.2em', fontWeight: 'bold' }}>
+                      <strong>+{spellAttackBonus}</strong> to hit
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Damage Info */}
+              {selectedSpellForCast.damage_dice && (
+                <div className={styles.damageInfo} style={{
+                  marginBottom: '1rem',
+                  padding: '1rem',
+                  borderRadius: '4px',
+                  background: '#ffebee',
+                  border: '1px solid #f44336'
+                }}>
+                  <h4>⚔️ Damage</h4>
+                  <div className={styles.damageBox}>
+                    <div className={styles.damageDice} style={{ fontSize: '1.2em', fontWeight: 'bold' }}>
+                      <strong>{getDamageForLevel(selectedSpellForCast, selectedSpellForCast.level)}</strong> 
+                      {selectedSpellForCast.damage_type && ` ${selectedSpellForCast.damage_type} damage`}
+                    </div>
+                    
+                    {/* Slot Level Selector for Upcasting */}
+                    {selectedSpellForCast.level > 0 && (
+                      <div className={styles.slotSelector} style={{ marginTop: '1rem' }}>
+                        <label>Casting at level:</label>
+                        <select 
+                          value={selectedSpellForCast.level} 
+                          onChange={(e) => {
+                            const newSpell = {...selectedSpellForCast, level: parseInt(e.target.value)};
+                            setSelectedSpellForCast(newSpell);
+                          }}
+                          style={{
+                            width: '100%',
+                            padding: '0.5rem',
+                            border: '1px solid #ccc',
+                            borderRadius: '4px',
+                            fontSize: '1em'
+                          }}
+                        >
+                          {Array.from({length: 9}, (_, i) => i + 1).map(level => (
+                            <option 
+                              key={level} 
+                              value={level}
+                              disabled={!hasAvailableSlot(level)}
+                            >
+                              {getOrdinal(level)} {level > selectedSpellForCast.level && selectedSpellForCast.upcast_damage_per_level && 
+                                ` (+${level - selectedSpellForCast.level}${selectedSpellForCast.upcast_damage_per_level})`}
+                              {!hasAvailableSlot(level) && ' (None)'}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+              
+              {/* Area of Effect */}
+              {selectedSpellForCast.area_of_effect_type && (
+                <div className={styles.areaInfo} style={{
+                  marginBottom: '1rem',
+                  padding: '1rem',
+                  borderRadius: '4px',
+                  background: '#e3f2fd',
+                  border: '1px solid #2196f3'
+                }}>
+                  <h4>📍 Area of Effect</h4>
+                  <div className={styles.areaBox}>
+                    {selectedSpellForCast.area_of_effect_size}-foot {selectedSpellForCast.area_of_effect_type}
+                  </div>
+                </div>
+              )}
+              
+              {/* Description */}
+              <div className={styles.description} style={{
+                marginTop: '1rem',
+                paddingTop: '1rem',
+                borderTop: '1px solid #ccc'
+              }}>
+                <p>{selectedSpellForCast.description}</p>
+                {selectedSpellForCast.higher_levels && selectedSpellForCast.level > (selectedSpellForCast as any).baseLevel && (
+                  <p className={styles.higherLevels} style={{ color: '#666', fontStyle: 'italic' }}>
+                    <strong>At Higher Levels:</strong> {selectedSpellForCast.higher_levels}
+                  </p>
+                )}
+              </div>
+              
+              {/* Cast Button */}
+              <div className={styles.castButtons} style={{
+                display: 'flex',
+                gap: '1rem',
+                marginTop: '1.5rem'
+              }}>
+                <button 
+                  className={styles.castBtn}
+                  onClick={() => {
+                    expendSpellSlot(selectedSpellForCast.level === 0 ? 0 : selectedSpellForCast.level);
+                    setIsSpellCastModalOpen(false);
+                    setSelectedSpellForCast(null);
+                  }}
+                  disabled={selectedSpellForCast.level > 0 && !hasAvailableSlot(selectedSpellForCast.level)}
+                  style={{
+                    flex: 1,
+                    padding: '0.75rem',
+                    background: '#4a90e2',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    fontSize: '1em',
+                    cursor: 'pointer'
+                  }}
+                >
+                  ✨ Cast Spell
+                </button>
+                <button 
+                  className={styles.cancelBtn} 
+                  onClick={() => {
+                    setIsSpellCastModalOpen(false);
+                    setSelectedSpellForCast(null);
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: '0.75rem',
+                    background: '#f0f0f0',
+                    color: '#333',
+                    border: 'none',
+                    borderRadius: '4px',
+                    fontSize: '1em',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* Inventory */}
@@ -1508,15 +2241,21 @@ const CharacterDisplay = () => {
                   }
                 }}
               >
-                {isBulkDeleteMode ? 'Cancel Bulk Delete' : '🗑️ Bulk Delete'}
+                {isBulkDeleteMode ? 'Cancel Bulk Delete' : 'Delete Items'}
               </button>
-              {/* Equipped Items Filter Button */}
               <button
                 className={showEquippedOnly ? styles.active : styles.secondary}
                 onClick={() => setShowEquippedOnly(!showEquippedOnly)}
                 title={showEquippedOnly ? 'Show all items' : 'Show only equipped items'}
               >
-                {showEquippedOnly ? '🛡️ Show All Items' : '🛡️ Equipped Only'}
+                {showEquippedOnly ? 'Show All Items' : 'Equipped Only'}
+              </button>
+              <button
+                className={showAttunedOnly ? styles.active : styles.secondary}
+                onClick={() => setShowAttunedOnly(!showAttunedOnly)}
+                title={showAttunedOnly ? 'Show all items' : 'Show only attuned items'}
+              >
+                {showAttunedOnly ? 'Show All Items' : 'Attuned Only'}
               </button>
             </>
           )}
@@ -1545,6 +2284,9 @@ const CharacterDisplay = () => {
                 if (showEquippedOnly) {
                   return item.is_equipped === true;
                 }
+                if (showAttunedOnly) {
+                  return item.is_attuned === true;
+                }
                 return true;
               })
               .map((item: any) => {
@@ -1553,12 +2295,14 @@ const CharacterDisplay = () => {
                 const isEquippable = canEquip(item);
                 const isEquipped = item.is_equipped || false;
                 const needsAttunement = requiresAttunement(item);
-                const isAttunedAndFull = needsAttunement && attunedCount >= attunementSlotLimit && !isEquipped;
+                const isAttuned = isItemAttuned(item);
+                const isAttunedAndFull = needsAttunement && attunedCount >= attunementSlotLimit && !isAttuned;
+                const isWeapon = itemData.item_type === 'Weapon' || itemData.type === 'Weapon';
                 
                 return (
                   <div
                     key={item.inventoryId}
-                    className={`${styles.inventoryItem} ${isBulkDeleteMode && isSelected ? styles.selectedForDelete : ''} ${isEquipped ? styles.equippedItem : ''}`}
+                    className={`${styles.inventoryItem} ${isBulkDeleteMode && isSelected ? styles.selectedForDelete : ''} ${isEquipped ? styles.equippedItem : ''} ${isAttuned ? styles.attunedItem : ''}`}
                     onClick={() => {
                       if (isBulkDeleteMode) {
                         toggleItemSelection(item.inventoryId);
@@ -1568,7 +2312,7 @@ const CharacterDisplay = () => {
                     }}
                     style={{
                       cursor: 'pointer',
-                      backgroundColor: isBulkDeleteMode && isSelected ? 'rgba(255, 100, 100, 0.2)' : (isEquipped ? 'rgba(100, 255, 100, 0.1)' : 'transparent')
+                      backgroundColor: isBulkDeleteMode && isSelected ? 'rgba(255, 100, 100, 0.2)' : (isAttuned ? 'rgba(155, 89, 182, 0.1)' : (isEquipped ? 'rgba(100, 255, 100, 0.1)' : 'transparent'))
                     }}
                   >
                     {isBulkDeleteMode && (
@@ -1587,11 +2331,13 @@ const CharacterDisplay = () => {
                         <span className={styles.inventoryItemName}>
                           {item.name} {item.quantity > 1 && `(x${item.quantity})`}
                           {isEquipped && <span className={styles.equippedBadge}>Equipped</span>}
-                          {needsAttunement && <span className={styles.attunementBadge}>⚡ Attunement</span>}
+                          {isAttuned && <span className={styles.attunedBadge}>✨ Attuned</span>}
+                          {needsAttunement && !isAttuned && <span className={styles.attunementBadge}>⚡ Requires Attunement</span>}
                         </span>
                         <div className={styles.inventoryItemQuickInfo}>
                           {item.item_type && <span className={styles.itemType}>{item.item_type}</span>}
-                          {/* EQUIP/UNEQUIP BUTTON for Wondrous Items and Rings */}
+                          
+                          {/* ✅ EQUIP/UNEQUIP BUTTON for equippable items */}
                           {isEquippable && !isBulkDeleteMode && (
                             isEquipped ? (
                               <button
@@ -1606,34 +2352,57 @@ const CharacterDisplay = () => {
                               </button>
                             ) : (
                               <button
-                                className={`${styles.equipButton} ${isAttunedAndFull ? styles.equipButtonDisabled : ''}`}
+                                className={styles.equipButton}
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  if (!isAttunedAndFull) {
-                                    equipItem(item.inventoryId, item.name, itemData);
-                                  } else {
-                                    alert(`❌ Cannot equip: You already have ${attunedCount} attuned items (max: ${attunementSlotLimit}). Unequip an attuned item first.`);
-                                  }
+                                  equipItem(item.inventoryId, item.name, itemData);
                                 }}
-                                disabled={isAttunedAndFull}
-                                title={isAttunedAndFull ? 'Attunement slots full' : 'Equip this item'}
+                                title="Equip this item"
                               >
                                 🔒 Equip
                               </button>
                             )
                           )}
-                          {isEquipped && <span className={styles.equippedBadge}>Equipped</span>}
+                          
+                          {/* ✅ ATTUNE/UNATTUNE BUTTONS for ALL items that require attunement */}
+                          {needsAttunement && !isBulkDeleteMode && (
+                            isAttuned ? (
+                              <button
+                                className={styles.unattuneButton}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  unattuneItem(item.inventoryId, item.name);
+                                }}
+                                title="Unattune this item"
+                              >
+                                ✨ Unattune
+                              </button>
+                            ) : (
+                              <button
+                                className={`${styles.attuneButton} ${!canAttuneMore() ? styles.attuneButtonDisabled : ''}`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (canAttuneMore()) {
+                                    attuneItem(item.inventoryId, item.name, itemData);
+                                  } else {
+                                    alert(`❌ Cannot attune: You already have ${attunedCount} attuned items (max: ${attunementSlotLimit}). Unattune an item first.`);
+                                  }
+                                }}
+                                disabled={!canAttuneMore()}
+                                title={!canAttuneMore() ? 'Attunement slots full' : 'Attune this item for special abilities'}
+                              >
+                                ⚡ Attune
+                              </button>
+                            )
+                          )}
+                          
                           {item.maxCharges && (
                             <span className={styles.chargesIndicator}>
                               Charges: {item.currentCharges}/{item.maxCharges}
+                              {needsAttunement && !isAttuned && <span className={styles.lockedBadge}> 🔒</span>}
                             </span>
                           )}
                         </div>
-                      </div>
-                      <div className={styles.inventoryActions} style={{ display: 'none' }}>
-                        <button className={styles.addMoreBtn} onClick={(e) => { e.stopPropagation(); addMoreItem(item); }}>+ Add 1 More</button>
-                        <button className={styles.removeOneBtn} onClick={(e) => { e.stopPropagation(); removeOneItem(item.inventoryId, item.name, item.quantity); }}>− Remove 1</button>
-                        <button className={styles.deleteBtn} onClick={(e) => { e.stopPropagation(); deleteInventoryItem(item.inventoryId, item.name); }}>🗑️ Delete</button>
                       </div>
                     </div>
                   </div>
@@ -1643,9 +2412,11 @@ const CharacterDisplay = () => {
         ) : (
           <p className={styles.emptyInventory}>No items yet. Add items to get started!</p>
         )}
-
         {showEquippedOnly && character.items.filter((item: any) => item.is_equipped === true).length === 0 && (
           <p className={styles.emptyInventory}>No equipped items. Equip items to see them here!</p>
+        )}
+        {showAttunedOnly && character.items.filter((item: any) => item.is_attuned === true).length === 0 && (
+          <p className={styles.emptyInventory}>No attuned items. Attune items to see them here!</p>
         )}
       </section>
 
@@ -1752,6 +2523,7 @@ const CharacterDisplay = () => {
                 <div className={styles.attackRowBonus}>Attack Bonus</div>
                 <div className={styles.attackRowDamage}>Damage</div>
                 <div className={styles.attackRowType}>Damage Type</div>
+                <div className={styles.attackRowSpecial}>Special</div>
               </div>
               <div className={styles.attacksList}>
                 {character.items
@@ -1761,6 +2533,10 @@ const CharacterDisplay = () => {
                     const attackBonus = bestAbility.modifier + proficiencyBonus;
                     const damageDice = weapon.damageDice || '1d4';
                     const damageType = weapon.damageType || 'bludgeoning';
+                    const isAttuned = isItemAttuned(weapon);
+                    const needsAttunement = requiresAttunement(weapon);
+                    const hasChargeAbilities = weapon.maxCharges && weapon.onHitEffect;
+                    
                     return (
                       <div
                         key={index}
@@ -1779,7 +2555,9 @@ const CharacterDisplay = () => {
                               damageDice,
                               damageType,
                               abilityUsed: bestAbility.ability,
-                              abilityModifier: bestAbility.modifier
+                              abilityModifier: bestAbility.modifier,
+                              isAttuned,
+                              needsAttunement
                             });
                           }
                         }}
@@ -1789,6 +2567,16 @@ const CharacterDisplay = () => {
                         <div className={styles.attackRowBonus}>+{attackBonus}</div>
                         <div className={styles.attackRowDamage}>{damageDice}</div>
                         <div className={styles.attackRowType}>{damageType}</div>
+                        <div className={styles.attackRowSpecial}>
+                          {needsAttunement && (
+                            <span className={isAttuned ? styles.specialAvailable : styles.specialLocked}>
+                              {isAttuned ? '⚡ Ready' : '🔒 Attune'}
+                            </span>
+                          )}
+                          {hasChargeAbilities && !needsAttunement && (
+                            <span className={styles.specialAvailable}>⚡ Charge</span>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
@@ -1805,6 +2593,14 @@ const CharacterDisplay = () => {
             <div className={styles.attackModalContent}>
               <button className={styles.attackModalClose} onClick={() => setAttackModalData(null)}>×</button>
               <h3>Make Attack: {attackModalData.weapon.name}</h3>
+              
+              {/* ✅ Show attunement warning if weapon requires attunement but not attuned */}
+              {attackModalData.needsAttunement && !attackModalData.isAttuned && (
+                <div className={styles.attunementWarningBox}>
+                  ⚠️ This weapon requires attunement to use special abilities. Current: {attunedCount}/{attunementSlotLimit} attuned.
+                </div>
+              )}
+              
               <div className={styles.attackModalData}>
                 <div className={styles.attackModalBox}>
                   <h4>To-Hit Bonus</h4>
@@ -1828,12 +2624,17 @@ const CharacterDisplay = () => {
                   )}
                 </div>
               </div>
+              
               {attackModalData.weapon.onHitEffect && (
                 <div className={styles.attackModalEffect}>
                   <h4>Special Effect</h4>
                   <p>{attackModalData.weapon.onHitEffect}</p>
+                  {attackModalData.needsAttunement && !attackModalData.isAttuned && (
+                    <p className={styles.lockedNote}>🔒 Requires attunement to use</p>
+                  )}
                 </div>
               )}
+              
               {attackModalData.weapon.maxCharges && attackModalData.weapon.currentCharges > 0 && (
                 <div className={styles.chargesExpendPrompt}>
                   <label>
@@ -1841,19 +2642,33 @@ const CharacterDisplay = () => {
                       type="checkbox"
                       checked={expendCharge}
                       onChange={(e) => setExpendCharge(e.target.checked)}
+                      disabled={attackModalData.needsAttunement && !attackModalData.isAttuned}
                     />
                     Expend 1 charge? ({attackModalData.weapon.currentCharges} remaining)
+                    {attackModalData.needsAttunement && !attackModalData.isAttuned && (
+                      <span className={styles.lockedNote}> 🔒 Attune to use charges</span>
+                    )}
                   </label>
                 </div>
               )}
+              
               <div className={styles.attackModalButtons}>
-                <button className={styles.confirmBtn} onClick={() => {
-                  if (expendCharge && attackModalData.weapon.currentCharges > 0) {
-                    updateItemCharges(attackModalData.weapon.inventoryId, attackModalData.weapon.currentCharges - 1);
-                  }
-                  setAttackModalData(null);
-                  setExpendCharge(false);
-                }}>OK, Ready to Roll!</button>
+                <button
+                  className={styles.confirmBtn}
+                  onClick={() => {
+                    if (expendCharge && attackModalData.weapon.currentCharges > 0) {
+                      if (attackModalData.needsAttunement && !attackModalData.isAttuned) {
+                        alert('❌ Must attune to this weapon first to expend charges!');
+                        return;
+                      }
+                      updateItemCharges(attackModalData.weapon.inventoryId, attackModalData.weapon.currentCharges - 1);
+                    }
+                    setAttackModalData(null);
+                    setExpendCharge(false);
+                  }}
+                >
+                  OK, Ready to Roll!
+                </button>
                 <button className={styles.cancelBtn} onClick={() => { setAttackModalData(null); setExpendCharge(false); }}>Cancel</button>
               </div>
             </div>
@@ -1906,7 +2721,9 @@ const CharacterDisplay = () => {
                         variant: selectedWeaponVariant,
                         range: selectedVariantObj.range,
                         abilityUsed: bestAbility.ability,
-                        abilityModifier: bestAbility.modifier
+                        abilityModifier: bestAbility.modifier,
+                        isAttuned: isItemAttuned(weaponToVariantSelect),
+                        needsAttunement: requiresAttunement(weaponToVariantSelect)
                       });
                       setWeaponVariantSelectorOpen(false);
                       setWeaponToVariantSelect(null);
@@ -1981,6 +2798,9 @@ const CharacterDisplay = () => {
                   <div className={styles.onHitSection}>
                     <h3>On-Hit Effect</h3>
                     <p>{selectedAttackForModal.onHitEffect}</p>
+                    {selectedAttackData.needsAttunement && !selectedAttackData.isAttuned && (
+                      <p className={styles.lockedNote}>🔒 Requires attunement to use this effect</p>
+                    )}
                   </div>
                 )}
 
@@ -1992,6 +2812,9 @@ const CharacterDisplay = () => {
                       {selectedAttackForModal.chargeRecharge && (
                         <span><strong>Recharge</strong> {selectedAttackForModal.chargeRecharge}</span>
                       )}
+                      {selectedAttackData.needsAttunement && !selectedAttackData.isAttuned && (
+                        <span className={styles.lockedNote}>🔒 Attune to expend charges</span>
+                      )}
                     </div>
                   </div>
                 )}
@@ -2001,7 +2824,12 @@ const CharacterDisplay = () => {
                     <h3>Special Abilities</h3>
                     <ul className={styles.abilitiesList}>
                       {selectedAttackForModal.specialAbilities.map((ability: string, idx: number) => (
-                        <li key={idx}>{ability}</li>
+                        <li key={idx} className={selectedAttackData.needsAttunement && !selectedAttackData.isAttuned ? styles.abilityLocked : ''}>
+                          {ability}
+                          {selectedAttackData.needsAttunement && !selectedAttackData.isAttuned && (
+                            <span className={styles.lockedBadge}> 🔒</span>
+                          )}
+                        </li>
                       ))}
                     </ul>
                   </div>
@@ -2099,9 +2927,21 @@ const CharacterDisplay = () => {
             unequipItem(selectedItemForDetails.inventoryId, selectedItemForDetails.name);
           }
         }}
+        onAttune={() => {
+          if (selectedItemForDetails && canAttuneMore()) {
+            attuneItem(selectedItemForDetails.inventoryId, selectedItemForDetails.name, selectedItemForDetails.item || selectedItemForDetails);
+          }
+        }}
+        onUnattune={() => {
+          if (selectedItemForDetails) {
+            unattuneItem(selectedItemForDetails.inventoryId, selectedItemForDetails.name);
+          }
+        }}
         canEquip={canEquip(selectedItemForDetails?.item || selectedItemForDetails)}
         isEquipped={selectedItemForDetails?.is_equipped || false}
         requiresAttunement={requiresAttunement(selectedItemForDetails?.item || selectedItemForDetails)}
+        isAttuned={isItemAttuned(selectedItemForDetails?.item || selectedItemForDetails)}
+        canAttuneMore={canAttuneMore()}
         attunedCount={attunedCount}
         attunementLimit={attunementSlotLimit}
       />
@@ -2111,7 +2951,13 @@ const CharacterDisplay = () => {
         <StatModifiersModal
           isOpen={statModifiersModal.isOpen}
           onClose={() => setStatModifiersModal({ ...statModifiersModal, isOpen: false })}
-          statName={statModifiersModal.stat}
+          statName={
+            statModifiersModal.stat === 'SpellDC'
+              ? 'Spell Save DC'
+              : statModifiersModal.stat === 'SpellAttack'
+                ? 'Spell Attack Bonus'
+                : statModifiersModal.stat
+          }
           currentValue={
             statModifiersModal.stat === 'AC'
               ? calculateAC()
@@ -2119,7 +2965,11 @@ const CharacterDisplay = () => {
                 ? getAbilityModifier(character.abilityScores?.dex || 10)
                 : statModifiersModal.stat === 'Speed'
                   ? character.speed || 30
-                  : 0
+                  : statModifiersModal.stat === 'SpellDC'
+                    ? spellSaveDC
+                    : statModifiersModal.stat === 'SpellAttack'
+                      ? spellAttackBonus
+                      : 0
           }
           modifiers={
             statModifiersModal.stat === 'AC'
@@ -2128,7 +2978,11 @@ const CharacterDisplay = () => {
                 ? getInitiativeModifiers()
                 : statModifiersModal.stat === 'Speed'
                   ? getSpeedModifiers()
-                  : []
+                  : statModifiersModal.stat === 'SpellDC'
+                    ? getSpellDCModifiers()
+                    : statModifiersModal.stat === 'SpellAttack'
+                      ? getSpellAttackModifiers()
+                      : []
           }
         />
       )}

@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, JSON, Boolean
+from sqlalchemy import Column, Integer, String, ForeignKey, JSON, Boolean, Text, DateTime
 from sqlalchemy.orm import relationship
 from . import Base
+from datetime import datetime
 
 
 class Character(Base):
@@ -46,12 +47,18 @@ class Character(Base):
     proficient_tools = Column(JSON, default=list)       # Tool proficiencies
     known_languages = Column(JSON, default=list)        # Language proficiencies
     hit_points = Column(Integer)                       # Manual HP value
+   
+    spell_slots = Column(JSON)  # {"1": 4, "2": 3, "3": 2, "4": 0, ...}
+    spell_slots_expended = Column(JSON)  # {"1": 2, "2": 1, "3": 0, "4": 0, ...}
+    spellcasting_ability = Column(String)  # "int", "wis", "cha" (primary)
 
     # Relationships
     species = relationship("Species", back_populates="characters")
     background = relationship("Background", back_populates="characters")
     classes_assoc = relationship("CharacterClass", back_populates="character")
     inventory = relationship("CharacterInventory", back_populates="character")
+    spells = relationship("CharacterSpell", back_populates="character")
+
 
     def __repr__(self) -> str:
         return f"Character('{self.name}', '{self.species}', '{self.level}')"
@@ -107,7 +114,8 @@ class Character(Base):
                 'chargeRecharge': inv_entry.item.charge_recharge,
                 'onHitEffect': inv_entry.item.on_hit_effect,
                 'inventoryId': inv_entry.id,  # ✅ NEW: Include inventory entry ID for updates
-                'is_equipped': inv_entry.is_equipped  # ✅ NEW: Include equipped status
+                'is_equipped': inv_entry.is_equipped,  # ✅ NEW: Include equipped status,
+                'is_attuned': inv_entry.is_attuned
             } for inv_entry in self.inventory]  # ✅ NEW: Include inventory items
         }
 
@@ -134,7 +142,6 @@ class CharacterClass(Base):
     character = relationship("Character", back_populates="classes_assoc")
     dndclass = relationship("DnDclass", back_populates="character_assoc")
 
-
 class CharacterInventory(Base):
     """
     Tracks items in a character's inventory.
@@ -145,7 +152,8 @@ class CharacterInventory(Base):
         itemID: Foreign key to items table
         quantity: Number of items (default 1)
         current_charges: Current charges remaining (for items with max_charges)
-        is_equipped: Whether the item is currently equipped (for armor/shields)
+        is_equipped: Whether the item is currently equipped (for armor/shields),
+        is_attuned': Whether the item is currently attuned
     """
     __tablename__ = "characterinventory"
     
@@ -155,6 +163,53 @@ class CharacterInventory(Base):
     quantity = Column(Integer, default=1)
     current_charges = Column(Integer, default=0)  # ✅ NEW: Track current charges
     is_equipped = Column(Boolean, default=False)  # ✅ NEW: Track if armor/shield is equipped
+    is_attuned = Column(Boolean, default=False)
 
     character = relationship("Character", back_populates="inventory")
     item = relationship("Item", back_populates="inventory_entries")
+
+class CharacterSpell(Base):
+    """
+    Junction table linking Characters to Spells they know/have prepared.
+    
+    Tracks character-specific spell data like preparation status,
+    spellcasting ability used, and source of the spell.
+    """
+    __tablename__ = "character_spells"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    character_id = Column(Integer, ForeignKey("characters.id"), nullable=False, index=True)
+    spell_id = Column(Integer, ForeignKey("spells.id"), nullable=False, index=True)
+    
+    # === Source Tracking ===
+    source = Column(String, nullable=False)  # "class", "species", "background", "feat", "item"
+    source_name = Column(String)  # "Wizard", "High Elf", "Magic Initiate"
+    source_detail = Column(Text)  # Additional details (e.g., subclass name)
+    
+    # === Preparation Status ===
+    is_prepared = Column(Boolean, default=True)  # For prepared casters
+    always_prepared = Column(Boolean, default=False)  # Domain spells, etc.
+    
+    # === Timestamps ===
+    date_added = Column(DateTime, default=datetime.utcnow)
+    date_prepared = Column(DateTime)  # When spell was last prepared
+    
+    # === Relationships ===
+    character = relationship("Character", back_populates="spells")
+    spell = relationship("Spell", back_populates="character_spells")
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'character_id': self.character_id,
+            'spell_id': self.spell_id,
+            'spell': self.spell.to_dict() if self.spell else None,
+            'source': self.source,
+            'source_name': self.source_name,
+            'source_detail': self.source_detail,
+            'is_prepared': self.is_prepared,
+            'always_prepared': self.always_prepared,
+            'spellcasting_ability': self.spellcasting_ability,
+            'date_added': self.date_added.isoformat() if self.date_added else None,
+            'date_prepared': self.date_prepared.isoformat() if self.date_prepared else None
+        }

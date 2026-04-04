@@ -12,13 +12,7 @@ def add_species_and_subspecies():
     # === HUMAN (Variant Human) ===
     human_data = {
         "name": "Human",
-        "ability_choices": [
-            {
-                "n_choices": 2,
-                "bonus": 1,
-                "options": ["STR", "DEX", "CON", "INT", "WIS", "CHA"]
-            }
-        ],
+        "ability_bonuses": {"STR" : 1, "DEX" : 1, "CON" : 1, "INT" : 1, "WIS" : 1, "CHA" : 1},
         "size": "Medium",
         "age_adulthood": 18,
         "lifespan": 80,

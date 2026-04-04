@@ -20,27 +20,34 @@ add_languages()
 from populate.populate_featuresDB import add_features
 add_features()
 
-# === Step 3: Populate Proficiencies ===
-# from populate.populate_proficienciesDB import add_proficiencies
-# add_proficiencies()
-
-# === Step 4: Populate Species ===
-from populate.populate_speciesDB import add_species_and_subspecies, add_species_traits
-add_species_and_subspecies()
-
-# === Step 5: Link Species Traits ===
-add_species_traits()
-
-# === Step 6: Populate Classes ===
-from populate.populate_classesDB import create_barbarian, create_druid
-create_barbarian()
-create_druid()
-
-# === Step 7: Populate Items ===
+# === Step 3: Populate Items ===
 from populate.populate_itemDB import add_items
 add_items()
 
-# === Step 8: Populate Backgrounds ===
+# === Step 4: Populate Spells ===
+from populate.populate_spellsDB import add_all
+add_all()
+
+# === Step 5: Populate Proficiencies ===
+# from populate.populate_proficienciesDB import add_proficiencies
+# add_proficiencies()
+
+# === Step 6: Populate Species ===
+from populate.populate_speciesDB import add_species_and_subspecies, add_species_traits
+add_species_and_subspecies()
+
+# === Step 7: Link Species Traits ===
+add_species_traits()
+
+# === Step 8: Populate Classes ===
+from populate.populate_classesDB import populate_all_classes
+populate_all_classes()
+
+# === Step 9: Match Spells to Class ===
+from populate.matchSpellsToClass import seed_class_spells_filtered
+seed_class_spells_filtered()
+
+# === Step 9: Populate Backgrounds ===
 from populate.populate_backgroundsDB import populate_backgrounds
 populate_backgrounds()
 

@@ -11,7 +11,7 @@ interface ItemModalProps {
   onAddPack?: (packName: string) => void;
   availableItems: Array<{
     name: string;
-    type: string;
+    item_type: string;
     desc?: string;
     weight?: number;
     cost?: number;
@@ -37,6 +37,8 @@ const ItemModal: React.FC<ItemModalProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [quantity, setQuantity] = useState(1);
+  const [filterType, setFilterType] = useState<string | 'all'>('all');
+  const [filterRarity, setFilterRarity] = useState<string | 'all'>('all');
   const navigate = useNavigate();
 
   const itemsWithPacks = useMemo(() => {
@@ -45,9 +47,29 @@ const ItemModal: React.FC<ItemModalProps> = ({
     return [...availableItems, ...packsToAdd];
   }, [availableItems]);
 
-  const filteredItems = itemsWithPacks.filter((item) =>
-    item.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Get unique item types and rarities for filter options
+  const uniqueTypes = useMemo(() => {
+    const types = new Set<string>();
+    itemsWithPacks.forEach((item) => {
+      if (item.item_type) types.add(item.item_type);
+    });
+    return Array.from(types).sort();
+  }, [itemsWithPacks]);
+
+  const uniqueRarities = useMemo(() => {
+    const rarities = new Set<string>();
+    itemsWithPacks.forEach((item) => {
+      if (item.rarity) rarities.add(item.rarity);
+    });
+    return Array.from(rarities).sort();
+  }, [itemsWithPacks]);
+
+  const filteredItems = itemsWithPacks.filter((item) => {
+    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesType = filterType === 'all' || item.item_type === filterType;
+    const matchesRarity = filterRarity === 'all' || item.rarity === filterRarity;
+    return matchesSearch && matchesType && matchesRarity;
+  });
 
   if (!isOpen) return null;
 
@@ -111,6 +133,47 @@ const ItemModal: React.FC<ItemModalProps> = ({
               />
             </div>
 
+            {/* Filter Controls */}
+            <div style={{ padding: '0.75rem', borderTop: '1px solid #ddd' }}>
+              <div style={{ marginBottom: '0.5rem' }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 'bold', display: 'block', marginBottom: '0.25rem' }}>
+                  Type:
+                </label>
+                <select
+                  value={filterType}
+                  onChange={(e) => setFilterType(e.target.value)}
+                  className={styles.searchInput}
+                  style={{ fontSize: '0.9rem' }}
+                >
+                  <option value="all">All Types</option>
+                  {uniqueTypes.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.85rem', fontWeight: 'bold', display: 'block', marginBottom: '0.25rem' }}>
+                  Rarity:
+                </label>
+                <select
+                  value={filterRarity}
+                  onChange={(e) => setFilterRarity(e.target.value)}
+                  className={styles.searchInput}
+                  style={{ fontSize: '0.9rem' }}
+                >
+                  <option value="all">All Rarities</option>
+                  {uniqueRarities.map((rarity) => (
+                    <option key={rarity} value={rarity}>
+                      {rarity}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
             <div className={styles.listContainer}>
               {filteredItems.length === 0 ? (
                 <p className={styles.noResults}>No items found</p>
@@ -128,7 +191,7 @@ const ItemModal: React.FC<ItemModalProps> = ({
                     className={`${styles.itemRow} ${selectedItem?.name === item.name ? styles.selected : ''}`}
                   >
                     <span className={styles.itemName}>{item.name}</span>
-                    <small className={styles.itemType}>{item.type}</small>
+                    <small className={styles.itemType}>{item.item_type}</small>
                   </div>
                 ))
               )}
@@ -141,7 +204,7 @@ const ItemModal: React.FC<ItemModalProps> = ({
                 <h4 className={styles.detailsTitle}>{selectedItem.name}</h4>
 
                 <div className={styles.detailGrid}>
-                  {selectedItem.type && <div><strong>Type:</strong> {selectedItem.type}</div>}
+                  {selectedItem.item_type && <div><strong>Type:</strong> {selectedItem.item_type}</div>}
                   {selectedItem.item_category && <div><strong>Category:</strong> {selectedItem.item_category}</div>}
                   {typeof selectedItem.weight === 'number' && <div><strong>Weight:</strong> {selectedItem.weight} lbs</div>}
                   {typeof selectedItem.cost === 'number' && <div><strong>Cost:</strong> {selectedItem.cost} gp</div>}
@@ -162,7 +225,7 @@ const ItemModal: React.FC<ItemModalProps> = ({
                   </div>
                 )}
 
-                {selectedItem.type === 'Weapon' && (
+                {selectedItem.item_type === 'Weapon' && (
                   <div className={styles.weaponDetails}>
                     {selectedItem.damageDice && <div><strong>Damage:</strong> {selectedItem.damageDice}</div>}
                     {selectedItem.damageType && <div><strong>Damage Type:</strong> {selectedItem.damageType}</div>}

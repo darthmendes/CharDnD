@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, JSON
+from sqlalchemy import Column, Integer, String, ForeignKey, JSON, Boolean
 from sqlalchemy.orm import relationship
 from . import Base
 from .utils import JSONType
@@ -23,6 +23,7 @@ class DnDclass(Base):
     class_features = relationship("ClassFeatures", back_populates="dndclass")
     class_equipment = relationship("ClassEquipment", back_populates="dndclass")
     character_assoc = relationship("CharacterClass", back_populates="dndclass")
+    class_spells = relationship("ClassSpell", back_populates="dndclass")
 
     guaranteed_proficiencies = relationship(
         "EntityProficiency",
@@ -104,3 +105,36 @@ class ClassFeatures(Base):
     dndclass = relationship("DnDclass", back_populates="class_features")
     subclass = relationship("Subclass", back_populates="features")
     features = relationship("Features", back_populates="classFeatures")
+
+class ClassSpell(Base):
+    """
+    Junction table defining which spells each class can learn.
+    
+    This is the MASTER LIST of spell availability per class.
+    """
+    __tablename__ = "class_spells"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    class_id = Column(Integer, ForeignKey("dndclass.id"), nullable=False, index=True)
+    spell_id = Column(Integer, ForeignKey("spells.id"), nullable=False, index=True)
+    
+    # Optional restrictions
+    min_level = Column(Integer, default=1)  # Minimum class level to learn
+    subclass = Column(String)  # NULL = all subclasses, or specific subclass name
+    is_always_prepared = Column(Boolean, default=False)  # For Cleric domain spells, etc.
+    
+    # Relationships
+    dndclass = relationship("DnDclass", back_populates="class_spells")
+    spell = relationship("Spell", back_populates="class_spells")
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'class_id': self.class_id,
+            'spell_id': self.spell_id,
+            'min_level': self.min_level,
+            'subclass': self.subclass,
+            'is_always_prepared': self.is_always_prepared,
+            'class': self.dndclass.to_dict() if self.dndclass else None,
+            'spell': self.spell.to_dict() if self.spell else None
+        }

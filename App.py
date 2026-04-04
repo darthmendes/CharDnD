@@ -15,6 +15,7 @@ from Backend.services.SpeciesService import SpeciesService as Species
 from Backend.services.ClassService import ClassService as DnDClass
 from Backend.services.ItemService import ItemService as Item
 from Backend.services.LanguageService import LanguageService as Language
+from Backend.services.SpellService import SpellService as Spell
 
 from Backend.constants import PACK_DEFINITIONS
 from Backend.config import FLASK_DEBUG, FLASK_PORT, CORS_ORIGINS, SECRET_KEY
@@ -169,6 +170,125 @@ def unequip_item(char_id, inventory_id):
     else:
         return jsonify(result), HTTPStatus.BAD_REQUEST
 
+
+# app.py
+
+@app.route('/API/characters/<int:char_id>/inventory/<int:inventory_id>/attune', methods=['PATCH'])
+def attune_item(char_id, inventory_id):
+    """Attune to a magic item."""
+    from Backend.models import session
+    from Backend.models.character import CharacterInventory
+    
+    try:
+        # Get character
+        char = Character.get_by_id(char_id)
+        if not char:
+            return jsonify({"error": "Character not found", "success": False}), 404
+        
+        # ✅ FIX: Use 'inventory' not 'inventory_items'
+        inventory_item = session.query(CharacterInventory).filter_by(
+            id=inventory_id,
+            characterID=char_id
+        ).first()
+        
+        if not inventory_item:
+            return jsonify({"error": "Inventory item not found", "success": False}), 404
+        
+        # Check if item requires attunement
+        item = inventory_item.item
+        requires_attunement = (
+            item.property_data and item.property_data.get('requires_attunement', False) or
+            (item.rarity and item.rarity in ['Rare', 'Very Rare', 'Legendary', 'Artifact'])
+        )
+        
+        if not requires_attunement:
+            return jsonify({
+                "error": "This item does not require attunement",
+                "success": False
+            }), 400
+        
+        # Check if already attuned
+        if inventory_item.is_attuned:
+            return jsonify({
+                "error": "Item is already attuned",
+                "success": False
+            }), 400
+        
+        # ✅ FIX: Use 'inventory' not 'inventory_items'
+        attuned_count = session.query(CharacterInventory).filter_by(
+            characterID=char_id,
+            is_attuned=True
+        ).count()
+        
+        # Check attunement limit (default 4)
+        attunement_limit = 4
+        if hasattr(char, 'attunementSlotBonus'):
+            attunement_limit += char.attunementSlotBonus
+        
+        if attuned_count >= attunement_limit:
+            return jsonify({
+                "error": f"Attunement slot limit reached ({attuned_count}/{attunement_limit})",
+                "success": False,
+                "attuned_count": attuned_count,
+                "attunement_limit": attunement_limit
+            }), 400
+        
+        # Attune the item
+        inventory_item.is_attuned = True
+        session.commit()
+        
+        # Return updated character
+        char = Character.get_by_id(char_id)
+        if char:
+            return jsonify(char.to_dict()), 200
+        return jsonify({"success": True}), 200
+        
+    except Exception as e:
+        session.rollback()
+        return jsonify({"error": str(e), "success": False}), 500
+
+
+@app.route('/API/characters/<int:char_id>/inventory/<int:inventory_id>/unattune', methods=['PATCH'])
+def unattune_item(char_id, inventory_id):
+    """Unattune from a magic item."""
+    from Backend.models import session
+    from Backend.models.character import CharacterInventory
+    
+    try:
+        # Get character
+        char = Character.get_by_id(char_id)
+        if not char:
+            return jsonify({"error": "Character not found", "success": False}), 404
+        
+        # Get inventory item
+        inventory_item = session.query(CharacterInventory).filter_by(
+            id=inventory_id,
+            characterID=char_id
+        ).first()
+        
+        if not inventory_item:
+            return jsonify({"error": "Inventory item not found", "success": False}), 404
+        
+        # Check if already unattuned
+        if not inventory_item.is_attuned:
+            return jsonify({
+                "error": "Item is not attuned",
+                "success": False
+            }), 400
+        
+        # Unattune the item
+        inventory_item.is_attuned = False
+        session.commit()
+        
+        # Return updated character
+        char = Character.get_by_id(char_id)
+        if char:
+            return jsonify(char.to_dict()), 200
+        return jsonify({"success": True}), 200
+        
+    except Exception as e:
+        session.rollback()
+        return jsonify({"error": str(e), "success": False}), 500
     
 ################################################################
 # Species Routes
@@ -321,6 +441,112 @@ def get_languages():
     try:
         languages = Language.get_all_languages()
         result = [lang.to_dict() for lang in languages]
+        return jsonify(result), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+################################################################
+# Spell Routes
+################################################################
+
+@app.route('/API/spells', methods=['GET'])
+def list_spells():
+    """Get all available spells."""
+    try:
+        spells = Spell.get_all_spells()
+        result = [s.to_dict() for s in spells]
+        return jsonify(result), HTTPStatus.OK
+    except Exception as e:
+        return jsonify({"error": str(e)}), HTTPStatus.INTERNAL_SERVER_ERROR
+
+@app.route('/API/characters/<int:char_id>/spell-slots', methods=['GET'])
+def get_spell_slots(char_id):
+    """Get character's available spell slots."""
+    result = Spell.get_character_spell_slots(char_id)
+    if result["success"]:
+        return jsonify(result["data"]), HTTPStatus.OK
+    else:
+        return jsonify({"error": result["error"]}), HTTPStatus.NOT_FOUND
+
+
+@app.route('/API/characters/<int:char_id>/spell-slots/expended', methods=['PATCH'])
+def update_expended_slots(char_id):
+    """Update expended spell slots."""
+    data = request.json
+    if not data or 'level' not in data or 'amount' not in data:
+        return jsonify({"error": "Missing level or amount"}), HTTPStatus.BAD_REQUEST
+    
+    result = Spell.update_expended_slots(char_id, data['level'], data['amount'])
+    if result["success"]:
+        return jsonify({"success": True, "expended": result["data"]}), HTTPStatus.OK
+    else:
+        return jsonify({"error": result["error"]}), HTTPStatus.BAD_REQUEST
+
+
+@app.route('/API/characters/<int:char_id>/spells', methods=['GET'])
+def get_character_spells(char_id):
+    """Get all spells known by character."""
+    result = Spell.get_character_spells(char_id)
+    if result["success"]:
+        return jsonify(result["data"]), HTTPStatus.OK
+    else:
+        return jsonify({"error": result["error"]}), HTTPStatus.NOT_FOUND
+
+
+@app.route('/API/characters/<int:char_id>/spells', methods=['POST'])
+def add_character_spell(char_id):
+    """Add a spell to character's known spells."""
+    data = request.json
+    if not data:
+        return jsonify({"error": "Request body must be valid JSON"}), HTTPStatus.BAD_REQUEST
+    
+    result = Spell.add_spell_to_character(char_id, data)
+    if result["success"]:
+        return jsonify({"success": True, "spell": result["data"]}), HTTPStatus.CREATED
+    else:
+        return jsonify({"error": result["error"]}), HTTPStatus.BAD_REQUEST
+
+
+@app.route('/API/characters/<int:char_id>/spells/<int:spell_id>', methods=['DELETE'])
+def remove_character_spell(char_id, spell_id):
+    """Remove a spell from character's known spells."""
+    result = Spell.remove_spell_from_character(char_id, spell_id)
+    if result["success"]:
+        return jsonify({"success": True}), HTTPStatus.OK
+    else:
+        return jsonify({"error": result["error"]}), HTTPStatus.NOT_FOUND
+
+
+@app.route('/API/characters/<int:char_id>/spells/<int:spell_id>/prepare', methods=['PATCH'])
+def toggle_spell_prepared(char_id, spell_id):
+    """Toggle whether a spell is prepared."""
+    result = Spell.toggle_spell_prepared(char_id, spell_id)
+    if result["success"]:
+        return jsonify({"success": True, "is_prepared": result["data"]["is_prepared"]}), HTTPStatus.OK
+    else:
+        return jsonify({"error": result["error"]}), HTTPStatus.NOT_FOUND
+
+
+@app.route('/API/characters/<int:char_id>/prepare-limit', methods=['GET'])
+def get_prepare_limit(char_id):
+    """Get spell prepare limit for character based on D&D 5e rules."""
+    result = Spell.calculate_prepare_limit(char_id)
+    if result["success"]:
+        return jsonify({
+            "prepare_limit": result["prepare_limit"],
+            "prepared_count": result["prepared_count"],
+            "prepare_ability": result["prepare_ability"],
+            "primary_spellcasting_class": result["primary_spellcasting_class"],
+            "unlimited": result["unlimited"]
+        }), HTTPStatus.OK
+    else:
+        return jsonify({"error": result["error"]}), HTTPStatus.NOT_FOUND
+
+@app.route('/API/spells', methods=['GET'])
+def get_spells():
+    try:
+        spells = Spell.get_all_spells()
+        result = [sp.to_dict() for sp in spells]
         return jsonify(result), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500

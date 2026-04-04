@@ -286,3 +286,64 @@ class ItemService:
         except Exception as e:
             session.rollback()
             return {"success": False, "error": f"Failed to unequip item: {str(e)}"}
+        
+    @staticmethod
+    def attune_item(inventory_id: int, char_id: int) -> dict:
+        """
+        Attune a character to a magic item.
+        """
+        try:
+            from Backend.models import session
+            
+            inventory_item = session.query(CharacterInventory).filter_by(
+                id=inventory_id,
+                character_id=char_id
+            ).first()
+            
+            if not inventory_item:
+                return {"success": False, "error": "Inventory item not found"}
+            
+            # Set attuned status
+            inventory_item.is_attuned = True
+            session.commit()
+            
+            return {
+                "success": True,
+                "message": f"{inventory_item.item.name} attuned successfully",
+                "inventory_id": inventory_id
+            }
+            
+        except Exception as e:
+            session.rollback()
+            return {"success": False, "error": str(e)}
+
+
+    @staticmethod
+    def unattune_item(inventory_id: int, char_id: int) -> dict:
+        """
+        Unattune a character from a magic item.
+        """
+        try:
+            from Backend.models import session
+            
+            inventory_item = session.query(CharacterInventory).filter_by(
+                id=inventory_id,
+                character_id=char_id
+            ).first()
+            
+            if not inventory_item:
+                return {"success": False, "error": "Inventory item not found"}
+            
+            # Unset attuned status
+            inventory_item.is_attuned = False
+            session.commit()
+            
+            return {
+                "success": True,
+                "message": f"{inventory_item.item.name} unattuned successfully",
+                "inventory_id": inventory_id
+            }
+            
+        except Exception as e:
+            session.rollback()
+            return {"success": False, "error": str(e)}

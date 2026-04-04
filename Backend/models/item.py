@@ -1,7 +1,8 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, JSON
+from sqlalchemy import Column, Integer, String, ForeignKey, JSON, Boolean, Text
 from sqlalchemy.orm import relationship
 from . import Base
 from ..constants import ITEM_TYPES
+
 
 VALID_TYPES_LIST = sorted(ITEM_TYPES)
 
@@ -39,6 +40,8 @@ class Item(Base):
     class_entries = relationship("ClassEquipment", back_populates="item")
     background_entries = relationship("BackgroundEquipment", back_populates="item")
     item_choice = relationship("ItemChoice", back_populates="item")
+    item_spells = relationship("ItemSpell", back_populates="item", cascade="all, delete-orphan")
+   
 
     def to_dict(self):
         return {
@@ -81,3 +84,58 @@ class ItemChoiceGroup(Base):
     n_choices = Column(Integer, default=1)
 
     choices = relationship("ItemChoice", back_populates="group")
+
+class ItemSpell(Base):
+    """
+    Junction table linking Items to Spells they can cast.
+    
+    Tracks item-specific spell data like fixed DC, charges,
+    and usage limits for magic items that cast spells.
+    """
+    __tablename__ = "item_spells"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    item_id = Column(Integer, ForeignKey("items.id"), nullable=False, index=True)
+    spell_id = Column(Integer, ForeignKey("spells.id"), nullable=False, index=True)
+    
+    # === Fixed Values (for items) ===
+    save_dc_fixed = Column(Integer)  # Fixed DC (e.g., 15) - NULL if uses wielder's ability
+    attack_bonus_fixed = Column(Integer)  # Fixed attack bonus - NULL if uses wielder's
+    
+    # === Usage Limits ===
+    charges_per_cast = Column(Integer, default=1)  # Charges consumed per cast
+    uses_per_day = Column(Integer)  # Max uses per day (NULL = unlimited)
+    uses_remaining = Column(Integer)  # Remaining uses (reset on long rest)
+    
+    # === Requirements ===
+    requires_attunement = Column(Boolean, default=False)  # Must be attuned to use
+    requires_spellcasting_ability = Column(Boolean, default=False)  # Must be spellcaster
+    
+    # === Casting Details ===
+    casting_modifier = Column(String)  # "use_item_dc", "use_wielder_ability"
+    spell_save_ability = Column(String)  # Which ability for save DC
+    
+    # === Description ===
+    notes = Column(Text)  # Special conditions or restrictions
+    
+    # === Relationships ===
+    item = relationship("Item", back_populates="item_spells")
+    spell = relationship("Spell", back_populates="item_spells")
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'item_id': self.item_id,
+            'spell_id': self.spell_id,
+            'spell': self.spell.to_dict() if self.spell else None,
+            'save_dc_fixed': self.save_dc_fixed,
+            'attack_bonus_fixed': self.attack_bonus_fixed,
+            'charges_per_cast': self.charges_per_cast,
+            'uses_per_day': self.uses_per_day,
+            'uses_remaining': self.uses_remaining,
+            'requires_attunement': self.requires_attunement,
+            'requires_spellcasting_ability': self.requires_spellcasting_ability,
+            'casting_modifier': self.casting_modifier,
+            'spell_save_ability': self.spell_save_ability,
+            'notes': self.notes
+        }
