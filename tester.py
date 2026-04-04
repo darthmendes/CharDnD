@@ -44,8 +44,8 @@ from populate.populate_classesDB import populate_all_classes
 populate_all_classes()
 
 # === Step 9: Match Spells to Class ===
-from populate.matchSpellsToClass import seed_class_spells_filtered
-seed_class_spells_filtered()
+from populate.matchSpellsToClass import make_all_matches
+make_all_matches()
 
 # === Step 9: Populate Backgrounds ===
 from populate.populate_backgroundsDB import populate_backgrounds

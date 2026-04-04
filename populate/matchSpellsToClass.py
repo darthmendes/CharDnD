@@ -70,8 +70,7 @@ def get_min_level(spell_level: int, class_name: str) -> int:
 # - min_level is calculated automatically by get_min_level(), so you can omit it or override
 # - subclass: None = available to all subclasses; set to "Life Domain", "Oath of Devotion", etc. for restrictions
 # - is_always_prepared: True for Domain/Oath/Circle spells that are always prepared
-
-SPELL_CLASS_MAPPING = {
+cantrip_mapping = {
     # ==================== CANTRIPS (Level 0) ====================
     "Acid Splash": [
         {"class": "Sorcerer"}, {"class": "Wizard"},
@@ -208,7 +207,11 @@ SPELL_CLASS_MAPPING = {
     "Sapping Sting": [
         {"class": "Wizard"},
     ],
+    "Toll the Dead": [{"class": "Cleric"}, {"class": "Warlock"}, {"class": "Wizard"}
+    ]
+}
 
+lvl1_mapping = {
     # ==================== LEVEL 1 SPELLS ====================
     "Alarm": [
         {"class": "Artificer"}, {"class": "Ranger"}, {"class": "Wizard"},
@@ -348,6 +351,9 @@ SPELL_CLASS_MAPPING = {
     "Ray of Sickness": [
         {"class": "Sorcerer"}, {"class": "Wizard"},
     ],
+    "Sanctuary": [
+        {"class": "Cleric"}, {"class": "Artificer"},
+    ],
     "Shield": [
         {"class": "Sorcerer"}, {"class": "Wizard"},
     ],
@@ -411,7 +417,35 @@ SPELL_CLASS_MAPPING = {
     "Immersive Translation": [
         {"class": "Bard"}, {"class": "Warlock"}, {"class": "Wizard"},
     ],
+    "Faerie Fire": [
+        {"class": "Bard"},
+        {"class": "Druid"},
+        {"class": "Ranger"}
+    ],
+    "Earth Tremor": [
+        {"class": "Bard"},
+        {"class": "Druid"},
+        {"class": "Sorcerer"},
+        {"class": "Wizard"}
+    ],
+    "Elemental Weapon": [
+        {"class": "Artificer"},
+        {"class": "Druid"},
+        {"class": "Paladin"},
+        {"class": "Ranger"}
+    ],
+    "Speak with Dead": [
+        {"class": "Cleric"},
+    ],
+    "Crusader's Mantle": [
+        {"class": "Paladin"},
+    ],
+    "Lightning Arrow": [
+        {"class": "Ranger"},
+    ],
+}
 
+lvl2_mapping = {
     # ==================== LEVEL 2 SPELLS ====================
     "Aid": [
         {"class": "Artificer"}, {"class": "Cleric"}, {"class": "Paladin"},
@@ -587,17 +621,144 @@ SPELL_CLASS_MAPPING = {
     "Skywrite": [
         {"class": "Artificer"}, {"class": "Bard"}, {"class": "Druid"}, {"class": "Sorcerer"}, {"class": "Wizard"},
     ],
-    "Summon Celestial": [
-        {"class": "Cleric"}, {"class": "Paladin"},
-    ],
-    "Summon Draconic Spirit": [
+    "Tasha's Mind Whip": [
         {"class": "Sorcerer"}, {"class": "Warlock"}, {"class": "Wizard"},
     ],
-    "Summon Elemental": [
+    "Flame Blade": [
+        {"class": "Druid"}
+    ]
+}
+
+lvl3_mapping = {
+    # ==================== LEVEL 3 SPELLS ====================
+    "Animate Dead": [
+        {"class": "Cleric"}, {"class": "Wizard"},
+    ],
+    "Bestow Curse": [
+        {"class": "Bard"}, {"class": "Cleric"}, {"class": "Wizard"},
+    ],
+    "Beacon of Hope": [
+        {"class": "Cleric"},
+    ],
+    "Blink": [
+        {"class": "Sorcerer"}, {"class": "Wizard"},
+    ],
+    "Call Lightning": [
+        {"class": "Druid"}, {"class": "Ranger"},
+    ],
+    "Catnap": [
+        {"class": "Bard"}, {"class": "Sorcerer"}, {"class": "Warlock"}, {"class": "Wizard"},
+    ],
+    "Clairvoyance": [
+        {"class": "Bard"}, {"class": "Cleric"}, {"class": "Sorcerer"}, {"class": "Wizard"},
+    ],
+    "Counterspell": [
+        {"class": "Sorcerer"}, {"class": "Warlock"}, {"class": "Wizard"},
+    ],
+    "Create Food and Water": [
+        {"class": "Cleric"}, {"class": "Paladin"},
+    ],
+    "Daylight": [
+        {"class": "Cleric"}, {"class": "Druid"}, {"class": "Ranger"}, {"class": "Sorcerer"},
+    ],
+    "Dispel Magic": [
+        {"class": "Bard"}, {"class": "Cleric"}, {"class": "Druid"}, {"class": "Paladin"}, {"class": "Sorcerer"}, {"class": "Warlock"}, {"class": "Wizard"},
+    ],
+    "Erupting Earth": [
         {"class": "Druid"}, {"class": "Sorcerer"}, {"class": "Wizard"},
+    ],
+    "Fear": [
+        {"class": "Bard"}, {"class": "Sorcerer"}, {"class": "Warlock"}, {"class": "Wizard"},
+    ],
+    "Feign Death": [
+        {"class": "Bard"}, {"class": "Cleric"}, {"class": "Wizard"},
+    ],
+    "Fireball": [
+        {"class": "Sorcerer"}, {"class": "Wizard"},
+    ],
+    "Flame Arrows": [
+        {"class": "Artificer"}, {"class": "Sorcerer"}, {"class": "Wizard"},
+    ],
+    "Fly": [
+        {"class": "Artificer"}, {"class": "Sorcerer"}, {"class": "Warlock"}, {"class": "Wizard"},
+    ],
+    "Gaseous Form": [
+        {"class": "Artificer"}, {"class": "Sorcerer"}, {"class": "Warlock"}, {"class": "Wizard"},
+    ],
+    "Glyph of Warding": [
+        {"class": "Bard"}, {"class": "Cleric"}, {"class": "Wizard"},
+    ],
+    "Haste": [
+        {"class": "Artificer"}, {"class": "Sorcerer"}, {"class": "Wizard"},
+    ],
+    "Hunger of Hadar": [
+        {"class": "Warlock"},
+    ],
+    "Hypnotic Pattern": [
+        {"class": "Bard"}, {"class": "Sorcerer"}, {"class": "Warlock"}, {"class": "Wizard"},
+    ],
+    "Leomund's Tiny Hut": [
+        {"class": "Bard"}, {"class": "Wizard"},
+    ],
+    "Life Transference": [
+        {"class": "Cleric"}, {"class": "Wizard"},
+    ],
+    "Lightning Bolt": [
+        {"class": "Sorcerer"}, {"class": "Wizard"},
+    ],
+    "Magic Circle": [
+        {"class": "Cleric"}, {"class": "Paladin"}, {"class": "Warlock"}, {"class": "Wizard"},
+    ],
+    "Major Image": [
+        {"class": "Bard"}, {"class": "Sorcerer"}, {"class": "Warlock"}, {"class": "Wizard"},
+    ],
+    "Meld into Stone": [
+        {"class": "Cleric"}, {"class": "Druid"},
+    ],
+    "Melf's Minute Meteors": [
+        {"class": "Sorcerer"}, {"class": "Wizard"},
+    ],
+    "Nondetection": [
+        {"class": "Bard"}, {"class": "Ranger"}, {"class": "Wizard"},
+    ],
+    "Phantom Steed": [
+        {"class": "Wizard"},
+    ],
+    "Plant Growth": [
+        {"class": "Bard"}, {"class": "Druid"}, {"class": "Ranger"},
+    ],
+    "Protection from Energy": [
+        {"class": "Artificer"}, {"class": "Cleric"}, {"class": "Druid"}, {"class": "Ranger"}, {"class": "Sorcerer"}, {"class": "Wizard"},
+    ],
+    "Remove Curse": [
+        {"class": "Cleric"}, {"class": "Paladin"}, {"class": "Warlock"}, {"class": "Wizard"},
+    ],
+    "Revivify": [
+        {"class": "Artificer"}, {"class": "Cleric"}, {"class": "Paladin"},
+    ],
+    "Sending": [
+        {"class": "Bard"}, {"class": "Cleric"}, {"class": "Wizard"},
+    ],
+    "Sleet Storm": [
+        {"class": "Druid"}, {"class": "Sorcerer"}, {"class": "Wizard"},
+    ],
+    "Slow": [
+        {"class": "Sorcerer"}, {"class": "Wizard"},
+    ],
+    "Spirit Guardians": [
+        {"class": "Cleric"},
+    ],
+    "Spirit Shroud": [
+        {"class": "Cleric"}, {"class": "Paladin"}, {"class": "Warlock"},
+    ],
+    "Stinking Cloud": [
+        {"class": "Bard"}, {"class": "Sorcerer"}, {"class": "Wizard"},
     ],
     "Summon Fey": [
         {"class": "Druid"}, {"class": "Ranger"}, {"class": "Warlock"}, {"class": "Wizard"},
+    ],
+    "Summon Lesser Demons": [
+        {"class": "Warlock"}, {"class": "Wizard"},
     ],
     "Summon Shadowspawn": [
         {"class": "Warlock"}, {"class": "Wizard"},
@@ -605,32 +766,413 @@ SPELL_CLASS_MAPPING = {
     "Summon Undead": [
         {"class": "Warlock"}, {"class": "Wizard"},
     ],
-    "Tasha's Mind Whip": [
+    "Thunder Step": [
         {"class": "Sorcerer"}, {"class": "Warlock"}, {"class": "Wizard"},
     ],
-
-    # ==================== LEVEL 3-9 SPELLS (Abbreviated for brevity) ====================
-    # Add remaining spells following the same pattern...
-    # For a complete mapping of all ~370 spells, see the full version below.
-    
-    # Example for Level 3:
-    "Animate Dead": [
-        {"class": "Cleric"}, {"class": "Wizard"},
+    "Tiny Servant": [
+        {"class": "Artificer"}, {"class": "Wizard"},
     ],
-    "Fireball": [
-        {"class": "Sorcerer"}, {"class": "Wizard"},
+    "Tongues": [
+        {"class": "Bard"}, {"class": "Cleric"}, {"class": "Sorcerer"}, {"class": "Warlock"}, {"class": "Wizard"},
     ],
-    "Counterspell": [
+    "Vampiric Touch": [
         {"class": "Sorcerer"}, {"class": "Warlock"}, {"class": "Wizard"},
     ],
-    # ... continue for all spells ...
+    "Wall of Sand": [
+        {"class": "Druid"}, {"class": "Sorcerer"}, {"class": "Wizard"},
+    ],
+    "Wall of Water": [
+        {"class": "Druid"}, {"class": "Sorcerer"}, {"class": "Wizard"},
+    ],
+    "Water Breathing": [
+        {"class": "Artificer"}, {"class": "Cleric"}, {"class": "Druid"}, {"class": "Sorcerer"}, {"class": "Wizard"},
+    ],
+    "Water Walk": [
+        {"class": "Artificer"}, {"class": "Cleric"}, {"class": "Druid"}, {"class": "Ranger"}, {"class": "Sorcerer"}, {"class": "Wizard"},
+    ],
+    "Wind Wall": [
+        {"class": "Druid"}, {"class": "Ranger"},
+    ],
+    "Aura of Vitality": [
+        {"class": "Bard"},
+        {"class": "Cleric"},
+        {"class": "Druid"}
+    ],
+    "Intellect Fortress": [
+        {"class": "Bard"},
+        {"class": "Sorcerer"},
+        {"class": "Warlock"},
+        {"class": "Wizard"}
+    ],
+    "Conjure Animals": [{"class": "Druid"}, {"class": "Ranger"}]
 }
 
+lvl4_mapping = {
+    "Arcane Eye": [{"class": "Wizard"}],
+    "Aura of Life": [{"class": "Paladin"}],
+    "Aura of Purity": [{"class": "Paladin"}],
+    "Banishment": [{"class": "Paladin"}, {"class": "Sorcerer"}, {"class": "Warlock"}, {"class": "Wizard"}],
+    "Blight": [{"class": "Druid"}, {"class": "Sorcerer"}, {"class": "Warlock"}, {"class": "Wizard"}],
+    "Charm Monster": [{"class": "Bard"}, {"class": "Druid"}, {"class": "Warlock"}, {"class": "Wizard"}],
+    "Compulsion": [{"class": "Bard"}],
+    "Confusion": [{"class": "Bard"}, {"class": "Druid"}, {"class": "Wizard"}],
+    "Conjure Minor Elementals": [{"class": "Druid"}, {"class": "Wizard"}],
+    "Conjure Woodland Beings": [{"class": "Druid"}, {"class": "Ranger"}],
+    "Control Water": [{"class": "Cleric"}, {"class": "Druid"}, {"class": "Wizard"}],
+    "Death Ward": [{"class": "Cleric"}, {"class": "Paladin"}],
+    "Dimension Door": [{"class": "Bard"}, {"class": "Sorcerer"}, {"class": "Warlock"}, {"class": "Wizard"}],
+    "Divination": [{"class": "Cleric"}, {"class": "Wizard"}],
+    "Dominate Beast": [{"class": "Druid"}, {"class": "Ranger"}],
+    "Elemental Bane": [{"class": "Druid"}, {"class": "Sorcerer"}, {"class": "Warlock"}, {"class": "Wizard"}],
+    "Evard's Black Tentacles": [{"class": "Wizard"}],
+    "Fabricate": [{"class": "Wizard"}],
+    "Find Greater Steed": [{"class": "Paladin"}],
+    "Fire Shield": [{"class": "Wizard"}],
+    "Freedom of Movement": [{"class": "Bard"}, {"class": "Cleric"}, {"class": "Druid"}, {"class": "Ranger"}],
+    "Galder's Speedy Courier": [{"class": "Bard"}, {"class": "Warlock"}, {"class": "Wizard"}],
+    "Giant Insect": [{"class": "Druid"}],
+    "Grasping Vine": [{"class": "Druid"}, {"class": "Ranger"}],
+    "Greater Invisibility": [{"class": "Bard"}, {"class": "Sorcerer"}, {"class": "Wizard"}],
+    "Guardian of Faith": [{"class": "Cleric"}],
+    "Hallucinatory Terrain": [{"class": "Bard"}, {"class": "Druid"}, {"class": "Wizard"}],
+    "Ice Storm": [{"class": "Sorcerer"}, {"class": "Wizard"}],
+    "Leomund's Secret Chest": [{"class": "Wizard"}],
+    "Locate Creature": [{"class": "Bard"}, {"class": "Cleric"}, {"class": "Druid"}, {"class": "Paladin"}, {"class": "Ranger"}, {"class": "Wizard"}],
+    "Mordenkainen's Faithful Hound": [{"class": "Wizard"}],
+    "Mordenkainen's Private Sanctum": [{"class": "Wizard"}],
+    "Otiluke's Resilient Sphere": [{"class": "Wizard"}],
+    "Phantasmal Killer": [{"class": "Bard"}, {"class": "Wizard"}],
+    "Polymorph": [{"class": "Bard"}, {"class": "Druid"}, {"class": "Sorcerer"}, {"class": "Wizard"}],
+    "Shadow of Moil": [{"class": "Warlock"}],
+    "Sickening Radiance": [{"class": "Sorcerer"}, {"class": "Warlock"}, {"class": "Wizard"}],
+    "Stone Shape": [{"class": "Cleric"}, {"class": "Druid"}, {"class": "Wizard"}],
+    "Stoneskin": [{"class": "Druid"}, {"class": "Ranger"}, {"class": "Sorcerer"}, {"class": "Wizard"}],
+    "Storm Sphere": [{"class": "Sorcerer"}, {"class": "Wizard"}],
+    "Summon Aberration": [{"class": "Warlock"}, {"class": "Wizard"}],
+    "Summon Construct": [{"class": "Artificer"}, {"class": "Wizard"}],
+    "Summon Elemental": [{"class": "Druid"}, {"class": "Wizard"}],
+    "Vitriolic Sphere": [{"class": "Sorcerer"}, {"class": "Wizard"}],
+    "Wall of Fire": [{"class": "Druid"}, {"class": "Sorcerer"}, {"class": "Wizard"}],
+    "Watery Sphere": [{"class": "Sorcerer"}, {"class": "Wizard"}]
+}
+lvl5_mapping =  {
+    "Animate Objects": [{"class": "Artificer"}, {"class": "Bard"}, {"class": "Sorcerer"}, {"class": "Wizard"}],
+    "Antilife Shell": [{"class": "Druid"}],
+    "Awaken": [{"class": "Druid"}],
+    "Banishing Smite": [{"class": "Paladin"}],
+    "Bigby's Hand": [{"class": "Wizard"}],
+    "Circle of Power": [{"class": "Paladin"}],
+    "Cloudkill": [{"class": "Sorcerer"}, {"class": "Wizard"}],
+    "Commune": [{"class": "Cleric"}],
+    "Commune with Nature": [{"class": "Druid"}, {"class": "Ranger"}],
+    "Cone of Cold": [{"class": "Sorcerer"}, {"class": "Wizard"}],
+    "Conjure Elemental": [{"class": "Druid"}, {"class": "Wizard"}],
+    "Conjure Volley": [{"class": "Ranger"}],
+    "Contact Other Plane": [{"class": "Warlock"}, {"class": "Wizard"}],
+    "Contagion": [{"class": "Cleric"}, {"class": "Druid"}],
+    "Control Winds": [{"class": "Druid"}, {"class": "Ranger"}, {"class": "Sorcerer"}, {"class": "Wizard"}],
+    "Creation": [{"class": "Artificer"}, {"class": "Sorcerer"}, {"class": "Wizard"}],
+    "Danse Macabre": [{"class": "Warlock"}, {"class": "Wizard"}],
+    "Dawn": [{"class": "Cleric"}],
+    "Destructive Wave": [{"class": "Paladin"}],
+    "Dispel Evil and Good": [{"class": "Cleric"}, {"class": "Paladin"}, {"class": "Warlock"}],
+    "Dominate Person": [{"class": "Bard"}, {"class": "Sorcerer"}, {"class": "Wizard"}],
+    "Dream": [{"class": "Bard"}, {"class": "Warlock"}, {"class": "Wizard"}],
+    "Enervation": [{"class": "Sorcerer"}, {"class": "Wizard"}],
+    "Far Step": [{"class": "Sorcerer"}, {"class": "Warlock"}, {"class": "Wizard"}],
+    "Flame Strike": [{"class": "Cleric"}],
+    "Geas": [{"class": "Bard"}, {"class": "Cleric"}, {"class": "Druid"}, {"class": "Paladin"}, {"class": "Wizard"}],
+    "Greater Restoration": [{"class": "Artificer"}, {"class": "Bard"}, {"class": "Cleric"}, {"class": "Druid"}],
+    "Hallow": [{"class": "Cleric"}],
+    "Hold Monster": [{"class": "Bard"}, {"class": "Sorcerer"}, {"class": "Warlock"}, {"class": "Wizard"}],
+    "Holy Weapon": [{"class": "Paladin"}, {"class": "Ranger"}],
+    "Immolation": [{"class": "Sorcerer"}, {"class": "Wizard"}],
+    "Infernal Calling": [{"class": "Warlock"}, {"class": "Wizard"}],
+    "Insect Plague": [{"class": "Cleric"}, {"class": "Druid"}],
+    "Legend Lore": [{"class": "Bard"}, {"class": "Cleric"}, {"class": "Wizard"}],
+    "Maelstrom": [{"class": "Druid"}],
+    "Mass Cure Wounds": [{"class": "Bard"}, {"class": "Cleric"}, {"class": "Druid"}],
+    "Mislead": [{"class": "Bard"}, {"class": "Wizard"}],
+    "Modify Memory": [{"class": "Bard"}],
+    "Negative Energy Flood": [{"class": "Warlock"}, {"class": "Wizard"}],
+    "Passwall": [{"class": "Wizard"}],
+    "Planar Binding": [{"class": "Bard"}, {"class": "Cleric"}, {"class": "Warlock"}, {"class": "Wizard"}],
+    "Raise Dead": [{"class": "Bard"}, {"class": "Cleric"}, {"class": "Paladin"}],
+    "Rary's Telepathic Bond": [{"class": "Wizard"}],
+    "Reincarnate": [{"class": "Druid"}],
+    "Scrying": [{"class": "Bard"}, {"class": "Cleric"}, {"class": "Druid"}, {"class": "Warlock"}, {"class": "Wizard"}],
+    "Seeming": [{"class": "Bard"}, {"class": "Sorcerer"}, {"class": "Wizard"}],
+    "Skill Empowerment": [{"class": "Artificer"}, {"class": "Bard"}, {"class": "Sorcerer"}, {"class": "Wizard"}],
+    "Steel Wind Strike": [{"class": "Ranger"}, {"class": "Wizard"}],
+    "Summon Draconic Spirit": [{"class": "Sorcerer"}, {"class": "Wizard"}],
+    "Swift Quiver": [{"class": "Ranger"}],
+    "Synaptic Static": [{"class": "Bard"}, {"class": "Sorcerer"}, {"class": "Warlock"}, {"class": "Wizard"}],
+    "Telekinesis": [{"class": "Artificer"}, {"class": "Sorcerer"}, {"class": "Wizard"}],
+    "Teleportation Circle": [{"class": "Bard"}, {"class": "Sorcerer"}, {"class": "Warlock"}, {"class": "Wizard"}],
+    "Transmute Rock": [{"class": "Druid"}, {"class": "Wizard"}],
+    "Tree Stride": [{"class": "Druid"}, {"class": "Ranger"}],
+    "Wall of Force": [{"class": "Artificer"}, {"class": "Wizard"}],
+    "Wall of Light": [{"class": "Sorcerer"}, {"class": "Warlock"}, {"class": "Wizard"}],
+    "Wall of Stone": [{"class": "Druid"}, {"class": "Wizard"}],
+    "Wrath of Nature": [{"class": "Druid"}, {"class": "Ranger"}]
+}
+lvl6_mapping = {
+    "Summon Celestial": [{"class": "Cleric"}, {"class": "Paladin"}],
+    "Arcane Gate": [{"class": "Sorcerer"}, {"class": "Warlock"}, {"class": "Wizard"}],
+    "Blade Barrier": [{"class": "Cleric"}],
+    "Bones of the Earth": [{"class": "Druid"}],
+    "Chain Lightning": [{"class": "Sorcerer"}, {"class": "Wizard"}],
+    "Circle of Death": [{"class": "Sorcerer"}, {"class": "Warlock"}, {"class": "Wizard"}],
+    "Conjure Fey": [{"class": "Druid"}, {"class": "Warlock"}],
+    "Contingency": [{"class": "Wizard"}],
+    "Create Homunculus": [{"class": "Wizard"}],
+    "Create Undead": [{"class": "Cleric"}, {"class": "Warlock"}, {"class": "Wizard"}],
+    "Disintegrate": [{"class": "Sorcerer"}, {"class": "Wizard"}],
+    "Drawmij's Instant Summons": [{"class": "Wizard"}],
+    "Druid Grove": [{"class": "Druid"}],
+    "Eyebite": [{"class": "Bard"}, {"class": "Sorcerer"}, {"class": "Warlock"}, {"class": "Wizard"}],
+    "Find the Path": [{"class": "Bard"}, {"class": "Cleric"}, {"class": "Druid"}],
+    "Flesh to Stone": [{"class": "Warlock"}, {"class": "Wizard"}],
+    "Forbiddance": [{"class": "Cleric"}],
+    "Globe of Invulnerability": [{"class": "Wizard"}],
+    "Guards and Wards": [{"class": "Wizard"}],
+    "Harm": [{"class": "Cleric"}],
+    "Heal": [{"class": "Cleric"}, {"class": "Druid"}],
+    "Heroes' Feast": [{"class": "Bard"}, {"class": "Cleric"}, {"class": "Druid"}],
+    "Investiture of Flame": [{"class": "Druid"}, {"class": "Sorcerer"}, {"class": "Warlock"}, {"class": "Wizard"}],
+    "Investiture of Ice": [{"class": "Druid"}, {"class": "Sorcerer"}, {"class": "Warlock"}, {"class": "Wizard"}],
+    "Investiture of Stone": [{"class": "Druid"}, {"class": "Sorcerer"}, {"class": "Warlock"}, {"class": "Wizard"}],
+    "Investiture of Wind": [{"class": "Druid"}, {"class": "Sorcerer"}, {"class": "Warlock"}, {"class": "Wizard"}],
+    "Magic Jar": [{"class": "Wizard"}],
+    "Mass Suggestion": [{"class": "Bard"}, {"class": "Sorcerer"}, {"class": "Warlock"}, {"class": "Wizard"}],
+    "Mental Prison": [{"class": "Sorcerer"}, {"class": "Warlock"}, {"class": "Wizard"}],
+    "Move Earth": [{"class": "Druid"}, {"class": "Sorcerer"}, {"class": "Wizard"}],
+    "Otiluke's Freezing Sphere": [{"class": "Sorcerer"}, {"class": "Wizard"}],
+    "Otto's Irresistible Dance": [{"class": "Bard"}, {"class": "Wizard"}],
+    "Planar Ally": [{"class": "Cleric"}],
+    "Primordial Ward": [{"class": "Druid"}, {"class": "Wizard"}],
+    "Programmed Illusion": [{"class": "Bard"}, {"class": "Wizard"}],
+    "Scatter": [{"class": "Sorcerer"}, {"class": "Wizard"}],
+    "Soul Cage": [{"class": "Warlock"}, {"class": "Wizard"}],
+    "Summon Fiend": [{"class": "Warlock"}, {"class": "Wizard"}],
+    "Sunbeam": [{"class": "Druid"}, {"class": "Sorcerer"}, {"class": "Wizard"}],
+    "Tasha's Otherworldly Guise": [{"class": "Warlock"}],
+    "Tenser's Transformation": [{"class": "Wizard"}],
+    "Transport via Plants": [{"class": "Druid"}, {"class": "Wizard"}],
+    "True Seeing": [{"class": "Bard"}, {"class": "Cleric"}, {"class": "Druid"}, {"class": "Sorcerer"}, {"class": "Warlock"}, {"class": "Wizard"}],
+    "Wall of Ice": [{"class": "Wizard"}],
+    "Wall of Thorns": [{"class": "Druid"}],
+    "Wind Walk": [{"class": "Druid"}, {"class": "Warlock"}, {"class": "Wizard"}],
+    "Word of Recall": [{"class": "Cleric"}]
+}
+lvl7_mapping =  {
+    "Crown of Stars": [{"class": "Sorcerer"}, {"class": "Warlock"}, {"class": "Wizard"}],
+    "Delayed Blast Fireball": [{"class": "Sorcerer"}, {"class": "Wizard"}],
+    "Divine Word": [{"class": "Cleric"}],
+    "Draconic Transformation": [{"class": "Sorcerer"}, {"class": "Warlock"}, {"class": "Wizard"}],
+    "Dream of the Blue Veil": [{"class": "Bard"}, {"class": "Sorcerer"}, {"class": "Warlock"}, {"class": "Wizard"}],
+    "Etherealness": [{"class": "Bard"}, {"class": "Cleric"}, {"class": "Sorcerer"}, {"class": "Warlock"}, {"class": "Wizard"}],
+    "Finger of Death": [{"class": "Sorcerer"}, {"class": "Warlock"}, {"class": "Wizard"}],
+    "Fire Storm": [{"class": "Cleric"}, {"class": "Druid"}, {"class": "Sorcerer"}],
+    "Forcecage": [{"class": "Bard"}, {"class": "Warlock"}, {"class": "Wizard"}],
+    "Mirage Arcane": [{"class": "Bard"}, {"class": "Druid"}, {"class": "Wizard"}],
+    "Mordenkainen's Magnificent Mansion": [{"class": "Bard"}, {"class": "Wizard"}],
+    "Mordenkainen's Sword": [{"class": "Bard"}, {"class": "Wizard"}],
+    "Plane Shift": [{"class": "Cleric"}, {"class": "Druid"}, {"class": "Sorcerer"}, {"class": "Warlock"}, {"class": "Wizard"}],
+    "Power Word Pain": [{"class": "Bard"}, {"class": "Sorcerer"}, {"class": "Warlock"}, {"class": "Wizard"}],
+    "Prismatic Spray": [{"class": "Sorcerer"}, {"class": "Wizard"}],
+    "Project Image": [{"class": "Bard"}, {"class": "Wizard"}],
+    "Regenerate": [{"class": "Bard"}, {"class": "Cleric"}, {"class": "Druid"}],
+    "Resurrection": [{"class": "Bard"}, {"class": "Cleric"}],
+    "Reverse Gravity": [{"class": "Druid"}, {"class": "Sorcerer"}, {"class": "Wizard"}],
+    "Sequester": [{"class": "Wizard"}],
+    "Simulacrum": [{"class": "Wizard"}],
+    "Symbol": [{"class": "Bard"}, {"class": "Cleric"}, {"class": "Druid"}, {"class": "Warlock"}, {"class": "Wizard"}],
+    "Teleport": [{"class": "Bard"}, {"class": "Sorcerer"}, {"class": "Wizard"}],
+    "Temple of the Gods": [{"class": "Cleric"}],
+    "Whirlwind": [{"class": "Druid"}, {"class": "Sorcerer"}, {"class": "Wizard"}]
+}
+
+lvl8_mapping =  {
+    "Animal Shapes": [
+        {"class" : "Druid"}
+    ],
+    "Antimagic Field": [
+        {"class": "Cleric"},
+        {"class": "Wizard"}
+    ],
+    "Antipathy/Sympathy": [
+        {"class": "Bard"},
+        {"class": "Druid"},
+        {"class": "Wizard"}
+    ],
+    "Clone": [
+        {"class": "Wizard"}
+    ],
+    "Control Weather": [
+        {"class": "Cleric"},
+        {"class": "Druid"},
+        {"class": "Wizard"}
+    ],
+    "Demiplane": [
+        {"class": "Sorcerer"},
+        {"class": "Warlock"},
+        {"class": "Wizard"}
+    ],
+    "Dominate Monster": [
+        {"class": "Bard"},
+        {"class": "Sorcerer"},
+        {"class": "Warlock"},
+        {"class": "Wizard"}
+    ],
+    "Earthquake": [
+        {"class": "Cleric"},
+        {"class": "Druid"},
+        {"class": "Sorcerer"}
+    ],
+    "Feeblemind": [
+        {"class": "Bard"},
+        {"class": "Druid"},
+        {"class": "Warlock"},
+        {"class": "Wizard"}
+    ],
+    "Glibness": [
+        {"class": "Bard"},
+        {"class": "Warlock"}
+    ],
+    "Holy Aura": [
+        {"class": "Cleric"}
+    ],
+    "Illusory Dragon": [
+        {"class": "Sorcerer"},
+        {"class": "Wizard"}
+    ],
+    "Incendiary Cloud": [
+        {"class": "Sorcerer"},
+        {"class": "Wizard"}
+    ],
+    "Maddening Darkness": [
+        {"class": "Warlock"}
+    ],
+    "Maze": [
+        {"class": "Wizard"}
+    ],
+    "Mind Blank": [
+        {"class": "Bard"},
+        {"class": "Wizard"}
+    ],
+    "Power Word Stun": [
+        {"class": "Bard"},
+        {"class": "Sorcerer"},
+        {"class": "Warlock"},
+        {"class": "Wizard"}
+    ],
+    "Sunburst": [
+        {"class": "Druid"},
+        {"class": "Sorcerer"},
+        {"class": "Wizard"}
+    ],
+    "Telepathy": [
+        {"class": "Bard"},
+        {"class": "Sorcerer"},
+        {"class": "Warlock"},
+        {"class": "Wizard"}
+    ],
+    "Tsunami": [
+        {"class": "Druid"}
+    ]
+}
+lvl9_mapping = {
+    "Astral Projection": [
+        {"class": "Cleric"},
+        {"class": "Warlock"},
+        {"class": "Wizard"}
+    ],
+    "Blade of Disaster": [
+        {"class": "Sorcerer"},
+        {"class": "Warlock"},
+        {"class": "Wizard"}
+    ],
+    "Foresight": [
+        {"class": "Bard"},
+        {"class": "Druid"},
+        {"class": "Warlock"},
+        {"class": "Wizard"}
+    ],
+    "Gate": [
+        {"class": "Cleric"},
+        {"class": "Sorcerer"},
+        {"class": "Warlock"},
+        {"class": "Wizard"}
+    ],
+    "Imprisonment": [
+        {"class": "Warlock"},
+        {"class": "Wizard"}
+    ],
+    "Invulnerability": [
+        {"class": "Wizard"}
+    ],
+    "Mass Heal": [
+        {"class": "Cleric"}
+    ],
+    "Mass Polymorph": [
+        {"class": "Bard"},
+        {"class": "Wizard"}
+    ],
+    "Meteor Swarm": [
+        {"class": "Sorcerer"},
+        {"class": "Wizard"}
+    ],
+    "Power Word Heal": [
+        {"class": "Cleric"}
+    ],
+    "Power Word Kill": [
+        {"class": "Bard"},
+        {"class": "Sorcerer"},
+        {"class": "Warlock"},
+        {"class": "Wizard"}
+    ],
+    "Prismatic Wall": [
+        {"class": "Wizard"}
+    ],
+    "Psychic Scream": [
+        {"class": "Bard"},
+        {"class": "Sorcerer"},
+        {"class": "Warlock"},
+        {"class": "Wizard"}
+    ],
+    "Shapechange": [
+        {"class": "Druid"},
+        {"class": "Wizard"}
+    ],
+    "Time Stop": [
+        {"class": "Sorcerer"},
+        {"class": "Wizard"}
+    ],
+    "True Polymorph": [
+        {"class": "Bard"},
+        {"class": "Warlock"},
+        {"class": "Wizard"}
+    ],
+    "True Resurrection": [
+        {"class": "Cleric"}, {"class" : "Druid"}
+    ],
+    "Weird": [
+        {"class": "Wizard"}
+    ],
+    "Wish": [
+        {"class": "Sorcerer"},
+        {"class": "Wizard"}
+    ],
+    "Storm of Vengeance" : [
+        {"class":"Druid"}
+    ]
+}
 # ============================================================================
 # === SEEDING FUNCTION ===
 # ============================================================================
 
-def seed_class_spells_manual(db: Session):
+def seed_class_spells_manual(db: Session, SPELL_CLASS_MAPPING):
     """Manually seed class-spell relationships using verified mappings."""
     print("🔗 Starting manual class-spell relationship seeding...")
     
@@ -701,27 +1243,35 @@ def seed_class_spells_manual(db: Session):
 # ============================================================================
 # === RUNNER ===
 # ============================================================================
-def seed_class_spells_filtered():
+# def seed_class_spells_filtered():
+#     from sqlalchemy.orm import Session as SessionMaker
+#     from Backend.models import engine
+    
+#     db = SessionMaker(bind=engine)
+#     try:
+#         seed_class_spells_manual(db)
+#     except Exception as e:
+#         db.rollback()
+#         print(f"❌ Error: {e}")
+#         raise
+#     finally:
+#         db.close()
+def make_all_matches():
     from sqlalchemy.orm import Session as SessionMaker
     from Backend.models import engine
     
     db = SessionMaker(bind=engine)
     try:
-        seed_class_spells_manual(db)
-    except Exception as e:
-        db.rollback()
-        print(f"❌ Error: {e}")
-        raise
-    finally:
-        db.close()
-
-if __name__ == "__main__":
-    from sqlalchemy.orm import Session as SessionMaker
-    from Backend.models import engine
-    
-    db = SessionMaker(bind=engine)
-    try:
-        seed_class_spells_manual(db)
+        seed_class_spells_manual(db, cantrip_mapping)
+        seed_class_spells_manual(db, lvl1_mapping)
+        seed_class_spells_manual(db, lvl2_mapping)
+        seed_class_spells_manual(db, lvl3_mapping)
+        seed_class_spells_manual(db, lvl4_mapping)
+        seed_class_spells_manual(db, lvl5_mapping)
+        seed_class_spells_manual(db, lvl6_mapping)
+        seed_class_spells_manual(db, lvl7_mapping)
+        seed_class_spells_manual(db, lvl8_mapping)
+        seed_class_spells_manual(db, lvl9_mapping)
     except Exception as e:
         db.rollback()
         print(f"❌ Error: {e}")

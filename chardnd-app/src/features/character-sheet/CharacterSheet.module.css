@@ -2082,3 +2082,87 @@ label {
     transform: translateY(0);
   }
 }
+/* Spell List Styling */
+.spellList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.spellItem {
+  transition: all 0.2s;
+}
+
+.spellItem:hover {
+  transform: translateX(2px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.preparedSpell {
+  border-left: 3px solid #4caf50 !important;
+}
+
+.classSpellSection {
+  transition: all 0.3s;
+}
+
+.classSpellSection:hover {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Preparation Toggle */
+.preparationToggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85em;
+  color: #666;
+}
+
+.preparationToggle input {
+  cursor: pointer;
+}
+
+.preparationToggle input:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Spell Level Tabs */
+.spellLevelTabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.spellLevelTab {
+  padding: 0.25rem 0.75rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  background-color: #e0e0e0;
+  color: #333;
+  font-size: 0.85em;
+  transition: all 0.2s;
+}
+
+.spellLevelTab:hover {
+  background-color: #d0d0d0;
+}
+
+.spellLevelTab.active {
+  background-color: #4a90e2;
+  color: white;
+  font-weight: bold;
+}
+
+/* Loading State */
+.spellLoading {
+  text-align: center;
+  padding: 1rem;
+  color: #666;
+  font-style: italic;
+}

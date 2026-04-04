@@ -542,15 +542,37 @@ def get_prepare_limit(char_id):
     else:
         return jsonify({"error": result["error"]}), HTTPStatus.NOT_FOUND
 
-@app.route('/API/spells', methods=['GET'])
-def get_spells():
+@app.route('/API/classes/<class_name>/spells', methods=['GET'])
+def get_class_spells(class_name):
+    """Get all spells available to a class."""
     try:
-        spells = Spell.get_all_spells()
-        result = [sp.to_dict() for sp in spells]
-        return jsonify(result), 200
+        from Backend.models import session
+        from Backend.models.dndclass import DnDclass, ClassSpell
+        from Backend.models.spells import Spell as SpellModel
+        
+        # Find the class
+        dnd_class = session.query(DnDclass).filter(
+            DnDclass.name.ilike(class_name)
+        ).first()
+        
+        if not dnd_class:
+            return jsonify({"error": "Class not found"}), HTTPStatus.NOT_FOUND
+        
+        # Get spells from junction table for base class only
+        class_spells = session.query(ClassSpell).filter(
+            ClassSpell.class_id == dnd_class.id,
+            ClassSpell.subclass == None
+        ).all()
+        
+        # Get the actual spell objects
+        spell_ids = [cs.spell_id for cs in class_spells]
+        spells = session.query(SpellModel).filter(
+            SpellModel.id.in_(spell_ids)
+        ).all()
+        
+        return jsonify([spell.to_dict() for spell in spells]), HTTPStatus.OK
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
+        return jsonify({"error": str(e)}), HTTPStatus.INTERNAL_SERVER_ERROR
 ################################################################
 # App Entry
 ################################################################

@@ -1,16 +1,14 @@
-// src/features/character-sheet/CharacterDisplay.tsx
+// src/features/character-sheet/CharacterSheet.tsx
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Character } from '../../types/Character';
 import AbsScores from './components/AbilityScores/AbsScores';
 import styles from './CharacterSheet.module.css';
 import ItemModal from '../Items/ItemModal/ItemModal';
-import SpellModal from './components/SpellModal/SpellModal';
 import SpellSelectionModal from './components/SpellModal/SpellSelectionModal';
 import ItemDetailsModal from './components/ItemDetailsModal/ItemDetailsModal';
 import StatModifiersModal from './components/StatModifiersModal/StatModifiersModal';
 import ProficiencyModal from './components/ProficiencyModal/ProficiencyModal';
-import SpellManager from './components/SpellManager/SpellManager';
 import { fetchItems } from '../../services/api';
 
 // 🔽 D&D 5e XP Thresholds
@@ -24,30 +22,6 @@ const DEFAULT_ATTUNEMENT_SLOTS = 4;
 
 // ✅ Type for proficiency tabs
 type ProficiencyTab = 'skills' | 'weapons' | 'tools';
-
-// ✅ PHB Multiclass Spellcaster Table
-const MULTICLASS_SLOT_TABLE: { [key: number]: { [key: number]: number } } = {
-  1:  { 1: 2 },
-  2:  { 1: 3 },
-  3:  { 1: 4, 2: 2 },
-  4:  { 1: 4, 2: 3 },
-  5:  { 1: 4, 2: 3, 3: 2 },
-  6:  { 1: 4, 2: 3, 3: 3 },
-  7:  { 1: 4, 2: 3, 3: 3, 4: 1 },
-  8:  { 1: 4, 2: 3, 3: 3, 4: 2 },
-  9:  { 1: 4, 2: 3, 3: 3, 4: 3, 5: 1 },
-  10: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2 },
-  11: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1 },
-  12: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1 },
-  13: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1 },
-  14: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1 },
-  15: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1 },
-  16: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1 },
-  17: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1, 9: 1 },
-  18: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 3, 6: 1, 7: 1, 8: 1, 9: 1 },
-  19: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 3, 6: 2, 7: 1, 8: 1, 9: 1 },
-  20: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 3, 6: 2, 7: 2, 8: 1, 9: 1 }
-};
 
 const CharacterDisplay = () => {
   const { id } = useParams<{ id: string }>();
@@ -151,6 +125,12 @@ const CharacterDisplay = () => {
   const [spellPrepareLimit, setSpellPrepareLimit] = useState<number | null>(null);
   const [spellPreparedCount, setSpellPreparedCount] = useState<number>(0);
   const [spellPrepareUnlimited, setSpellPrepareUnlimited] = useState<boolean>(false);
+
+  // ✅ NEW: Class-based spell lists state
+  const [classSpellsByClass, setClassSpellsByClass] = useState<{[className: string]: {[level: number]: any[]}}>({});
+  const [activeSpellLevels, setActiveSpellLevels] = useState<{[className: string]: number}>({});
+  const [activeClassSpellTab, setActiveClassSpellTab] = useState<{[className: string]: 'available' | 'prepared'}>({});
+  const [classSpellLoading, setClassSpellLoading] = useState<{[className: string]: boolean}>({});
 
   // Navigation
   const goToMain = () => navigate('/');
@@ -359,6 +339,52 @@ const CharacterDisplay = () => {
     loadSpellData();
   }, [id, character]);
 
+  // ✅ NEW: Load class-available spells for each of character's classes
+  useEffect(() => {
+    const loadClassSpells = async () => {
+      if (!id || !character?.classes) return;
+      
+      const spellsByClass: {[className: string]: {[level: number]: any[]}} = {};
+      const initialActiveLevels: {[className: string]: number} = {};
+      const initialActiveTabs: {[className: string]: 'available' | 'prepared'} = {};
+      
+      for (const charClass of character.classes) {
+        const className = charClass.className;
+        setClassSpellLoading(prev => ({ ...prev, [className]: true }));
+        
+        try {
+          // Fetch spells available to this class
+          const response = await fetch(`http://127.0.0.1:8001/API/classes/${className}/spells`);
+          if (response.ok) {
+            const spells = await response.json();
+            
+            // Group by spell level
+            const byLevel: {[level: number]: any[]} = {};
+            for (const spell of spells) {
+              const level = spell.level || 0;
+              if (!byLevel[level]) byLevel[level] = [];
+              byLevel[level].push(spell);
+            }
+            
+            spellsByClass[className] = byLevel;
+            initialActiveLevels[className] = 0; // Default to cantrips tab
+            initialActiveTabs[className] = 'available'; // Default to available tab
+          }
+        } catch (err) {
+          console.error(`Failed to load spells for ${className}:`, err);
+        } finally {
+          setClassSpellLoading(prev => ({ ...prev, [className]: false }));
+        }
+      }
+      
+      setClassSpellsByClass(spellsByClass);
+      setActiveSpellLevels(initialActiveLevels);
+      setActiveClassSpellTab(initialActiveTabs);
+    };
+    
+    loadClassSpells();
+  }, [id, character?.classes]);
+
   // Ability scores
   const handleScoreChange = (newScores: { [key: string]: number }) => {
     setLocalAbilityScores(newScores);
@@ -566,6 +592,15 @@ const CharacterDisplay = () => {
     }
   };
 
+  // ✅ Helper to set active spell level for a class
+  const setActiveSpellLevel = (className: string, level: number) => {
+    setActiveSpellLevels(prev => ({ ...prev, [className]: level }));
+  };
+
+  // ✅ Helper to set active tab for class spells
+  const updateActiveClassSpellTab = (className: string, tab: 'available' | 'prepared') => {
+    setActiveClassSpellTab(prev => ({ ...prev, [className]: tab }));
+  };
 
   // ✅ NEW: Attune item (does NOT require equipment)
   const attuneItem = async (inventoryId: number, itemName: string, itemData: any) => {
@@ -886,7 +921,7 @@ const CharacterDisplay = () => {
 
     // Ability modifier
     if (spellcastingAbility && character.abilityScores) {
-      const abilityScore = character.abilityScores[spellcastingAbility] || 10;
+      const abilityScore = (character.abilityScores as any)[spellcastingAbility] || 10;
       const abilityMod = Math.floor((abilityScore - 10) / 2);
       if (abilityMod !== 0) {
         modifiers.push({
@@ -931,7 +966,7 @@ const CharacterDisplay = () => {
 
     // Ability modifier
     if (spellcastingAbility && character.abilityScores) {
-      const abilityScore = character.abilityScores[spellcastingAbility] || 10;
+      const abilityScore = (character.abilityScores as any)[spellcastingAbility] || 10;
       const abilityMod = Math.floor((abilityScore - 10) / 2);
       if (abilityMod !== 0) {
         modifiers.push({
@@ -1422,8 +1457,9 @@ const CharacterDisplay = () => {
   const skillModifiers = getSkillModifiers();
   const skillAdvantages = getSkillAdvantages();
 
-  // ✅ Helper: Get ordinal suffix for spell levels
-  const getOrdinal = (n: number) => {
+  // ✅ FIXED: Helper: Get ordinal suffix for spell levels (returns full ordinal like "1st")
+  const getOrdinal = (n: number): string => {
+    if (n === 0) return 'Cantrip';
     const s = ["th", "st", "nd", "rd"];
     const v = n % 100;
     return n + (s[(v - 20) % 10] || s[v] || s[0]);
@@ -1433,20 +1469,25 @@ const CharacterDisplay = () => {
   const getDamageForLevel = (spell: any, slotLevel: number) => {
     if (!spell.damage_dice) return null;
     
-    if (slotLevel <= spell.level) {
+    // Spell can only be cast at or above spell level
+    if (slotLevel < spell.level) {
+      return null; // Can't cast above spell level
+    }
+    
+    if (slotLevel === spell.level) {
       return spell.damage_dice;
     }
     
     // Add upcast damage
     const extraDice = slotLevel - spell.level;
     const upcastDie = spell.upcast_damage_per_level || '1d6';
-    return `${spell.damage_dice} + ${extraDice}${upcastDie}`;
+    return `${spell.damage_dice} + ${extraDice}×${upcastDie}`;
   };
 
   // ✅ Helper: Check if slot is available
   const hasAvailableSlot = (level: number) => {
     if (level === 0) return true; // Cantrips don't use slots
-    return (spellSlotsRemaining[level] || 0) > 0;
+    return (spellSlotsRemaining[level] ?? 0) > 0;
   };
 
   // Render
@@ -1871,7 +1912,7 @@ const CharacterDisplay = () => {
         )}
       </section>
 
-      {/* ✅ UPDATED: Spellcasting Section with Slots */}
+      {/* ✅ ENHANCED: Spellcasting Section with Class-Based Known Spells */}
       <section className={styles.section}>
         <h2>Spellcasting</h2>
         
@@ -1927,7 +1968,7 @@ const CharacterDisplay = () => {
                     minWidth: '80px'
                   }}>
                     <div style={{ fontWeight: 'bold', marginBottom: '0.25rem' }}>
-                      {level === '1' ? '1st' : level === '2' ? '2nd' : level === '3' ? '3rd' : level === '4' ? '4th' : level === '5' ? '5th' : `${level}th`}
+                      {getOrdinal(parseInt(level))}
                     </div>
                     <div style={{ fontSize: '1.5em', fontWeight: 'bold' }}>
                       {remaining}/{total}
@@ -1956,28 +1997,286 @@ const CharacterDisplay = () => {
           </div>
         )}
         
-        {/* ✅ NEW: Spell Manager with Known/Prepared tabs */}
-        {spellcasterLevel > 0 && (
-          <SpellManager
-            characterSpells={characterSpells}
-            spellSlots={spellSlots}
-            spellSaveDC={spellSaveDC}
-            spellAttackBonus={spellAttackBonus}
-            spellcastingAbility={spellcastingAbility}
-            character={character}
-            prepareLimit={spellPrepareLimit}
-            preparedCount={spellPreparedCount}
-            isPrepareUnlimited={spellPrepareUnlimited}
-            onTogglePrepare={toggleSpellPrepared}
-            onCastSpell={expendSpellSlot}
-          />
+        {/* ✅ NEW: Class Spell Lists with Available/Prepared Tabs */}
+        {spellcasterLevel > 0 && character?.classes && character.classes.length > 0 && (
+          <div className={styles.classSpellLists} style={{ marginBottom: '1rem' }}>
+            <h3>Spells by Class</h3>
+            
+            {character.classes.map((charClass) => {
+              const className = charClass.className;
+              const classLevel = charClass.level;
+              const subclass = charClass.subclass;
+              const isPreparedCaster = ['Cleric', 'Druid', 'Paladin', 'Wizard'].includes(className);
+              const activeTab = activeClassSpellTab[className] ?? 'available';
+              const activeLevel = activeSpellLevels[className] ?? 0;
+              
+              return (
+                <div key={className} className={styles.classSpellSection} style={{ 
+                  marginBottom: '1.5rem',
+                  padding: '1rem',
+                  backgroundColor: '#f9f9f9',
+                  borderRadius: '8px',
+                  border: '1px solid #ddd'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <h4 style={{ margin: 0 }}>{className} {subclass && `• ${subclass}`}</h4>
+                    <span style={{ color: '#666', fontSize: '0.9em' }}>Level {classLevel}</span>
+                  </div>
+                  
+                  {/* Preparation Info for Prepared Casters */}
+                  {isPreparedCaster && (
+                    <div style={{ 
+                      padding: '0.5rem', 
+                      backgroundColor: '#e3f2fd', 
+                      borderRadius: '4px', 
+                      marginBottom: '1rem',
+                      fontSize: '0.9em'
+                    }}>
+                      <strong>Prepared Spells:</strong> {spellPreparedCount}/{spellPrepareLimit || '∞'} 
+                      {spellPrepareUnlimited && ' (Unlimited)'}
+                      <br />
+                      <em>Preparation = {spellcastingAbility.toUpperCase()} modifier + {className} level</em>
+                    </div>
+                  )}
+                  
+                  {/* ✅ Tabs: Available / Prepared */}
+                  <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '0.5rem' }}>
+                    <button
+                      onClick={() => updateActiveClassSpellTab(className, 'available')}
+                      style={{
+                        padding: '0.25rem 0.75rem',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        backgroundColor: activeTab === 'available' ? '#4a90e2' : '#e0e0e0',
+                        color: activeTab === 'available' ? 'white' : '#333',
+                        fontWeight: activeTab === 'available' ? 'bold' : 'normal',
+                        fontSize: '0.85em'
+                      }}
+                    >
+                      Available
+                    </button>
+                    {isPreparedCaster && (
+                      <button
+                        onClick={() => updateActiveClassSpellTab(className, 'prepared')}
+                        style={{
+                          padding: '0.25rem 0.75rem',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          backgroundColor: activeTab === 'prepared' ? '#4a90e2' : '#e0e0e0',
+                          color: activeTab === 'prepared' ? 'white' : '#333',
+                          fontWeight: activeTab === 'prepared' ? 'bold' : 'normal',
+                          fontSize: '0.85em'
+                        }}
+                      >
+                        Prepared
+                      </button>
+                    )}
+                  </div>
+                  
+                  {/* Spell Level Tabs */}
+                  <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+                    {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(level => {
+                      const spells = classSpellsByClass[className]?.[level] || [];
+                      const hasSpells = activeTab === 'available' 
+                        ? spells.length > 0 
+                        : spells.filter(s => s.is_prepared).length > 0;
+                      if (!hasSpells) return null;
+                      return (
+                        <button
+                          key={level}
+                          onClick={() => setActiveSpellLevel(className, level)}
+                          style={{
+                            padding: '0.25rem 0.75rem',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            backgroundColor: activeLevel === level ? '#4a90e2' : '#e0e0e0',
+                            color: activeLevel === level ? 'white' : '#333',
+                            fontWeight: activeLevel === level ? 'bold' : 'normal',
+                            fontSize: '0.85em'
+                          }}
+                        >
+                          {getOrdinal(level)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  
+                  {/* Spell List for Active Level & Tab */}
+                  <div className={styles.spellList}>
+                    {classSpellLoading[className] ? (
+                      <p className={styles.spellLoading}>Loading spells...</p>
+                    ) : (
+                      <>
+                        {activeTab === 'available' 
+                          ? classSpellsByClass[className]?.[activeLevel]?.map((spell: any) => {
+                              const isPrepared = spell.is_prepared;
+                              const canPrepare = isPreparedCaster;
+                              const isPreparationFull = spellPrepareLimit !== null && spellPreparedCount >= spellPrepareLimit && !isPrepared;
+                              
+                              return (
+                                <div
+                                  key={spell.id}
+                                  className={`${styles.spellItem} ${isPrepared ? styles.preparedSpell : ''}`}
+                                  style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    padding: '0.5rem',
+                                    backgroundColor: isPrepared ? '#e8f5e9' : '#fff',
+                                    border: isPrepared ? '1px solid #4caf50' : '1px solid #ddd',
+                                    borderRadius: '4px',
+                                    marginBottom: '0.25rem'
+                                  }}
+                                >
+                                  <div>
+                                    <strong>{spell.name}</strong>
+                                    <span style={{ color: '#666', fontSize: '0.85em', marginLeft: '0.5rem' }}>
+                                      {spell.school} • {spell.casting_time}
+                                    </span>
+                                    {spell.concentration && (
+                                      <span style={{ color: '#ff9800', fontSize: '0.85em', marginLeft: '0.25rem' }}>⚠️ Concentration</span>
+                                    )}
+                                  </div>
+                                  
+                                  {/* Preparation Toggle for Prepared Casters */}
+                                  {canPrepare && (
+                                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                      <input
+                                        type="checkbox"
+                                        checked={isPrepared || false}
+                                        onChange={() => toggleSpellPrepared(spell.id)}
+                                        disabled={isPreparationFull && !isPrepared}
+                                        style={{ marginRight: '0.5rem', cursor: 'pointer' }}
+                                        title={isPreparationFull && !isPrepared ? 'Preparation limit reached' : 'Toggle preparation'}
+                                      />
+                                      <span style={{ fontSize: '0.85em' }}>
+                                        {isPrepared ? 'Prepared' : 'Prepare'}
+                                      </span>
+                                    </label>
+                                  )}
+                                </div>
+                              );
+                            })
+                          : classSpellsByClass[className]?.[activeLevel]?.filter((spell: any) => spell.is_prepared).map((spell: any) => (
+                              <div
+                                key={spell.id}
+                                className={`${styles.spellItem} ${styles.preparedSpell}`}
+                                style={{
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                  padding: '0.5rem',
+                                  backgroundColor: '#e8f5e9',
+                                  border: '1px solid #4caf50',
+                                  borderRadius: '4px',
+                                  marginBottom: '0.25rem'
+                                }}
+                              >
+                                <div>
+                                  <strong>{spell.name}</strong>
+                                  <span style={{ color: '#666', fontSize: '0.85em', marginLeft: '0.5rem' }}>
+                                    {spell.school} • {spell.casting_time}
+                                  </span>
+                                  {spell.concentration && (
+                                    <span style={{ color: '#ff9800', fontSize: '0.85em', marginLeft: '0.25rem' }}>⚠️ Concentration</span>
+                                  )}
+                                </div>
+                                <button
+                                  onClick={() => {
+                                    setSelectedSpellForCast(spell);
+                                    setIsSpellCastModalOpen(true);
+                                  }}
+                                  style={{
+                                    padding: '0.25rem 0.75rem',
+                                    backgroundColor: '#4a90e2',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer',
+                                    fontSize: '0.85em'
+                                  }}
+                                >
+                                  Cast
+                                </button>
+                              </div>
+                            ))
+                        }
+                        
+                        {/* Empty State */}
+                        {(!classSpellsByClass[className] || 
+                          !classSpellsByClass[className][activeLevel] || 
+                          (activeTab === 'available' && classSpellsByClass[className][activeLevel].length === 0) ||
+                          (activeTab === 'prepared' && classSpellsByClass[className][activeLevel]?.filter((s: any) => s.is_prepared).length === 0)
+                        ) && !classSpellLoading[className] && (
+                          <p style={{ color: '#666', fontStyle: 'italic', textAlign: 'center', padding: '1rem' }}>
+                            No {activeTab} {getOrdinal(activeLevel)} spells for {className}
+                          </p>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         )}
         
-        {spellcasterLevel > 0 && (
-          <button className={styles.primary} onClick={() => setIsSpellModalOpen(true)} style={{ marginTop: '1rem' }}>
-            Add Spell
-          </button>
+        {/* Character's Known Spells (Spells Known Casters) */}
+        {characterSpells.length > 0 && (
+          <div className={styles.characterSpells} style={{ marginBottom: '1rem' }}>
+            <h3>Your Known Spells</h3>
+            <div className={styles.spellList}>
+              {characterSpells.map((spell: any) => (
+                <div
+                  key={spell.id}
+                  className={styles.spellItem}
+                  style={{
+                    padding: '0.5rem',
+                    backgroundColor: '#fff',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    marginBottom: '0.25rem',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}
+                >
+                  <div>
+                    <strong>{spell.name}</strong>
+                    <span style={{ color: '#666', fontSize: '0.85em', marginLeft: '0.5rem' }}>
+                      {spell.level === 0 ? 'Cantrip' : getOrdinal(spell.level)} • {spell.school}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setSelectedSpellForCast(spell);
+                      setIsSpellCastModalOpen(true);
+                    }}
+                    style={{
+                      padding: '0.25rem 0.75rem',
+                      backgroundColor: '#4a90e2',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '0.85em'
+                    }}
+                  >
+                    Cast
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
+        
+        {/* Add Spell Button */}
+        <button className={styles.primary} onClick={() => setIsSpellModalOpen(true)} style={{ marginTop: '1rem' }}>
+          Add Spell
+        </button>
         
         <SpellSelectionModal
           isOpen={isSpellModalOpen}
@@ -1987,7 +2286,7 @@ const CharacterDisplay = () => {
           characterId={character?.id || 0}
         />
         
-        {/* ✅ NEW: Spell Cast Modal */}
+        {/* ✅ Spell Cast Modal */}
         {selectedSpellForCast && isSpellCastModalOpen && (
           <div className={styles.spellCastModal} style={{
             position: 'fixed',
@@ -2026,7 +2325,7 @@ const CharacterDisplay = () => {
               
               <h2>{selectedSpellForCast.name}</h2>
               <p className={styles.spellInfo} style={{ color: '#666', marginBottom: '1rem' }}>
-                {selectedSpellForCast.level === 0 ? 'Cantrip' : `${selectedSpellForCast.level}${getOrdinal(selectedSpellForCast.level)} Level`} 
+                {selectedSpellForCast.level === 0 ? 'Cantrip' : getOrdinal(selectedSpellForCast.level)} 
                 {' • '}{selectedSpellForCast.school}
               </p>
               
@@ -2412,10 +2711,10 @@ const CharacterDisplay = () => {
         ) : (
           <p className={styles.emptyInventory}>No items yet. Add items to get started!</p>
         )}
-        {showEquippedOnly && character.items.filter((item: any) => item.is_equipped === true).length === 0 && (
+        {showEquippedOnly && character.items?.filter((item: any) => item.is_equipped === true).length === 0 && (
           <p className={styles.emptyInventory}>No equipped items. Equip items to see them here!</p>
         )}
-        {showAttunedOnly && character.items.filter((item: any) => item.is_attuned === true).length === 0 && (
+        {showAttunedOnly && character.items?.filter((item: any) => item.is_attuned === true).length === 0 && (
           <p className={styles.emptyInventory}>No attuned items. Attune items to see them here!</p>
         )}
       </section>
@@ -2927,6 +3226,7 @@ const CharacterDisplay = () => {
             unequipItem(selectedItemForDetails.inventoryId, selectedItemForDetails.name);
           }
         }}
+        // @ts-ignore - onAttune and onUnattune are custom handlers for attunement functionality
         onAttune={() => {
           if (selectedItemForDetails && canAttuneMore()) {
             attuneItem(selectedItemForDetails.inventoryId, selectedItemForDetails.name, selectedItemForDetails.item || selectedItemForDetails);
