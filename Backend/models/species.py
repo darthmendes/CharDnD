@@ -74,7 +74,7 @@ class Species(Base):
             "guaranteed_proficiencies": [ep.proficiency.to_dict() for ep in self.guaranteed_proficiencies],
             "optional_proficiencies": [
                 {
-                    "group_id": group.id,
+                    "groupID": group.id,
                     "name": group.name,
                     "n_choices": group.n_choices,
                     "options": [choice.proficiency.to_dict() for choice in group.choices]
@@ -86,7 +86,7 @@ class Species(Base):
             "languages": [ep.language.to_dict() for ep in self.languages],
             "optional_languages": [
                 {
-                    "group_id": group.id,
+                    "groupID": group.id,
                     "name": group.name,
                     "n_choices": group.n_choices,
                     "options": [choice.language.to_dict() for choice in group.choices]
@@ -100,7 +100,7 @@ class Subspecies(Base):
     __tablename__ = "subspecies"
     
     id = Column(Integer, primary_key=True, autoincrement=True)
-    species_id = Column(Integer, ForeignKey("species.id"), nullable=False)
+    speciesID = Column(Integer, ForeignKey("species.id"), nullable=False)
     name = Column(String, nullable=False)
     ability_bonuses = Column(JSON, default=dict)
     ability_choices = Column(JSON, default=list)
@@ -133,9 +133,9 @@ class Subspecies(Base):
 class SpeciesTraits(Base):
     __tablename__ = "species_traits"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    species_id = Column(Integer, ForeignKey("species.id"), nullable=True)
-    subspecies_id = Column(Integer, ForeignKey("subspecies.id"), nullable=True)
-    feature_id = Column(Integer, ForeignKey("features.id"), nullable=False)
+    speciesID = Column(Integer, ForeignKey("species.id"), nullable=True)
+    subspeciesID = Column(Integer, ForeignKey("subspecies.id"), nullable=True)
+    featureID = Column(Integer, ForeignKey("features.id"), nullable=False)
 
     species = relationship("Species", back_populates="traits")
     subspecies = relationship("Subspecies", back_populates="traits")

@@ -116,15 +116,15 @@ class SpellService:
     
     # ✅ Database operations
     @staticmethod
-    def get_character_spell_slots(char_id: int) -> dict:
+    def get_character_spell_slots(charID: int) -> dict:
         """Get character's spell slots with all calculations."""
-        char = session.query(Character).filter_by(id=char_id).first()
+        char = session.query(Character).filter_by(id=charID).first()
         if not char:
             return {"success": False, "error": "Character not found"}
         
         try:
             # Get all class levels
-            classes = session.query(CharacterClass).filter_by(characterID=char_id).all()
+            classes = session.query(CharacterClass).filter_by(characterID=charID).all()
             classes_data = [{'className': c.dndclass.name, 'level': c.level, 'subclass': c.subclass} for c in classes]
             
             # Calculate spellcaster level
@@ -162,10 +162,10 @@ class SpellService:
             return {"success": False, "error": str(e)}
     
     @staticmethod
-    def update_expended_slots(char_id: int, level: int, amount: int) -> dict:
+    def update_expended_slots(charID: int, level: int, amount: int) -> dict:
         """Update expended spell slots."""
         try:
-            char = session.query(Character).filter_by(id=char_id).first()
+            char = session.query(Character).filter_by(id=charID).first()
             if not char:
                 return {"success": False, "error": "Character not found"}
             
@@ -186,10 +186,10 @@ class SpellService:
             return {"success": False, "error": str(e)}
     
     @staticmethod
-    def get_character_spells(char_id: int) -> dict:
+    def get_character_spells(charID: int) -> dict:
         """Get all spells known by character."""
         try:
-            spells = session.query(CharacterSpell).filter_by(characterID=char_id).all()
+            spells = session.query(CharacterSpell).filter_by(characterID=charID).all()
             return {
                 "success": True,
                 "data": [s.to_dict() for s in spells]
@@ -198,24 +198,24 @@ class SpellService:
             return {"success": False, "error": str(e)}
     
     @staticmethod
-    def add_spell_to_character(char_id: int, spell_data: dict) -> dict:
+    def add_spell_to_character(charID: int, spell_data: dict) -> dict:
         """Add a spell to character's known spells."""
         try:
-            if 'spell_id' not in spell_data:
-                return {"success": False, "error": "Missing spell_id"}
+            if 'spellID' not in spell_data:
+                return {"success": False, "error": "Missing spellID"}
             
             # Verify spell exists
-            spell = session.query(Spell).filter_by(id=spell_data['spell_id']).first()
+            spell = session.query(Spell).filter_by(id=spell_data['spellID']).first()
             if not spell:
                 return {"success": False, "error": "Spell not found"}
             
             # Create character spell entry
             char_spell = CharacterSpell(
-                characterID=char_id,
-                spellID=spell_data['spell_id'],
+                characterID=charID,
+                spellID=spell_data['spellID'],
                 source=spell_data.get('source', 'class'),
                 source_name=spell_data.get('source_name', ''),
-                is_prepared=spell_data.get('is_prepared', True),
+                is_prepared=spell_data.get('is_prepared', False),
                 always_prepared=spell_data.get('always_prepared', False)
             )
             
@@ -228,32 +228,46 @@ class SpellService:
             return {"success": False, "error": str(e)}
     
     @staticmethod
-    def remove_spell_from_character(char_id: int, spell_id: int) -> dict:
-        """Remove a spell from character's known spells."""
+    def add_spells_bulk_to_character(charID: int, spell_ids: list, is_prepared: bool = True) -> dict:
+        """Add multiple spells to character at once (much faster than one-by-one)."""
         try:
-            char_spell = session.query(CharacterSpell).filter_by(
-                characterID=char_id,
-                spellID=spell_id
-            ).first()
+            if not spell_ids:
+                return {"success": True, "data": [], "message": "No spells to add"}
             
-            if not char_spell:
-                return {"success": False, "error": "Spell not found on character"}
+            # Verify all spells exist
+            spells = session.query(Spell).filter(Spell.id.in_(spell_ids)).all()
+            if len(spells) != len(spell_ids):
+                return {"success": False, "error": "One or more spells not found"}
             
-            session.delete(char_spell)
+            # Create all character spell entries at once
+            char_spells = [
+                CharacterSpell(
+                    characterID=charID,
+                    spellID=spell_id,
+                    source='class',
+                    source_name='',
+                    is_prepared=is_prepared,  # Allow caller to specify prepared status
+                    always_prepared=False
+                )
+                for spell_id in spell_ids
+            ]
+            
+            # Bulk add and commit once
+            session.add_all(char_spells)
             session.commit()
             
-            return {"success": True}
+            return {"success": True, "data": [cs.to_dict() for cs in char_spells], "count": len(char_spells)}
         except Exception as e:
             session.rollback()
             return {"success": False, "error": str(e)}
     
     @staticmethod
-    def toggle_spell_prepared(char_id: int, spell_id: int) -> dict:
+    def toggle_spell_prepared(charID: int, spellID: int) -> dict:
         """Toggle whether a spell is prepared."""
         try:
             char_spell = session.query(CharacterSpell).filter_by(
-                characterID=char_id,
-                spellID=spell_id
+                characterID=charID,
+                spellID=spellID
             ).first()
             
             if not char_spell:
@@ -268,7 +282,7 @@ class SpellService:
             return {"success": False, "error": str(e)}
     
     @staticmethod
-    def calculate_prepare_limit(char_id: int) -> dict:
+    def calculate_prepare_limit(charID: int) -> dict:
         """
         Calculate spell prepare limit based on D&D 5e rules by class.
         
@@ -283,11 +297,11 @@ class SpellService:
         - Bard, Sorcerer, Warlock: No limit (all known are prepared)
         """
         try:
-            character = session.query(Character).filter_by(id=char_id).first()
+            character = session.query(Character).filter_by(id=charID).first()
             if not character:
                 return {"success": False, "error": "Character not found"}
             
-            classes = session.query(CharacterClass).filter_by(characterID=char_id).all()
+            classes = session.query(CharacterClass).filter_by(characterID=charID).all()
             prepared_count = 0
             prepare_limit = None
             prepare_ability = None
@@ -354,12 +368,19 @@ class SpellService:
                     prepare_limit = float('inf')
                     primary_spellcasting_class = class_name.title()
             
-            # Count currently prepared spells
-            prepared_spells = session.query(CharacterSpell).filter_by(
-                characterID=char_id,
-                is_prepared=True
+            # Count currently prepared spells (EXCLUDE CANTRIPS)
+            prepared_spells = session.query(CharacterSpell).filter(
+                CharacterSpell.characterID == charID,
+                CharacterSpell.is_prepared == True
             ).all()
-            prepared_count = len(prepared_spells)
+            
+            # Filter out cantrips from the count
+            spell_ids = [cs.spellID for cs in prepared_spells]
+            non_cantrip_spells = session.query(Spell).filter(
+                Spell.id.in_(spell_ids),
+                Spell.level > 0  # Exclude cantrips (level 0)
+            ).all()
+            prepared_count = len(non_cantrip_spells) if spell_ids else 0
             
             return {
                 "success": True,

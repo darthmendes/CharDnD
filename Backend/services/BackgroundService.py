@@ -17,10 +17,10 @@ class BackgroundService:
             }
 
     @staticmethod
-    def get_by_id(bg_id):
+    def get_byID(bgID):
         """Get a background by ID"""
         try:
-            background = session.query(Background).filter_by(id=bg_id).first()
+            background = session.query(Background).filter_by(id=bgID).first()
             if not background:
                 return {
                     "success": False,

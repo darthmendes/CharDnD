@@ -2166,3 +2166,253 @@ label {
   color: #666;
   font-style: italic;
 }
+
+/* ===== NEWLY EXTRACTED INLINE STYLES ===== */
+
+/* Proficiency/Languages Sections */
+.clickableSectionHeader {
+  cursor: pointer;
+  color: #4a90e2;
+  text-decoration: underline;
+}
+
+.proficiencyTagsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.proficiencyTag {
+  padding: 0.25rem 0.5rem;
+  background-color: #e0e0e0;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.proficiencySourcesBox {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background-color: #e3f2fd;
+  border-radius: 4px;
+  border: 1px solid #2196f3;
+}
+
+.proficiencySourcesList {
+  margin: 0.25rem 0 0 1rem;
+  padding: 0;
+}
+
+.proficiencySourceItem {
+  font-size: 0.9em;
+  color: #1565c0;
+}
+
+/* Skills Section */
+.skillCardsGrid {
+  display: grid;
+  gridTemplateColumns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.skillCardWithBonus {
+  border: 1px solid #4caf50 !important;
+  background-color: #e8f5e9 !important;
+}
+
+.skillCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.itemBonusBadge {
+  font-size: 0.75em;
+  color: #2e7d32;
+  background-color: #c8e6c9;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  margin-top: 2px;
+  display: block;
+}
+
+/* Skill Advantages */
+.skillAdvantagesSection {
+  margin-bottom: 1rem;
+}
+
+.skillAdvantagesTitle {
+  color: #ff9800;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.skillAdvantagesGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.advantageCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.advantageSkillName {
+  color: #e65100;
+  font-weight: 600;
+}
+
+.expandIcon {
+  font-size: 0.75em;
+  color: #ff9800;
+}
+
+.advantageSource {
+  font-size: 0.85em;
+  color: #f57c00;
+}
+
+.advantageDescription {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #ffcc80;
+  font-size: 0.85em;
+  color: #e65100;
+}
+
+.emptyStateMessage {
+  color: #666;
+  margin-top: 0.5rem;
+}
+
+/* Spellcasting Stats */
+.spellcastingStatsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background-color: #f0f4f8;
+  border-radius: 8px;
+}
+
+.statValue {
+  font-size: 1.5em;
+  color: #4a90e2;
+}
+
+/* Spell Slots */
+.spellSlotsSection {
+  margin-bottom: 1rem;
+}
+
+.spellSlotsCards {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.spellSlotCard {
+  padding: 0.5rem;
+  background-color: #fff;
+  border: 2px solid #4a90e2;
+  border-radius: 8px;
+  text-align: center;
+  min-width: 80px;
+}
+
+.spellSlotLevel {
+  font-weight: bold;
+  margin-bottom: 0.25rem;
+}
+
+.spellSlotCount {
+  font-size: 1.5em;
+  font-weight: bold;
+}
+
+/* ===== COLLAPSIBLE SECTIONS ===== */
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background-color: #f8f4e9;
+  border-radius: 8px 8px 0 0;
+  transition: background-color 0.2s;
+  user-select: none;
+}
+
+.sectionHeader:hover {
+  background-color: #f0e6d2;
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sectionTitle h2 {
+  margin: 0;
+  color: #5a3921;
+  font-size: 1.3rem;
+  border: none;
+  padding: 0;
+}
+
+.toggleIcon {
+  display: inline-block;
+  color: #4a90e2;
+  font-size: 0.9rem;
+  transition: transform 0.3s ease;
+}
+
+.toggleIcon.collapsed {
+  transform: rotate(-90deg);
+}
+
+.collapseHint {
+  font-size: 0.85rem;
+  color: #7a684f;
+  font-style: italic;
+}
+
+.sectionContent {
+  padding: 16px 20px;
+  animation: fadeIn 0.3s ease;
+}
+
+.sectionContent.collapsed {
+  padding: 0 20px;
+  max-height: 0;
+  overflow: hidden;
+  animation: fadeOut 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 5000px;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    max-height: 5000px;
+  }
+  to {
+    opacity: 0;
+    max-height: 0;
+  }
+}

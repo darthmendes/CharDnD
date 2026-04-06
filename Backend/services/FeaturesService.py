@@ -100,7 +100,7 @@ class FeaturesService:
             return {"success": False, "error": f"Unexpected error: {str(e)}"}
 
     @classmethod
-    def get_by_id(cls, id: int) -> Optional[Features]:
+    def get_byID(cls, id: int) -> Optional[Features]:
         """Retrieve a feature by ID (with levels loaded)."""
         from sqlalchemy.orm import joinedload
         return session.query(Features).options(
@@ -123,7 +123,7 @@ class FeaturesService:
     @classmethod
     def delete(cls, id: int) -> Dict[str, Any]:
         """Delete a feature by ID (and its levels)."""
-        feature = cls.get_by_id(id)
+        feature = cls.get_byID(id)
         if not feature:
             return {"success": False, "error": "Feature not found."}
         
@@ -173,7 +173,7 @@ class FeaturesService:
     @classmethod
     def update(cls, id: int, **kwargs) -> Dict[str, Any]:
         """Update an existing feature."""
-        feature = cls.get_by_id(id)
+        feature = cls.get_byID(id)
         if not feature:
             return {"success": False, "error": "Feature not found."}
         

@@ -99,7 +99,7 @@ def create_barbarian():
     # === BARBARIAN SUBCLASSES ===
     # Path of the Berserker
     berserker = Subclass(
-        class_id=barbarian.id,
+        classID=barbarian.id,
         name="Path of the Berserker",
         subclass_flavor="Primal Path"
     )
@@ -143,7 +143,7 @@ def create_barbarian():
 
     # Path of the Totem Warrior
     totem_warrior = Subclass(
-        class_id=barbarian.id,
+        classID=barbarian.id,
         name="Path of the Totem Warrior",
         subclass_flavor="Primal Path"
     )
@@ -286,7 +286,7 @@ def create_druid():
     # === DRUID SUBCLASSES ===
     # Circle of the Moon
     moon_circle = Subclass(
-        class_id=druid.id,
+        classID=druid.id,
         name="Circle of the Moon",
         subclass_flavor="Druid Circle"
     )
@@ -332,7 +332,7 @@ def create_druid():
 
     # Circle of the Land (Earth Domain)
     land_circle = Subclass(
-        class_id=druid.id,
+        classID=druid.id,
         name="Circle of the Land (Mountain)",
         subclass_flavor="Druid Circle"
     )
@@ -516,7 +516,7 @@ def create_artificer():
 
     # === SUBCLASSES ===
     # Alchemist
-    alchemist = Subclass(class_id=artificer.id, name="Alchemist", subclass_flavor="Artificer Specialist")
+    alchemist = Subclass(classID=artificer.id, name="Alchemist", subclass_flavor="Artificer Specialist")
     session.add(alchemist)
     session.commit()
 
@@ -533,7 +533,7 @@ def create_artificer():
     session.commit()
 
     # Artillerist
-    artillerist = Subclass(class_id=artificer.id, name="Artillerist", subclass_flavor="Artificer Specialist")
+    artillerist = Subclass(classID=artificer.id, name="Artillerist", subclass_flavor="Artificer Specialist")
     session.add(artillerist)
     session.commit()
 
@@ -597,7 +597,7 @@ def create_bard():
 
     # === SUBCLASSES ===
     # College of Lore
-    lore = Subclass(class_id=bard.id, name="College of Lore", subclass_flavor="Bard College")
+    lore = Subclass(classID=bard.id, name="College of Lore", subclass_flavor="Bard College")
     session.add(lore)
     session.commit()
 
@@ -613,7 +613,7 @@ def create_bard():
     session.commit()
 
     # College of Valor
-    valor = Subclass(class_id=bard.id, name="College of Valor", subclass_flavor="Bard College")
+    valor = Subclass(classID=bard.id, name="College of Valor", subclass_flavor="Bard College")
     session.add(valor)
     session.commit()
 
@@ -674,7 +674,7 @@ def create_cleric():
 
     # === SUBCLASSES (Domains) ===
     # Life Domain
-    life = Subclass(class_id=cleric.id, name="Life Domain", subclass_flavor="Divine Domain")
+    life = Subclass(classID=cleric.id, name="Life Domain", subclass_flavor="Divine Domain")
     session.add(life)
     session.commit()
 
@@ -693,7 +693,7 @@ def create_cleric():
     session.commit()
 
     # Light Domain
-    light = Subclass(class_id=cleric.id, name="Light Domain", subclass_flavor="Divine Domain")
+    light = Subclass(classID=cleric.id, name="Light Domain", subclass_flavor="Divine Domain")
     session.add(light)
     session.commit()
 
@@ -763,7 +763,7 @@ def create_fighter():
 
     # === SUBCLASSES ===
     # Champion
-    champion = Subclass(class_id=fighter.id, name="Champion", subclass_flavor="Martial Archetype")
+    champion = Subclass(classID=fighter.id, name="Champion", subclass_flavor="Martial Archetype")
     session.add(champion)
     session.commit()
 
@@ -780,7 +780,7 @@ def create_fighter():
     session.commit()
 
     # Battle Master
-    battlemaster = Subclass(class_id=fighter.id, name="Battle Master", subclass_flavor="Martial Archetype")
+    battlemaster = Subclass(classID=fighter.id, name="Battle Master", subclass_flavor="Martial Archetype")
     session.add(battlemaster)
     session.commit()
 
@@ -852,7 +852,7 @@ def create_paladin():
 
     # === SUBCLASSES (Oaths) ===
     # Oath of Devotion
-    devotion = Subclass(class_id=paladin.id, name="Oath of Devotion", subclass_flavor="Sacred Oath")
+    devotion = Subclass(classID=paladin.id, name="Oath of Devotion", subclass_flavor="Sacred Oath")
     session.add(devotion)
     session.commit()
 
@@ -870,7 +870,7 @@ def create_paladin():
     session.commit()
 
     # Oath of Vengeance
-    vengeance = Subclass(class_id=paladin.id, name="Oath of Vengeance", subclass_flavor="Sacred Oath")
+    vengeance = Subclass(classID=paladin.id, name="Oath of Vengeance", subclass_flavor="Sacred Oath")
     session.add(vengeance)
     session.commit()
 
@@ -947,7 +947,7 @@ def create_ranger():
 
     # === SUBCLASSES ===
     # Hunter
-    hunter = Subclass(class_id=ranger.id, name="Hunter", subclass_flavor="Ranger Archetype")
+    hunter = Subclass(classID=ranger.id, name="Hunter", subclass_flavor="Ranger Archetype")
     session.add(hunter)
     session.commit()
 
@@ -963,7 +963,7 @@ def create_ranger():
     session.commit()
 
     # Beast Master
-    beastmaster = Subclass(class_id=ranger.id, name="Beast Master", subclass_flavor="Ranger Archetype")
+    beastmaster = Subclass(classID=ranger.id, name="Beast Master", subclass_flavor="Ranger Archetype")
     session.add(beastmaster)
     session.commit()
 
@@ -1109,7 +1109,7 @@ def create_rogue():
 
     # === SUBCLASSES ===
     # Thief
-    thief = Subclass(class_id=rogue.id, name="Thief", subclass_flavor="Roguish Archetype")
+    thief = Subclass(classID=rogue.id, name="Thief", subclass_flavor="Roguish Archetype")
     session.add(thief)
     session.commit()
 
@@ -1146,7 +1146,7 @@ def create_rogue():
     session.commit()
 
     # Assassin
-    assassin = Subclass(class_id=rogue.id, name="Assassin", subclass_flavor="Roguish Archetype")
+    assassin = Subclass(classID=rogue.id, name="Assassin", subclass_flavor="Roguish Archetype")
     session.add(assassin)
     session.commit()
 
@@ -1277,7 +1277,7 @@ def create_sorcerer():
 
     # === SUBCLASSES ===
     # Draconic Bloodline
-    draconic = Subclass(class_id=sorcerer.id, name="Draconic Bloodline", subclass_flavor="Sorcerous Origin")
+    draconic = Subclass(classID=sorcerer.id, name="Draconic Bloodline", subclass_flavor="Sorcerous Origin")
     session.add(draconic)
     session.commit()
 
@@ -1314,7 +1314,7 @@ def create_sorcerer():
     session.commit()
 
     # Wild Magic
-    wild_magic = Subclass(class_id=sorcerer.id, name="Wild Magic", subclass_flavor="Sorcerous Origin")
+    wild_magic = Subclass(classID=sorcerer.id, name="Wild Magic", subclass_flavor="Sorcerous Origin")
     session.add(wild_magic)
     session.commit()
 
@@ -1462,7 +1462,7 @@ def create_warlock():
 
     # === SUBCLASSES (Patrons) ===
     # The Fiend
-    fiend = Subclass(class_id=warlock.id, name="The Fiend", subclass_flavor="Otherworldly Patron")
+    fiend = Subclass(classID=warlock.id, name="The Fiend", subclass_flavor="Otherworldly Patron")
     session.add(fiend)
     session.commit()
 
@@ -1499,7 +1499,7 @@ def create_warlock():
     session.commit()
 
     # The Great Old One
-    great_old_one = Subclass(class_id=warlock.id, name="The Great Old One", subclass_flavor="Otherworldly Patron")
+    great_old_one = Subclass(classID=warlock.id, name="The Great Old One", subclass_flavor="Otherworldly Patron")
     session.add(great_old_one)
     session.commit()
 
@@ -1605,7 +1605,7 @@ def create_wizard():
 
     # === SUBCLASSES (Schools of Magic) ===
     # School of Evocation
-    evocation = Subclass(class_id=wizard.id, name="School of Evocation", subclass_flavor="Arcane Tradition")
+    evocation = Subclass(classID=wizard.id, name="School of Evocation", subclass_flavor="Arcane Tradition")
     session.add(evocation)
     session.commit()
 
@@ -1642,7 +1642,7 @@ def create_wizard():
     session.commit()
 
     # School of Abjuration
-    abjuration = Subclass(class_id=wizard.id, name="School of Abjuration", subclass_flavor="Arcane Tradition")
+    abjuration = Subclass(classID=wizard.id, name="School of Abjuration", subclass_flavor="Arcane Tradition")
     session.add(abjuration)
     session.commit()
 

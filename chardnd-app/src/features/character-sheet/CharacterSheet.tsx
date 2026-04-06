@@ -1,4 +1,4 @@
-// src/features/character-sheet/CharacterSheet.tsx
+// src/features/character-sheet/CharacterDisplay.tsx
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Character } from '../../types/Character';
@@ -7,9 +7,11 @@ import styles from './CharacterSheet.module.css';
 import ItemModal from '../Items/ItemModal/ItemModal';
 import SpellSelectionModal from './components/SpellModal/SpellSelectionModal';
 import ItemDetailsModal from './components/ItemDetailsModal/ItemDetailsModal';
+import SpellDetailsModal from './components/SpellDetailsModal/SpellDetailsModal';
 import StatModifiersModal from './components/StatModifiersModal/StatModifiersModal';
 import ProficiencyModal from './components/ProficiencyModal/ProficiencyModal';
-import { fetchItems } from '../../services/api';
+import SpellManager from './components/SpellManager/SpellManager';
+import { fetchItems, fetchSpeciesTraits } from '../../services/api';
 
 // 🔽 D&D 5e XP Thresholds
 const LEVEL_XP_TABLE = [
@@ -22,6 +24,9 @@ const DEFAULT_ATTUNEMENT_SLOTS = 4;
 
 // ✅ Type for proficiency tabs
 type ProficiencyTab = 'skills' | 'weapons' | 'tools';
+
+// ✅ Type for collapsible sections
+type CollapsibleSection = 'speciesLevel' | 'traits' | 'spellcasting' | 'inventory' | 'combat';
 
 const CharacterDisplay = () => {
   const { id } = useParams<{ id: string }>();
@@ -44,6 +49,8 @@ const CharacterDisplay = () => {
   const [saving, setSaving] = useState(false);
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
   const [isSpellModalOpen, setIsSpellModalOpen] = useState(false);
+  const [isSpellDetailsModalOpen, setIsSpellDetailsModalOpen] = useState(false);
+  const [selectedSpellForDetails, setSelectedSpellForDetails] = useState<any | null>(null);
   
   // ✅ State for items
   const [availableItems, setAvailableItems] = useState<any[]>([]);
@@ -109,6 +116,15 @@ const CharacterDisplay = () => {
   // ✅ State for expanded skill advantage (for collapsible display)
   const [expandedAdvantage, setExpandedAdvantage] = useState<string | null>(null);
   
+  // ✅ NEW: State for collapsible sections
+  const [collapsedSections, setCollapsedSections] = useState<Record<CollapsibleSection, boolean>>({
+    speciesLevel: false,
+    traits: false,
+    spellcasting: false,
+    inventory: false,
+    combat: false,
+  });
+  
   // ✅ NEW: Spell casting state
   const [spellSlots, setSpellSlots] = useState<{[key: string]: number}>({});
   const [spellSlotsExpended, setSpellSlotsExpended] = useState<{[key: string]: number}>({});
@@ -132,9 +148,21 @@ const CharacterDisplay = () => {
   const [activeClassSpellTab, setActiveClassSpellTab] = useState<{[className: string]: 'available' | 'prepared'}>({});
   const [classSpellLoading, setClassSpellLoading] = useState<{[className: string]: boolean}>({});
 
+  // ✅ Spell bulk preparation state
+  const [spellBulkSelectMode, setSpellBulkSelectMode] = useState(false);
+  const [selectedSpellsForBulk, setSelectedSpellsForBulk] = useState<Set<number>>(new Set());
+
   // Navigation
   const goToMain = () => navigate('/');
   const goToItemCreator = () => navigate('/items/creator');
+
+  // ✅ Toggle section collapse
+  const toggleSection = (section: CollapsibleSection) => {
+    setCollapsedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
 
   // 🔁 XP ⇄ Level Helpers
   const levelToXp = (level: number): number => {
@@ -252,7 +280,7 @@ const CharacterDisplay = () => {
     }
   };
 
-  // 📥 Load character
+  // 📥 Load character (✅ FIXED: Fetch species traits)
   useEffect(() => {
     const fetchCharacter = async () => {
       if (!id) return;
@@ -260,6 +288,27 @@ const CharacterDisplay = () => {
         const response = await fetch(`http://127.0.0.1:8001/API/characters/${id}`);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data: Character = await response.json();
+        
+        // ✅ Fetch species traits if species exists
+        if (data.species) {
+          try {
+            const speciesTraits = await fetchSpeciesTraits(data.species, data.subspecies);
+            if (speciesTraits && speciesTraits.length > 0) {
+              // Merge species traits with character traits
+              data.traits = [
+                ...(data.traits || []),
+                ...speciesTraits.map((t: any) => ({
+                  name: t.feature_name || t.name,
+                  description: t.description,
+                  source: data.subspecies || data.species
+                }))
+              ];
+            }
+          } catch (err) {
+            console.error('Failed to load species traits:', err);
+          }
+        }
+        
         setCharacter(data);
         const scores = data.abilityScores || { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 };
         setLocalAbilityScores(scores);
@@ -301,7 +350,6 @@ const CharacterDisplay = () => {
   useEffect(() => {
     const loadSpellData = async () => {
       if (!id || !character) return;
-      
       try {
         // Load spell slots
         const slotsResponse = await fetch(`http://127.0.0.1:8001/API/characters/${id}/spell-slots`);
@@ -335,7 +383,6 @@ const CharacterDisplay = () => {
         console.error('Failed to load spell data:', err);
       }
     };
-    
     loadSpellData();
   }, [id, character]);
 
@@ -343,7 +390,6 @@ const CharacterDisplay = () => {
   useEffect(() => {
     const loadClassSpells = async () => {
       if (!id || !character?.classes) return;
-      
       const spellsByClass: {[className: string]: {[level: number]: any[]}} = {};
       const initialActiveLevels: {[className: string]: number} = {};
       const initialActiveTabs: {[className: string]: 'available' | 'prepared'} = {};
@@ -351,13 +397,11 @@ const CharacterDisplay = () => {
       for (const charClass of character.classes) {
         const className = charClass.className;
         setClassSpellLoading(prev => ({ ...prev, [className]: true }));
-        
         try {
           // Fetch spells available to this class
           const response = await fetch(`http://127.0.0.1:8001/API/classes/${className}/spells`);
           if (response.ok) {
             const spells = await response.json();
-            
             // Group by spell level
             const byLevel: {[level: number]: any[]} = {};
             for (const spell of spells) {
@@ -365,10 +409,11 @@ const CharacterDisplay = () => {
               if (!byLevel[level]) byLevel[level] = [];
               byLevel[level].push(spell);
             }
-            
             spellsByClass[className] = byLevel;
             initialActiveLevels[className] = 0; // Default to cantrips tab
-            initialActiveTabs[className] = 'available'; // Default to available tab
+            // ✅ FIX #2: Default to 'prepared' tab for prepared casters
+            const isPreparedCaster = ['Cleric', 'Druid', 'Paladin', 'Wizard'].includes(className);
+            initialActiveTabs[className] = isPreparedCaster ? 'prepared' : 'available';
           }
         } catch (err) {
           console.error(`Failed to load spells for ${className}:`, err);
@@ -376,12 +421,10 @@ const CharacterDisplay = () => {
           setClassSpellLoading(prev => ({ ...prev, [className]: false }));
         }
       }
-      
       setClassSpellsByClass(spellsByClass);
       setActiveSpellLevels(initialActiveLevels);
       setActiveClassSpellTab(initialActiveTabs);
     };
-    
     loadClassSpells();
   }, [id, character?.classes]);
 
@@ -432,7 +475,7 @@ const CharacterDisplay = () => {
   // Add spell
   const addSpell = async (spell: { id?: number; name: string }) => {
     try {
-      // Extract spell_id from spell object
+      // Extract spellID from spell object
       const spellId = spell.id;
       if (!spellId) {
         alert('❌ Spell ID not found');
@@ -442,7 +485,7 @@ const CharacterDisplay = () => {
       const response = await fetch(`http://127.0.0.1:8001/API/characters/${id}/spells`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ spell_id: spellId }),
+        body: JSON.stringify({ spellID: spellId }),
       });
       if (!response.ok) throw new Error('Failed to add spell');
       
@@ -460,6 +503,12 @@ const CharacterDisplay = () => {
       console.error(err);
       alert('❌ Could not add spell: ' + err.message);
     }
+  };
+
+  // Open spell details modal
+  const openSpellDetails = (spell: any) => {
+    setSelectedSpellForDetails(spell);
+    setIsSpellDetailsModalOpen(true);
   };
 
   // Add one more of the same item
@@ -589,6 +638,121 @@ const CharacterDisplay = () => {
       }
     } catch (err) {
       console.error('Failed to toggle spell prepared:', err);
+    }
+  };
+
+  // ✅ Toggle single spell in bulk selection
+  const toggleSpellBulkSelection = (spellId: number) => {
+    setSelectedSpellsForBulk(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(spellId)) {
+        newSet.delete(spellId);
+      } else {
+        newSet.add(spellId);
+      }
+      return newSet;
+    });
+  };
+
+  // ✅ Select all visible spells
+  const selectAllVisibleSpells = () => {
+    const allSpellIds = new Set<number>();
+    Object.values(classSpellsByClass).forEach(classSpells => {
+      Object.values(classSpells).forEach(levelSpells => {
+        levelSpells.forEach((spell: any) => {
+          allSpellIds.add(spell.id);
+        });
+      });
+    });
+    setSelectedSpellsForBulk(allSpellIds);
+  };
+
+  // ✅ Deselect all spells
+  const deselectAllSpells = () => {
+    setSelectedSpellsForBulk(new Set());
+  };
+
+  // ✅ Bulk prepare spells
+  const bulkPrepareSpells = async () => {
+    if (selectedSpellsForBulk.size === 0) {
+      alert('No spells selected');
+      return;
+    }
+    try {
+      const spellIds = Array.from(selectedSpellsForBulk);
+      const response = await fetch(`http://127.0.0.1:8001/API/characters/${id}/spells/bulk-prepare`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ spellIDs: spellIds }),
+      });
+      
+      if (response.ok) {
+        alert(`✅ Prepared ${spellIds.length} spell(s)`);
+        setSelectedSpellsForBulk(new Set());
+        setSpellBulkSelectMode(false);
+        
+        // Refresh spells and prepare limit
+        const spellsResponse = await fetch(`http://127.0.0.1:8001/API/characters/${id}/spells`);
+        if (spellsResponse.ok) {
+          const spellsData = await spellsResponse.json();
+          setCharacterSpells(spellsData);
+        }
+        
+        const prepareResponse = await fetch(`http://127.0.0.1:8001/API/characters/${id}/prepare-limit`);
+        if (prepareResponse.ok) {
+          const prepareData = await prepareResponse.json();
+          setSpellPrepareLimit(prepareData.prepare_limit);
+          setSpellPreparedCount(prepareData.prepared_count);
+          setSpellPrepareUnlimited(prepareData.unlimited);
+        }
+      } else {
+        alert('❌ Failed to prepare spells');
+      }
+    } catch (err) {
+      console.error('Failed to bulk prepare spells:', err);
+      alert('❌ Error preparing spells');
+    }
+  };
+
+  // ✅ Bulk unprepare spells
+  const bulkUnprepareSpells = async () => {
+    if (selectedSpellsForBulk.size === 0) {
+      alert('No spells selected');
+      return;
+    }
+    try {
+      const spellIds = Array.from(selectedSpellsForBulk);
+      const response = await fetch(`http://127.0.0.1:8001/API/characters/${id}/spells/bulk-unprepare`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ spellIDs: spellIds }),
+      });
+      
+      if (response.ok) {
+        alert(`✅ Unprepared ${spellIds.length} spell(s)`);
+        setSelectedSpellsForBulk(new Set());
+        setSpellBulkSelectMode(false);
+        
+        // Refresh spells and prepare limit
+        const spellsResponse = await fetch(`http://127.0.0.1:8001/API/characters/${id}/spells`);
+        if (spellsResponse.ok) {
+          const spellsData = await spellsResponse.json();
+          setCharacterSpells(spellsData);
+        }
+        
+        const prepareResponse = await fetch(`http://127.0.0.1:8001/API/characters/${id}/prepare-limit`);
+        if (prepareResponse.ok) {
+          const prepareData = await prepareResponse.json();
+          setSpellPrepareLimit(prepareData.prepare_limit);
+          setSpellPreparedCount(prepareData.prepared_count);
+          setSpellPrepareUnlimited(prepareData.unlimited);
+        }
+      } else {
+        alert('❌ Failed to unprepare spells');
+      }
+    } catch (err) {
+      console.error('Failed to bulk unprepare spells:', err);
+      alert('❌ Error unpreparing spells');
     }
   };
 
@@ -995,6 +1159,7 @@ const CharacterDisplay = () => {
 
     return modifiers;
   };
+
   const getAbilityModifiers = (abilityKey: string): Array<{ itemName: string; value: number; type: 'bonus' | 'penalty' | 'base' }> => {
     if (!character || !character.items) return [];
     const modifiers: Array<{ itemName: string; value: number; type: 'bonus' | 'penalty' | 'base' }> = [];
@@ -1154,7 +1319,7 @@ const CharacterDisplay = () => {
     return languages;
   };
 
-  // ✅ Get all traits (from character + equipped AND attuned items)
+  // ✅ Get all traits (from character + species + equipped AND attuned items)
   const getAllTraits = (): Array<{ name: string; description: string; source: string }> => {
     const traits: Array<{ name: string; description: string; source: string }> = [];
     const traitNames = new Set<string>();
@@ -1468,16 +1633,13 @@ const CharacterDisplay = () => {
   // ✅ Helper: Calculate damage for spell at given slot level
   const getDamageForLevel = (spell: any, slotLevel: number) => {
     if (!spell.damage_dice) return null;
-    
     // Spell can only be cast at or above spell level
     if (slotLevel < spell.level) {
       return null; // Can't cast above spell level
     }
-    
     if (slotLevel === spell.level) {
       return spell.damage_dice;
     }
-    
     // Add upcast damage
     const extraDice = slotLevel - spell.level;
     const upcastDie = spell.upcast_damage_per_level || '1d6';
@@ -1507,1680 +1669,1279 @@ const CharacterDisplay = () => {
 
       <h1>{character.name}</h1>
 
+      {/* ✅ COLLAPSIBLE: Species & Level Section */}
       <section className={styles.section}>
-        <h2>Species & Level</h2>
-        <label><strong>Species:</strong> {character.species}</label>
-        {character.subspecies && <label><strong>Subspecies:</strong> {character.subspecies}</label>}
-        {character.background && <label><strong>Background:</strong> {character.background.name}</label>}
+        <div 
+          className={styles.sectionHeader}
+          onClick={() => toggleSection('speciesLevel')}
+          style={{ cursor: 'pointer' }}
+        >
+          <div className={styles.sectionTitle}>
+            <span className={`${styles.toggleIcon} ${collapsedSections.speciesLevel ? styles.collapsed : ''}`}>
+              ▼
+            </span>
+            <h2>Species & Level</h2>
+          </div>
+          <span className={styles.collapseHint}>
+            {collapsedSections.speciesLevel ? 'Show' : 'Hide'}
+          </span>
+        </div>
+        
+        <div className={`${styles.sectionContent} ${collapsedSections.speciesLevel ? styles.collapsed : ''}`}>
+          <label><strong>Species:</strong> {character.species}</label>
+          {character.subspecies && <label><strong>Subspecies:</strong> {character.subspecies}</label>}
+          {character.background && <label><strong>Background:</strong> {character.background.name}</label>}
 
-        {/* Level & XP */}
-        <div className={styles.levelXpGroup}>
-          <div className={styles.levelXpRow}>
-            <span className={styles.levelXpLabel}>Level:</span>
-            <strong>{localLevel}</strong>
-            <div className={styles.levelButtons}>
-              <button
-                type="button"
-                onClick={() => handleLevelChange(-1)}
-                disabled={saving || localLevel <= 1}
-                className={styles.levelButton}
-              >
-                −
-              </button>
-              <button
-                type="button"
-                onClick={() => handleLevelChange(1)}
-                disabled={saving || localLevel >= 20}
-                className={styles.levelButton}
-              >
-                +
-              </button>
+          {/* Level & XP */}
+          <div className={styles.levelXpGroup}>
+            <div className={styles.levelXpRow}>
+              <span className={styles.levelXpLabel}>Level:</span>
+              <strong>{localLevel}</strong>
+              <div className={styles.levelButtons}>
+                <button
+                  type="button"
+                  onClick={() => handleLevelChange(-1)}
+                  disabled={saving || localLevel <= 1}
+                  className={styles.levelButton}
+                >
+                  −
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleLevelChange(1)}
+                  disabled={saving || localLevel >= 20}
+                  className={styles.levelButton}
+                >
+                  +
+                </button>
+              </div>
             </div>
+
+            <div className={styles.levelXpRow}>
+              <span className={styles.levelXpLabel}>XP:</span>
+              <input
+                type="number"
+                value={localXp}
+                onChange={handleXpInput}
+                disabled={saving}
+                className={styles.xpInput}
+              />
+              <div className={styles.xpButtons}>
+                <button
+                  type="button"
+                  onClick={() => handleXpChange(-100)}
+                  disabled={saving}
+                  className={styles.xpStepButton}
+                >
+                  −100
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleXpChange(100)}
+                  disabled={saving}
+                  className={styles.xpStepButton}
+                >
+                  +100
+                </button>
+              </div>
+            </div>
+
+            {localLevel < 20 && (
+              <div className={styles.xpHint}>
+                {levelToXp(localLevel + 1) - localXp} XP to Level {localLevel + 1}
+              </div>
+            )}
+
+            <button onClick={saveLevelAndXp} disabled={saving} className={styles.saveBtn}>
+              {saving ? 'Saving...' : 'Save Level & XP'}
+            </button>
           </div>
 
-          <div className={styles.levelXpRow}>
-            <span className={styles.levelXpLabel}>XP:</span>
-            <input
-              type="number"
-              value={localXp}
-              onChange={handleXpInput}
-              disabled={saving}
-              className={styles.xpInput}
-            />
-            <div className={styles.xpButtons}>
-              <button
-                type="button"
-                onClick={() => handleXpChange(-100)}
-                disabled={saving}
-                className={styles.xpStepButton}
-              >
-                −100
-              </button>
-              <button
-                type="button"
-                onClick={() => handleXpChange(100)}
-                disabled={saving}
-                className={styles.xpStepButton}
-              >
-                +100
-              </button>
+          {/* Multiclass Display */}
+          <label><strong>Classes:</strong></label>
+          {character.classes?.length > 0 ? (
+            <div>
+              {character.classes.map((cls, index) => (
+                <div key={index}>
+                  {cls.className} (Level {cls.level})
+                  {cls.subclass && ` - ${cls.subclass}`}
+                </div>
+              ))}
             </div>
-          </div>
-
-          {localLevel < 20 && (
-            <div className={styles.xpHint}>
-              {levelToXp(localLevel + 1) - localXp} XP to Level {localLevel + 1}
-            </div>
+          ) : (
+            <p>No classes assigned</p>
           )}
 
-          <button onClick={saveLevelAndXp} disabled={saving} className={styles.saveBtn}>
-            {saving ? 'Saving...' : 'Save Level & XP'}
-          </button>
-        </div>
-
-        {/* Multiclass Display */}
-        <label><strong>Classes:</strong></label>
-        {character.classes?.length > 0 ? (
           <div>
-            {character.classes.map((cls, index) => (
-              <div key={index}>
-                {cls.className} (Level {cls.level})
-                {cls.subclass && ` - ${cls.subclass}`}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p>No classes assigned</p>
-        )}
-
-        <div>
-          <strong>Ability Scores:</strong>
-          <AbsScores abilityScores={localAbilityScores} onScoreChange={handleScoreChange} />
-          <button onClick={saveScores} disabled={saving} className={styles.saveBtn}>
-            {saving ? 'Saving...' : 'Save Scores'}
-          </button>
-        </div>
-
-        {/* Proficiency Bonus */}
-        <div>
-          <strong>Proficiency Bonus:</strong> +{proficiencyBonus}
-        </div>
-
-        {/* ✅ NEW: Proficiency Display with Tabs */}
-        <div>
-          <strong>Proficiencies:</strong>
-          
-          {/* ✅ Tab Buttons */}
-          <div className={styles.proficiencyTabs} style={{ 
-            display: 'flex', 
-            gap: '0.5rem', 
-            marginTop: '0.5rem',
-            marginBottom: '1rem'
-          }}>
-            <button
-              onClick={() => setActiveProficiencyTab('skills')}
-              className={`${styles.tabButton} ${activeProficiencyTab === 'skills' ? styles.activeTab : ''}`}
-              style={{
-                padding: '0.5rem 1rem',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                backgroundColor: activeProficiencyTab === 'skills' ? '#4a90e2' : '#e0e0e0',
-                color: activeProficiencyTab === 'skills' ? 'white' : '#333',
-                fontWeight: activeProficiencyTab === 'skills' ? 'bold' : 'normal',
-                transition: 'all 0.2s'
-              }}
-            >
-              Skills {displayedSkills.skills.length > 0 && `(${displayedSkills.skills.length})`}
-            </button>
-            <button
-              onClick={() => setActiveProficiencyTab('weapons')}
-              className={`${styles.tabButton} ${activeProficiencyTab === 'weapons' ? styles.activeTab : ''}`}
-              style={{
-                padding: '0.5rem 1rem',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                backgroundColor: activeProficiencyTab === 'weapons' ? '#4a90e2' : '#e0e0e0',
-                color: activeProficiencyTab === 'weapons' ? 'white' : '#333',
-                fontWeight: activeProficiencyTab === 'weapons' ? 'bold' : 'normal',
-                transition: 'all 0.2s'
-              }}
-            >
-              Weapons {proficientWeapons.length > 0 && `(${proficientWeapons.length})`}
-            </button>
-            <button
-              onClick={() => setActiveProficiencyTab('tools')}
-              className={`${styles.tabButton} ${activeProficiencyTab === 'tools' ? styles.activeTab : ''}`}
-              style={{
-                padding: '0.5rem 1rem',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                backgroundColor: activeProficiencyTab === 'tools' ? '#4a90e2' : '#e0e0e0',
-                color: activeProficiencyTab === 'tools' ? 'white' : '#333',
-                fontWeight: activeProficiencyTab === 'tools' ? 'bold' : 'normal',
-                transition: 'all 0.2s'
-              }}
-            >
-              Tools {proficientTools.length > 0 && `(${proficientTools.length})`}
+            <strong>Ability Scores:</strong>
+            <AbsScores abilityScores={localAbilityScores} onScoreChange={handleScoreChange} />
+            <button onClick={saveScores} disabled={saving} className={styles.saveBtn}>
+              {saving ? 'Saving...' : 'Save Scores'}
             </button>
           </div>
 
-          {/* ✅ Tab Content - Skills */}
-          {activeProficiencyTab === 'skills' && displayedSkills.skills.length > 0 && (
-            <div>
-              <strong
-                style={{ cursor: 'pointer', color: '#4a90e2', textDecoration: 'underline' }}
-                onClick={() => setProficiencyModal({ isOpen: true, type: 'skills' })}
-                title="Click to see skill proficiency sources"
+          {/* Proficiency Bonus */}
+          <div>
+            <strong>Proficiency Bonus:</strong> +{proficiencyBonus}
+          </div>
+
+          {/* ✅ NEW: Proficiency Display with Tabs */}
+          <div>
+            <strong>Proficiencies:</strong>
+            
+            {/* ✅ Tab Buttons */}
+            <div className={styles.proficiencyTabs} style={{ 
+              display: 'flex', 
+              gap: '0.5rem', 
+              marginTop: '0.5rem',
+              marginBottom: '1rem'
+            }}>
+              <button
+                onClick={() => setActiveProficiencyTab('skills')}
+                className={`${styles.tabButton} ${activeProficiencyTab === 'skills' ? styles.activeTab : ''}`}
+                style={{
+                  padding: '0.5rem 1rem',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  backgroundColor: activeProficiencyTab === 'skills' ? '#4a90e2' : '#e0e0e0',
+                  color: activeProficiencyTab === 'skills' ? 'white' : '#333',
+                  fontWeight: activeProficiencyTab === 'skills' ? 'bold' : 'normal',
+                  transition: 'all 0.2s'
+                }}
               >
-                Skills: {getSkillProficiencies().length > 0 && `(+${getSkillProficiencies().length} from items)`}
-                {skillModifiers.length > 0 && ` | Item Bonuses: ${skillModifiers.length}`}
-              </strong>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '0.5rem', marginTop: '0.5rem' }}>
-                {/* ✅ Filter to only show skills with proficiency OR item bonuses */}
-                {displayedSkills.skills
-                  .map(skill => {
-                    const ability = getSkillAbility(skill);
-                    const finalScore = getFinalAbilityScore(ability);
-                    const abilityMod = getAbilityModifier(finalScore);
-                    const isProficient = proficientSkills.includes(skill);
-                    const itemModifier = skillModifiers
-                      .filter(mod => mod.skillName.toLowerCase() === skill.toLowerCase())
-                      .reduce((sum, mod) => sum + mod.modifier, 0);
-                    const totalMod = abilityMod + (isProficient ? proficiencyBonus : 0) + itemModifier;
-                    const displayMod = totalMod >= 0 ? `+${totalMod}` : `${totalMod}`;
-                    const hasItemBonus = itemModifier !== 0;
-                    const hasAdvantage = skillAdvantages.some(adv => adv.skillName.toLowerCase() === skill.toLowerCase());
-                    const isFromItems = displayedSkills.sources[skill]?.some(source => source !== 'Character');
-                    const itemSources = displayedSkills.sources[skill]?.filter(source => source !== 'Character') || [];
-                    return {
-                      skill,
-                      abilityMod,
-                      isProficient,
-                      itemModifier,
-                      totalMod,
-                      displayMod,
-                      hasItemBonus,
-                      hasAdvantage,
-                      isFromItems,
-                      itemSources
-                    };
-                  })
-                  .filter(skillData =>
-                    // ✅ Only show if proficient OR has item bonus OR has advantage
-                    skillData.isProficient || skillData.hasItemBonus || skillData.hasAdvantage
-                  )
-                  .map(skillData => (
-                    <div
-                      key={skillData.skill}
-                      className={`${styles.skillCard} ${skillData.hasItemBonus ? styles.skillCardWithBonus : ''} ${skillData.hasAdvantage ? styles.skillCardWithAdvantage : ''} ${skillData.isFromItems ? styles.skillCardFromItem : ''}`}
-                      style={{
-                        padding: '0.25rem',
-                        backgroundColor: skillData.hasAdvantage ? '#fff3e0' : (skillData.hasItemBonus ? '#e8f5e9' : (skillData.isFromItems ? '#e3f2fd' : '#f0f0f0')),
-                        borderRadius: '4px',
-                        border: skillData.hasAdvantage ? '2px solid #ff9800' : (skillData.hasItemBonus ? '1px solid #4caf50' : (skillData.isFromItems ? '1px solid #2196f3' : 'none'))
-                      }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <strong>{skillData.skill}</strong>
-                        <span>{skillData.displayMod}</span>
-                      </div>
-                      {skillData.hasItemBonus && (
-                        <span className={styles.itemBonusBadge}>
-                          +{skillData.itemModifier} {skillModifiers
-                            .filter(mod => mod.skillName.toLowerCase() === skillData.skill.toLowerCase())
-                            .map(mod => mod.itemName)
-                            .join(', ')}
-                        </span>
-                      )}
-                      {skillData.isFromItems && !skillData.hasItemBonus && (
-                        <span className={styles.itemSourceBadge}>
-                          📦 {skillData.itemSources.join(', ')}
-                        </span>
-                      )}
-                      {skillData.hasAdvantage && <span className={styles.advantageBadge}>🎲 ADV</span>}
-                    </div>
-                  ))}
-              </div>
-              {getSkillProficiencies().length > 0 && (
-                <div style={{ marginTop: '0.5rem', padding: '0.5rem', backgroundColor: '#e3f2fd', borderRadius: '4px', border: '1px solid #2196f3' }}>
-                  <strong>📜 Item-Granted Proficiencies:</strong>
-                  <ul style={{ margin: '0.25rem 0 0 1rem', padding: 0 }}>
-                    {getSkillProficiencies().map((prof, idx) => (
-                      <li key={idx} style={{ fontSize: '0.9em', color: '#1565c0' }}>
-                        {prof.proficiency} (from {prof.itemName})
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {/* Skill Advantages - Always visible */}
-              {skillAdvantages.length > 0 && (
-                <div style={{ marginBottom: '1rem' }}>
-                  <strong style={{ color: '#ff9800' }}>🎲 Skill Advantages:</strong>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
-                    {skillAdvantages.map((adv, idx) => (
+                Skills {displayedSkills.skills.length > 0 && `(${displayedSkills.skills.length})`}
+              </button>
+              <button
+                onClick={() => setActiveProficiencyTab('weapons')}
+                className={`${styles.tabButton} ${activeProficiencyTab === 'weapons' ? styles.activeTab : ''}`}
+                style={{
+                  padding: '0.5rem 1rem',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  backgroundColor: activeProficiencyTab === 'weapons' ? '#4a90e2' : '#e0e0e0',
+                  color: activeProficiencyTab === 'weapons' ? 'white' : '#333',
+                  fontWeight: activeProficiencyTab === 'weapons' ? 'bold' : 'normal',
+                  transition: 'all 0.2s'
+                }}
+              >
+                Weapons {proficientWeapons.length > 0 && `(${proficientWeapons.length})`}
+              </button>
+              <button
+                onClick={() => setActiveProficiencyTab('tools')}
+                className={`${styles.tabButton} ${activeProficiencyTab === 'tools' ? styles.activeTab : ''}`}
+                style={{
+                  padding: '0.5rem 1rem',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  backgroundColor: activeProficiencyTab === 'tools' ? '#4a90e2' : '#e0e0e0',
+                  color: activeProficiencyTab === 'tools' ? 'white' : '#333',
+                  fontWeight: activeProficiencyTab === 'tools' ? 'bold' : 'normal',
+                  transition: 'all 0.2s'
+                }}
+              >
+                Tools {proficientTools.length > 0 && `(${proficientTools.length})`}
+              </button>
+            </div>
+
+            {/* ✅ Tab Content - Skills */}
+            {activeProficiencyTab === 'skills' && displayedSkills.skills.length > 0 && (
+              <div>
+                <strong
+                  style={{ cursor: 'pointer', color: '#4a90e2', textDecoration: 'underline' }}
+                  onClick={() => setProficiencyModal({ isOpen: true, type: 'skills' })}
+                  title="Click to see skill proficiency sources"
+                >
+                  Skills: {getSkillProficiencies().length > 0 && `(+${getSkillProficiencies().length} from items)`}
+                  {skillModifiers.length > 0 && ` | Item Bonuses: ${skillModifiers.length}`}
+                </strong>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '0.5rem', marginTop: '0.5rem' }}>
+                  {/* ✅ Filter to only show skills with proficiency OR item bonuses */}
+                  {displayedSkills.skills
+                    .map(skill => {
+                      const ability = getSkillAbility(skill);
+                      const finalScore = getFinalAbilityScore(ability);
+                      const abilityMod = getAbilityModifier(finalScore);
+                      const isProficient = proficientSkills.includes(skill);
+                      const itemModifier = skillModifiers
+                        .filter(mod => mod.skillName.toLowerCase() === skill.toLowerCase())
+                        .reduce((sum, mod) => sum + mod.modifier, 0);
+                      const totalMod = abilityMod + (isProficient ? proficiencyBonus : 0) + itemModifier;
+                      const displayMod = totalMod >= 0 ? `+${totalMod}` : `${totalMod}`;
+                      const hasItemBonus = itemModifier !== 0;
+                      const hasAdvantage = skillAdvantages.some(adv => adv.skillName.toLowerCase() === skill.toLowerCase());
+                      const isFromItems = displayedSkills.sources[skill]?.some(source => source !== 'Character');
+                      const itemSources = displayedSkills.sources[skill]?.filter(source => source !== 'Character') || [];
+                      return {
+                        skill,
+                        abilityMod,
+                        isProficient,
+                        itemModifier,
+                        totalMod,
+                        displayMod,
+                        hasItemBonus,
+                        hasAdvantage,
+                        isFromItems,
+                        itemSources
+                      };
+                    })
+                    .filter(skillData =>
+                      // ✅ Only show if proficient OR has item bonus OR has advantage
+                      skillData.isProficient || skillData.hasItemBonus || skillData.hasAdvantage
+                    )
+                    .map(skillData => (
                       <div
-                        key={idx}
-                        className={`${styles.advantageCard} ${expandedAdvantage === adv.skillName ? styles.advantageCardExpanded : ''}`}
-                        onClick={() => toggleAdvantageExpand(adv.skillName)}
+                        key={skillData.skill}
+                        className={`${styles.skillCard} ${skillData.hasItemBonus ? styles.skillCardWithBonus : ''} ${skillData.hasAdvantage ? styles.skillCardWithAdvantage : ''} ${skillData.isFromItems ? styles.skillCardFromItem : ''}`}
                         style={{
-                          cursor: 'pointer',
-                          padding: '0.5rem',
-                          backgroundColor: '#fff3e0',
-                          border: '2px solid #ff9800',
+                          padding: '0.25rem',
+                          backgroundColor: skillData.hasAdvantage ? '#fff3e0' : (skillData.hasItemBonus ? '#e8f5e9' : (skillData.isFromItems ? '#e3f2fd' : '#f0f0f0')),
                           borderRadius: '4px',
-                          flex: '1 1 200px',
-                          maxWidth: '300px'
+                          border: skillData.hasAdvantage ? '2px solid #ff9800' : (skillData.hasItemBonus ? '1px solid #4caf50' : (skillData.isFromItems ? '1px solid #2196f3' : 'none'))
                         }}
                       >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <strong style={{ color: '#e65100' }}>{adv.skillName}</strong>
-                          <span style={{ fontSize: '0.75em', color: '#ff9800' }}>
-                            {expandedAdvantage === adv.skillName ? '▲' : '▼'}
-                          </span>
+                          <strong>{skillData.skill}</strong>
+                          <span>{skillData.displayMod}</span>
                         </div>
-                        <div style={{ fontSize: '0.85em', color: '#f57c00' }}>from {adv.itemName}</div>
-                        {expandedAdvantage === adv.skillName && adv.description && (
-                          <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid #ffcc80', fontSize: '0.85em', color: '#e65100' }}>
-                            {adv.description}
-                          </div>
+                        {skillData.hasItemBonus && (
+                          <span className={styles.itemBonusBadge}>
+                            +{skillData.itemModifier} {skillModifiers
+                              .filter(mod => mod.skillName.toLowerCase() === skillData.skill.toLowerCase())
+                              .map(mod => mod.itemName)
+                              .join(', ')}
+                          </span>
                         )}
+                        {skillData.isFromItems && !skillData.hasItemBonus && (
+                          <span className={styles.itemSourceBadge}>
+                            📦 {skillData.itemSources.join(', ')}
+                          </span>
+                        )}
+                        {skillData.hasAdvantage && <span className={styles.advantageBadge}>🎲 ADV</span>}
                       </div>
                     ))}
-                  </div>
                 </div>
-              )}
-            </div>            
-          )}
-
-          {/* ✅ Tab Content - Weapons */}
-          {activeProficiencyTab === 'weapons' && proficientWeapons.length > 0 && (
-            <div>
-              <strong
-                style={{ cursor: 'pointer', color: '#4a90e2', textDecoration: 'underline' }}
-                onClick={() => setProficiencyModal({ isOpen: true, type: 'weapons' })}
-                title="Click to see weapon proficiency sources"
-              >
-                Weapons & Armor: {getWeaponProficiencies().length > 0 && `(+${getWeaponProficiencies().length})`}
-              </strong>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
-                {proficientWeapons.map(weapon => (
-                  <span key={weapon} style={{ padding: '0.25rem 0.5rem', backgroundColor: '#e0e0e0', borderRadius: '4px' }}>
-                    {weapon}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* ✅ Tab Content - Tools */}
-          {activeProficiencyTab === 'tools' && proficientTools.length > 0 && (
-            <div>
-              <strong
-                style={{ cursor: 'pointer', color: '#4a90e2', textDecoration: 'underline' }}
-                onClick={() => setProficiencyModal({ isOpen: true, type: 'tools' })}
-                title="Click to see tool proficiency sources"
-              >
-                Tools: {getToolProficiencies().length > 0 && `(+${getToolProficiencies().length})`}
-              </strong>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
-                {proficientTools.map(tool => (
-                  <span key={tool} style={{ padding: '0.25rem 0.5rem', backgroundColor: '#e0e0e0', borderRadius: '4px' }}>
-                    {tool}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* ✅ Show message if no proficiencies in active tab */}
-          {((activeProficiencyTab === 'skills' && displayedSkills.skills.length === 0) ||
-            (activeProficiencyTab === 'weapons' && proficientWeapons.length === 0) ||
-            (activeProficiencyTab === 'tools' && proficientTools.length === 0)) && (
-            <p style={{ color: '#666', marginTop: '0.5rem' }}>
-              No {activeProficiencyTab} proficiencies yet.
-            </p>
-          )}
-        </div>
-
-        {/* Languages */}
-        <div>
-          <strong
-            style={{ cursor: 'pointer', color: '#4a90e2', textDecoration: 'underline' }}
-            onClick={() => setProficiencyModal({ isOpen: true, type: 'languages' })}
-            title="Click to see language sources"
-          >
-            Languages: {getLanguages().length > 0 && `(+${getLanguages().length})`}
-          </strong>
-          {knownLanguages.length > 0 ? (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
-              {knownLanguages.map(lang => (
-                <span key={lang} style={{ padding: '0.25rem 0.5rem', backgroundColor: '#e0e0e0', borderRadius: '4px' }}>
-                  {lang}
-                </span>
-              ))}
-            </div>
-          ) : (
-            <p>None</p>
-          )}
-        </div>
-
-        {/* Attunement Slots Display */}
-        <div className={styles.attunementDisplay}>
-          <strong>Attunement Slots:</strong>
-          <span className={attunedCount >= attunementSlotLimit ? styles.attunementFull : styles.attunementAvailable}>
-            {attunedCount} / {attunementSlotLimit}
-          </span>
-          {attunedCount >= attunementSlotLimit && (
-            <span className={styles.attunementWarning}> ⚠️ Max attuned items reached!</span>
-          )}
-        </div>
-      </section>
-
-      {/* Traits Section */}
-      <section className={styles.section}>
-        <h2>Traits</h2>
-        {allTraits.length > 0 ? (
-          <div className={styles.traitsList}>
-            {allTraits.map((trait, index) => (
-              <div
-                key={index}
-                className={`${styles.traitCard} ${expandedTrait === trait.name ? styles.traitCardExpanded : ''}`}
-                onClick={() => toggleTraitExpand(trait.name)}
-                style={{ cursor: 'pointer' }}
-              >
-                <div className={styles.traitCardHeader}>
-                  <span className={styles.traitName}>{trait.name}</span>
-                  <span className={styles.traitSource}>{trait.source}</span>
-                  <span className={styles.traitExpandIcon}>
-                    {expandedTrait === trait.name ? '▲' : '▼'}
-                  </span>
-                </div>
-                {expandedTrait === trait.name && (
-                  <div className={styles.traitDescription}>
-                    {trait.description}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className={styles.emptyInventory}>No traits yet. Traits will appear from your species, background, class, or equipped items!</p>
-        )}
-      </section>
-
-      {/* ✅ ENHANCED: Spellcasting Section with Class-Based Known Spells */}
-      <section className={styles.section}>
-        <h2>Spellcasting</h2>
-        
-        {/* Spellcasting Stats */}
-        {spellcasterLevel > 0 && (
-          <div className={styles.spellcastingStats} style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', 
-            gap: '0.5rem',
-            marginBottom: '1rem',
-            padding: '1rem',
-            backgroundColor: '#f0f4f8',
-            borderRadius: '8px'
-          }}>
-            <div className={`${styles.statBox} ${styles.clickable}`} 
-            onClick={() => setStatModifiersModal({ isOpen: true, stat: 'SpellDC' })}
-            title="Click to see how Spell Save DC is calculated" >
-              <strong>Spell Save DC</strong>
-              <span style={{ fontSize: '1.5em', color: '#4a90e2' }}>{spellSaveDC}</span>
-            </div>
-            <div className={`${styles.statBox} ${styles.clickable}`}
-            onClick={() => setStatModifiersModal({ isOpen: true, stat: 'SpellAttack' })}
-            title="Click to see how Spell Attack is calculated" >
-              <strong>Spell Attack</strong>
-              <span style={{ fontSize: '1.5em', color: '#4a90e2' }}>+{spellAttackBonus}</span>
-            </div>
-            <div className={styles.statBox}>
-              <strong>Ability</strong>
-              <span style={{ fontSize: '1.5em', color: '#4a90e2' }}>{spellcastingAbility.toUpperCase()}</span>
-            </div>
-            <div className={styles.statBox}>
-              <strong>Caster Level</strong>
-              <span style={{ fontSize: '1.5em', color: '#4a90e2' }}>{spellcasterLevel}</span>
-            </div>
-          </div>
-        )}
-        
-        {/* Spell Slots */}
-        {spellcasterLevel > 0 && (
-          <div className={styles.spellSlots} style={{ marginBottom: '1rem' }}>
-            <h3>Spell Slots</h3>
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-              {Object.entries(spellSlots).map(([level, total]) => {
-                const expended = spellSlotsExpended[level] || 0;
-                const remaining = total - expended;
-                return (
-                  <div key={level} style={{ 
-                    padding: '0.5rem', 
-                    backgroundColor: '#fff',
-                    border: '2px solid #4a90e2',
-                    borderRadius: '8px',
-                    textAlign: 'center',
-                    minWidth: '80px'
-                  }}>
-                    <div style={{ fontWeight: 'bold', marginBottom: '0.25rem' }}>
-                      {getOrdinal(parseInt(level))}
-                    </div>
-                    <div style={{ fontSize: '1.5em', fontWeight: 'bold' }}>
-                      {remaining}/{total}
-                    </div>
-                    <div style={{ display: 'flex', gap: '2px', justifyContent: 'center', marginTop: '0.25rem' }}>
-                      {Array.from({ length: total }).map((_, i) => (
-                        <div
-                          key={i}
-                          onClick={() => expendSpellSlot(parseInt(level))}
-                          style={{
-                            width: '12px',
-                            height: '12px',
-                            borderRadius: '2px',
-                            backgroundColor: i < expended ? '#ccc' : '#4a90e2',
-                            cursor: i < expended ? 'default' : 'pointer',
-                            border: '1px solid #333'
-                          }}
-                          title={i < expended ? 'Expended' : 'Available'}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-        
-        {/* ✅ NEW: Class Spell Lists with Available/Prepared Tabs */}
-        {spellcasterLevel > 0 && character?.classes && character.classes.length > 0 && (
-          <div className={styles.classSpellLists} style={{ marginBottom: '1rem' }}>
-            <h3>Spells by Class</h3>
-            
-            {character.classes.map((charClass) => {
-              const className = charClass.className;
-              const classLevel = charClass.level;
-              const subclass = charClass.subclass;
-              const isPreparedCaster = ['Cleric', 'Druid', 'Paladin', 'Wizard'].includes(className);
-              const activeTab = activeClassSpellTab[className] ?? 'available';
-              const activeLevel = activeSpellLevels[className] ?? 0;
-              
-              return (
-                <div key={className} className={styles.classSpellSection} style={{ 
-                  marginBottom: '1.5rem',
-                  padding: '1rem',
-                  backgroundColor: '#f9f9f9',
-                  borderRadius: '8px',
-                  border: '1px solid #ddd'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                    <h4 style={{ margin: 0 }}>{className} {subclass && `• ${subclass}`}</h4>
-                    <span style={{ color: '#666', fontSize: '0.9em' }}>Level {classLevel}</span>
-                  </div>
-                  
-                  {/* Preparation Info for Prepared Casters */}
-                  {isPreparedCaster && (
-                    <div style={{ 
-                      padding: '0.5rem', 
-                      backgroundColor: '#e3f2fd', 
-                      borderRadius: '4px', 
-                      marginBottom: '1rem',
-                      fontSize: '0.9em'
-                    }}>
-                      <strong>Prepared Spells:</strong> {spellPreparedCount}/{spellPrepareLimit || '∞'} 
-                      {spellPrepareUnlimited && ' (Unlimited)'}
-                      <br />
-                      <em>Preparation = {spellcastingAbility.toUpperCase()} modifier + {className} level</em>
-                    </div>
-                  )}
-                  
-                  {/* ✅ Tabs: Available / Prepared */}
-                  <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '0.5rem' }}>
-                    <button
-                      onClick={() => updateActiveClassSpellTab(className, 'available')}
-                      style={{
-                        padding: '0.25rem 0.75rem',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        backgroundColor: activeTab === 'available' ? '#4a90e2' : '#e0e0e0',
-                        color: activeTab === 'available' ? 'white' : '#333',
-                        fontWeight: activeTab === 'available' ? 'bold' : 'normal',
-                        fontSize: '0.85em'
-                      }}
-                    >
-                      Available
-                    </button>
-                    {isPreparedCaster && (
-                      <button
-                        onClick={() => updateActiveClassSpellTab(className, 'prepared')}
-                        style={{
-                          padding: '0.25rem 0.75rem',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          backgroundColor: activeTab === 'prepared' ? '#4a90e2' : '#e0e0e0',
-                          color: activeTab === 'prepared' ? 'white' : '#333',
-                          fontWeight: activeTab === 'prepared' ? 'bold' : 'normal',
-                          fontSize: '0.85em'
-                        }}
-                      >
-                        Prepared
-                      </button>
-                    )}
-                  </div>
-                  
-                  {/* Spell Level Tabs */}
-                  <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
-                    {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(level => {
-                      const spells = classSpellsByClass[className]?.[level] || [];
-                      const hasSpells = activeTab === 'available' 
-                        ? spells.length > 0 
-                        : spells.filter(s => s.is_prepared).length > 0;
-                      if (!hasSpells) return null;
-                      return (
-                        <button
-                          key={level}
-                          onClick={() => setActiveSpellLevel(className, level)}
-                          style={{
-                            padding: '0.25rem 0.75rem',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            backgroundColor: activeLevel === level ? '#4a90e2' : '#e0e0e0',
-                            color: activeLevel === level ? 'white' : '#333',
-                            fontWeight: activeLevel === level ? 'bold' : 'normal',
-                            fontSize: '0.85em'
-                          }}
-                        >
-                          {getOrdinal(level)}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  
-                  {/* Spell List for Active Level & Tab */}
-                  <div className={styles.spellList}>
-                    {classSpellLoading[className] ? (
-                      <p className={styles.spellLoading}>Loading spells...</p>
-                    ) : (
-                      <>
-                        {activeTab === 'available' 
-                          ? classSpellsByClass[className]?.[activeLevel]?.map((spell: any) => {
-                              const isPrepared = spell.is_prepared;
-                              const canPrepare = isPreparedCaster;
-                              const isPreparationFull = spellPrepareLimit !== null && spellPreparedCount >= spellPrepareLimit && !isPrepared;
-                              
-                              return (
-                                <div
-                                  key={spell.id}
-                                  className={`${styles.spellItem} ${isPrepared ? styles.preparedSpell : ''}`}
-                                  style={{
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    padding: '0.5rem',
-                                    backgroundColor: isPrepared ? '#e8f5e9' : '#fff',
-                                    border: isPrepared ? '1px solid #4caf50' : '1px solid #ddd',
-                                    borderRadius: '4px',
-                                    marginBottom: '0.25rem'
-                                  }}
-                                >
-                                  <div>
-                                    <strong>{spell.name}</strong>
-                                    <span style={{ color: '#666', fontSize: '0.85em', marginLeft: '0.5rem' }}>
-                                      {spell.school} • {spell.casting_time}
-                                    </span>
-                                    {spell.concentration && (
-                                      <span style={{ color: '#ff9800', fontSize: '0.85em', marginLeft: '0.25rem' }}>⚠️ Concentration</span>
-                                    )}
-                                  </div>
-                                  
-                                  {/* Preparation Toggle for Prepared Casters */}
-                                  {canPrepare && (
-                                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                                      <input
-                                        type="checkbox"
-                                        checked={isPrepared || false}
-                                        onChange={() => toggleSpellPrepared(spell.id)}
-                                        disabled={isPreparationFull && !isPrepared}
-                                        style={{ marginRight: '0.5rem', cursor: 'pointer' }}
-                                        title={isPreparationFull && !isPrepared ? 'Preparation limit reached' : 'Toggle preparation'}
-                                      />
-                                      <span style={{ fontSize: '0.85em' }}>
-                                        {isPrepared ? 'Prepared' : 'Prepare'}
-                                      </span>
-                                    </label>
-                                  )}
-                                </div>
-                              );
-                            })
-                          : classSpellsByClass[className]?.[activeLevel]?.filter((spell: any) => spell.is_prepared).map((spell: any) => (
-                              <div
-                                key={spell.id}
-                                className={`${styles.spellItem} ${styles.preparedSpell}`}
-                                style={{
-                                  display: 'flex',
-                                  justifyContent: 'space-between',
-                                  alignItems: 'center',
-                                  padding: '0.5rem',
-                                  backgroundColor: '#e8f5e9',
-                                  border: '1px solid #4caf50',
-                                  borderRadius: '4px',
-                                  marginBottom: '0.25rem'
-                                }}
-                              >
-                                <div>
-                                  <strong>{spell.name}</strong>
-                                  <span style={{ color: '#666', fontSize: '0.85em', marginLeft: '0.5rem' }}>
-                                    {spell.school} • {spell.casting_time}
-                                  </span>
-                                  {spell.concentration && (
-                                    <span style={{ color: '#ff9800', fontSize: '0.85em', marginLeft: '0.25rem' }}>⚠️ Concentration</span>
-                                  )}
-                                </div>
-                                <button
-                                  onClick={() => {
-                                    setSelectedSpellForCast(spell);
-                                    setIsSpellCastModalOpen(true);
-                                  }}
-                                  style={{
-                                    padding: '0.25rem 0.75rem',
-                                    backgroundColor: '#4a90e2',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer',
-                                    fontSize: '0.85em'
-                                  }}
-                                >
-                                  Cast
-                                </button>
-                              </div>
-                            ))
-                        }
-                        
-                        {/* Empty State */}
-                        {(!classSpellsByClass[className] || 
-                          !classSpellsByClass[className][activeLevel] || 
-                          (activeTab === 'available' && classSpellsByClass[className][activeLevel].length === 0) ||
-                          (activeTab === 'prepared' && classSpellsByClass[className][activeLevel]?.filter((s: any) => s.is_prepared).length === 0)
-                        ) && !classSpellLoading[className] && (
-                          <p style={{ color: '#666', fontStyle: 'italic', textAlign: 'center', padding: '1rem' }}>
-                            No {activeTab} {getOrdinal(activeLevel)} spells for {className}
-                          </p>
-                        )}
-                      </>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-        
-        {/* Character's Known Spells (Spells Known Casters) */}
-        {characterSpells.length > 0 && (
-          <div className={styles.characterSpells} style={{ marginBottom: '1rem' }}>
-            <h3>Your Known Spells</h3>
-            <div className={styles.spellList}>
-              {characterSpells.map((spell: any) => (
-                <div
-                  key={spell.id}
-                  className={styles.spellItem}
-                  style={{
-                    padding: '0.5rem',
-                    backgroundColor: '#fff',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px',
-                    marginBottom: '0.25rem',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                  }}
-                >
-                  <div>
-                    <strong>{spell.name}</strong>
-                    <span style={{ color: '#666', fontSize: '0.85em', marginLeft: '0.5rem' }}>
-                      {spell.level === 0 ? 'Cantrip' : getOrdinal(spell.level)} • {spell.school}
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setSelectedSpellForCast(spell);
-                      setIsSpellCastModalOpen(true);
-                    }}
-                    style={{
-                      padding: '0.25rem 0.75rem',
-                      backgroundColor: '#4a90e2',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '0.85em'
-                    }}
-                  >
-                    Cast
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-        
-        {/* Add Spell Button */}
-        <button className={styles.primary} onClick={() => setIsSpellModalOpen(true)} style={{ marginTop: '1rem' }}>
-          Add Spell
-        </button>
-        
-        <SpellSelectionModal
-          isOpen={isSpellModalOpen}
-          onClose={() => setIsSpellModalOpen(false)}
-          onAddSpell={addSpell}
-          availableSpells={availableSpells}
-          characterId={character?.id || 0}
-        />
-        
-        {/* ✅ Spell Cast Modal */}
-        {selectedSpellForCast && isSpellCastModalOpen && (
-          <div className={styles.spellCastModal} style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.7)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000
-          }}>
-            <div className={styles.spellCastContent} style={{
-              background: 'white',
-              padding: '2rem',
-              borderRadius: '8px',
-              maxWidth: '600px',
-              maxHeight: '90vh',
-              overflowY: 'auto',
-              position: 'relative'
-            }}>
-              <button className={styles.closeBtn} onClick={() => {
-                setIsSpellCastModalOpen(false);
-                setSelectedSpellForCast(null);
-              }} style={{
-                position: 'absolute',
-                top: '1rem',
-                right: '1rem',
-                background: 'none',
-                border: 'none',
-                fontSize: '1.5em',
-                cursor: 'pointer',
-                color: '#666'
-              }}>✕</button>
-              
-              <h2>{selectedSpellForCast.name}</h2>
-              <p className={styles.spellInfo} style={{ color: '#666', marginBottom: '1rem' }}>
-                {selectedSpellForCast.level === 0 ? 'Cantrip' : getOrdinal(selectedSpellForCast.level)} 
-                {' • '}{selectedSpellForCast.school}
-              </p>
-              
-              {/* Spell Details */}
-              <div className={styles.spellDetails} style={{
-                background: '#f0f4f8',
-                padding: '1rem',
-                borderRadius: '4px',
-                marginBottom: '1rem'
-              }}>
-                <div><strong>Casting Time:</strong> {selectedSpellForCast.casting_time}</div>
-                <div><strong>Range:</strong> {selectedSpellForCast.range}</div>
-                <div><strong>Components:</strong> {selectedSpellForCast.components}</div>
-                <div><strong>Duration:</strong> {selectedSpellForCast.duration}</div>
-                {selectedSpellForCast.concentration && <div className={styles.concentration} style={{ color: '#ff9800', fontWeight: 'bold', marginTop: '0.5rem' }}>⚠️ Concentration</div>}
-              </div>
-              
-              {/* Saving Throw Info */}
-              {selectedSpellForCast.save_ability && (
-                <div className={styles.saveInfo} style={{
-                  marginBottom: '1rem',
-                  padding: '1rem',
-                  borderRadius: '4px',
-                  background: '#fff3e0',
-                  border: '1px solid #ff9800'
-                }}>
-                  <h4>💾 Saving Throw</h4>
-                  <div className={styles.saveBox}>
-                    <div className={styles.saveDC} style={{ fontSize: '1.2em', fontWeight: 'bold' }}>
-                      <strong>DC {spellSaveDC}</strong> {selectedSpellForCast.save_ability.toUpperCase()} save
-                    </div>
-                    <div className={styles.saveEffect}>
-                      {selectedSpellForCast.save_half_on_success ? 'Half damage on success' : 'No effect on success'}
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              {/* Spell Attack Info */}
-              {selectedSpellForCast.attack_type === 'spell_attack' && (
-                <div className={styles.attackInfo} style={{
-                  marginBottom: '1rem',
-                  padding: '1rem',
-                  borderRadius: '4px',
-                  background: '#e8f5e9',
-                  border: '1px solid #4caf50'
-                }}>
-                  <h4>⚔️ Spell Attack</h4>
-                  <div className={styles.attackBox}>
-                    <div className={styles.attackBonus} style={{ fontSize: '1.2em', fontWeight: 'bold' }}>
-                      <strong>+{spellAttackBonus}</strong> to hit
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              {/* Damage Info */}
-              {selectedSpellForCast.damage_dice && (
-                <div className={styles.damageInfo} style={{
-                  marginBottom: '1rem',
-                  padding: '1rem',
-                  borderRadius: '4px',
-                  background: '#ffebee',
-                  border: '1px solid #f44336'
-                }}>
-                  <h4>⚔️ Damage</h4>
-                  <div className={styles.damageBox}>
-                    <div className={styles.damageDice} style={{ fontSize: '1.2em', fontWeight: 'bold' }}>
-                      <strong>{getDamageForLevel(selectedSpellForCast, selectedSpellForCast.level)}</strong> 
-                      {selectedSpellForCast.damage_type && ` ${selectedSpellForCast.damage_type} damage`}
-                    </div>
-                    
-                    {/* Slot Level Selector for Upcasting */}
-                    {selectedSpellForCast.level > 0 && (
-                      <div className={styles.slotSelector} style={{ marginTop: '1rem' }}>
-                        <label>Casting at level:</label>
-                        <select 
-                          value={selectedSpellForCast.level} 
-                          onChange={(e) => {
-                            const newSpell = {...selectedSpellForCast, level: parseInt(e.target.value)};
-                            setSelectedSpellForCast(newSpell);
-                          }}
-                          style={{
-                            width: '100%',
-                            padding: '0.5rem',
-                            border: '1px solid #ccc',
-                            borderRadius: '4px',
-                            fontSize: '1em'
-                          }}
-                        >
-                          {Array.from({length: 9}, (_, i) => i + 1).map(level => (
-                            <option 
-                              key={level} 
-                              value={level}
-                              disabled={!hasAvailableSlot(level)}
-                            >
-                              {getOrdinal(level)} {level > selectedSpellForCast.level && selectedSpellForCast.upcast_damage_per_level && 
-                                ` (+${level - selectedSpellForCast.level}${selectedSpellForCast.upcast_damage_per_level})`}
-                              {!hasAvailableSlot(level) && ' (None)'}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-              
-              {/* Area of Effect */}
-              {selectedSpellForCast.area_of_effect_type && (
-                <div className={styles.areaInfo} style={{
-                  marginBottom: '1rem',
-                  padding: '1rem',
-                  borderRadius: '4px',
-                  background: '#e3f2fd',
-                  border: '1px solid #2196f3'
-                }}>
-                  <h4>📍 Area of Effect</h4>
-                  <div className={styles.areaBox}>
-                    {selectedSpellForCast.area_of_effect_size}-foot {selectedSpellForCast.area_of_effect_type}
-                  </div>
-                </div>
-              )}
-              
-              {/* Description */}
-              <div className={styles.description} style={{
-                marginTop: '1rem',
-                paddingTop: '1rem',
-                borderTop: '1px solid #ccc'
-              }}>
-                <p>{selectedSpellForCast.description}</p>
-                {selectedSpellForCast.higher_levels && selectedSpellForCast.level > (selectedSpellForCast as any).baseLevel && (
-                  <p className={styles.higherLevels} style={{ color: '#666', fontStyle: 'italic' }}>
-                    <strong>At Higher Levels:</strong> {selectedSpellForCast.higher_levels}
-                  </p>
-                )}
-              </div>
-              
-              {/* Cast Button */}
-              <div className={styles.castButtons} style={{
-                display: 'flex',
-                gap: '1rem',
-                marginTop: '1.5rem'
-              }}>
-                <button 
-                  className={styles.castBtn}
-                  onClick={() => {
-                    expendSpellSlot(selectedSpellForCast.level === 0 ? 0 : selectedSpellForCast.level);
-                    setIsSpellCastModalOpen(false);
-                    setSelectedSpellForCast(null);
-                  }}
-                  disabled={selectedSpellForCast.level > 0 && !hasAvailableSlot(selectedSpellForCast.level)}
-                  style={{
-                    flex: 1,
-                    padding: '0.75rem',
-                    background: '#4a90e2',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    fontSize: '1em',
-                    cursor: 'pointer'
-                  }}
-                >
-                  ✨ Cast Spell
-                </button>
-                <button 
-                  className={styles.cancelBtn} 
-                  onClick={() => {
-                    setIsSpellCastModalOpen(false);
-                    setSelectedSpellForCast(null);
-                  }}
-                  style={{
-                    flex: 1,
-                    padding: '0.75rem',
-                    background: '#f0f0f0',
-                    color: '#333',
-                    border: 'none',
-                    borderRadius: '4px',
-                    fontSize: '1em',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </section>
-
-      {/* Inventory */}
-      <section className={styles.section}>
-        <h2>Inventory</h2>
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '10px', flexWrap: 'wrap' }}>
-          <button
-            className={styles.primary}
-            onClick={() => setIsItemModalOpen(true)}
-            disabled={itemsLoading}
-          >
-            {itemsLoading ? 'Loading Items...' : 'Add Item'}
-          </button>
-          {character.items && Array.isArray(character.items) && character.items.length > 0 && (
-            <>
-              <button
-                className={isBulkDeleteMode ? styles.danger : styles.secondary}
-                onClick={() => {
-                  if (isBulkDeleteMode) {
-                    setIsBulkDeleteMode(false);
-                    setSelectedItemsForDelete(new Set());
-                  } else {
-                    setIsBulkDeleteMode(true);
-                  }
-                }}
-              >
-                {isBulkDeleteMode ? 'Cancel Bulk Delete' : 'Delete Items'}
-              </button>
-              <button
-                className={showEquippedOnly ? styles.active : styles.secondary}
-                onClick={() => setShowEquippedOnly(!showEquippedOnly)}
-                title={showEquippedOnly ? 'Show all items' : 'Show only equipped items'}
-              >
-                {showEquippedOnly ? 'Show All Items' : 'Equipped Only'}
-              </button>
-              <button
-                className={showAttunedOnly ? styles.active : styles.secondary}
-                onClick={() => setShowAttunedOnly(!showAttunedOnly)}
-                title={showAttunedOnly ? 'Show all items' : 'Show only attuned items'}
-              >
-                {showAttunedOnly ? 'Show All Items' : 'Attuned Only'}
-              </button>
-            </>
-          )}
-          {isBulkDeleteMode && selectedItemsForDelete.size > 0 && (
-            <button
-              className={styles.danger}
-              onClick={bulkDeleteItems}
-            >
-              Delete {selectedItemsForDelete.size} Item(s)
-            </button>
-          )}
-        </div>
-
-        <ItemModal
-          isOpen={isItemModalOpen}
-          onClose={() => setIsItemModalOpen(false)}
-          onAddItem={addItem}
-          availableItems={availableItems}
-          characterId={character.id}
-        />
-
-        {character.items && Array.isArray(character.items) && character.items.length > 0 ? (
-          <div className={styles.inventoryList}>
-            {character.items
-              .filter((item: any) => {
-                if (showEquippedOnly) {
-                  return item.is_equipped === true;
-                }
-                if (showAttunedOnly) {
-                  return item.is_attuned === true;
-                }
-                return true;
-              })
-              .map((item: any) => {
-                const isSelected = selectedItemsForDelete.has(item.inventoryId);
-                const itemData = item.item || item;
-                const isEquippable = canEquip(item);
-                const isEquipped = item.is_equipped || false;
-                const needsAttunement = requiresAttunement(item);
-                const isAttuned = isItemAttuned(item);
-                const isAttunedAndFull = needsAttunement && attunedCount >= attunementSlotLimit && !isAttuned;
-                const isWeapon = itemData.item_type === 'Weapon' || itemData.type === 'Weapon';
-                
-                return (
-                  <div
-                    key={item.inventoryId}
-                    className={`${styles.inventoryItem} ${isBulkDeleteMode && isSelected ? styles.selectedForDelete : ''} ${isEquipped ? styles.equippedItem : ''} ${isAttuned ? styles.attunedItem : ''}`}
-                    onClick={() => {
-                      if (isBulkDeleteMode) {
-                        toggleItemSelection(item.inventoryId);
-                      } else {
-                        setSelectedItemForDetails(item);
-                      }
-                    }}
-                    style={{
-                      cursor: 'pointer',
-                      backgroundColor: isBulkDeleteMode && isSelected ? 'rgba(255, 100, 100, 0.2)' : (isAttuned ? 'rgba(155, 89, 182, 0.1)' : (isEquipped ? 'rgba(100, 255, 100, 0.1)' : 'transparent'))
-                    }}
-                  >
-                    {isBulkDeleteMode && (
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={(e) => {
-                          e.stopPropagation();
-                          toggleItemSelection(item.inventoryId);
-                        }}
-                        style={{ cursor: 'pointer', flexShrink: 0, marginTop: '2px' }}
-                      />
-                    )}
-                    <div className={styles.inventoryItemContent}>
-                      <div className={styles.inventoryItemHeader}>
-                        <span className={styles.inventoryItemName}>
-                          {item.name} {item.quantity > 1 && `(x${item.quantity})`}
-                          {isEquipped && <span className={styles.equippedBadge}>Equipped</span>}
-                          {isAttuned && <span className={styles.attunedBadge}>✨ Attuned</span>}
-                          {needsAttunement && !isAttuned && <span className={styles.attunementBadge}>⚡ Requires Attunement</span>}
-                        </span>
-                        <div className={styles.inventoryItemQuickInfo}>
-                          {item.item_type && <span className={styles.itemType}>{item.item_type}</span>}
-                          
-                          {/* ✅ EQUIP/UNEQUIP BUTTON for equippable items */}
-                          {isEquippable && !isBulkDeleteMode && (
-                            isEquipped ? (
-                              <button
-                                className={styles.unequipButton}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  unequipItem(item.inventoryId, item.name);
-                                }}
-                                title="Unequip this item"
-                              >
-                                🔓 Unequip
-                              </button>
-                            ) : (
-                              <button
-                                className={styles.equipButton}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  equipItem(item.inventoryId, item.name, itemData);
-                                }}
-                                title="Equip this item"
-                              >
-                                🔒 Equip
-                              </button>
-                            )
-                          )}
-                          
-                          {/* ✅ ATTUNE/UNATTUNE BUTTONS for ALL items that require attunement */}
-                          {needsAttunement && !isBulkDeleteMode && (
-                            isAttuned ? (
-                              <button
-                                className={styles.unattuneButton}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  unattuneItem(item.inventoryId, item.name);
-                                }}
-                                title="Unattune this item"
-                              >
-                                ✨ Unattune
-                              </button>
-                            ) : (
-                              <button
-                                className={`${styles.attuneButton} ${!canAttuneMore() ? styles.attuneButtonDisabled : ''}`}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (canAttuneMore()) {
-                                    attuneItem(item.inventoryId, item.name, itemData);
-                                  } else {
-                                    alert(`❌ Cannot attune: You already have ${attunedCount} attuned items (max: ${attunementSlotLimit}). Unattune an item first.`);
-                                  }
-                                }}
-                                disabled={!canAttuneMore()}
-                                title={!canAttuneMore() ? 'Attunement slots full' : 'Attune this item for special abilities'}
-                              >
-                                ⚡ Attune
-                              </button>
-                            )
-                          )}
-                          
-                          {item.maxCharges && (
-                            <span className={styles.chargesIndicator}>
-                              Charges: {item.currentCharges}/{item.maxCharges}
-                              {needsAttunement && !isAttuned && <span className={styles.lockedBadge}> 🔒</span>}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-          </div>
-        ) : (
-          <p className={styles.emptyInventory}>No items yet. Add items to get started!</p>
-        )}
-        {showEquippedOnly && character.items?.filter((item: any) => item.is_equipped === true).length === 0 && (
-          <p className={styles.emptyInventory}>No equipped items. Equip items to see them here!</p>
-        )}
-        {showAttunedOnly && character.items?.filter((item: any) => item.is_attuned === true).length === 0 && (
-          <p className={styles.emptyInventory}>No attuned items. Attune items to see them here!</p>
-        )}
-      </section>
-
-      {/* Combat */}
-      <section className={styles.section}>
-        <h2>Combat</h2>
-
-        {/* HP Section */}
-        <div className={styles.hpSection}>
-          <div className={styles.hpRow}>
-            <div className={styles.hpContainer}>
-              <strong>Hit Points:</strong>
-              <div className={styles.hpDisplay}>
-                <div className={styles.hpMainDisplay}>
-                  <span className={styles.hpCurrent}>{hpCurrent}</span>
-                  <span className={styles.hpSeparator}>/</span>
-                  <span className={styles.hpMax}>{hpMax}</span>
-                  {hpTmp > 0 && <span className={styles.hpTemp}>(+{hpTmp} temp)</span>}
-                </div>
-              </div>
-              <div className={styles.hpControls}>
-                <button type="button" onClick={() => setHpModalType('heal')} disabled={saving} className={styles.hpButton}>💚 Heal</button>
-                <button type="button" onClick={() => setHpModalType('damage')} disabled={saving} className={styles.hpButton}>💔 Damage</button>
-                <button type="button" onClick={() => setHpModalType('temp')} disabled={saving} className={styles.hpButton}>🛡️ Temp HP</button>
-              </div>
-            </div>
-
-            <div className={styles.totalHpContainer}>
-              <strong>Total HP:</strong>
-              <div className={styles.totalHpDisplay}>
-                <span className={styles.totalHpValue}>{hpCurrent + hpTmp} / {hpMax}</span>
-              </div>
-            </div>
-          </div>
-
-          {hpModalType && (
-            <div className={styles.hpModal}>
-              <div className={styles.hpModalContent}>
-                <label>
-                  {hpModalType === 'heal' && 'Heal amount:'}
-                  {hpModalType === 'damage' && 'Damage amount:'}
-                  {hpModalType === 'temp' && 'Temporary HP:'}
-                </label>
-                <input
-                  type="number"
-                  value={hpModalInput}
-                  onChange={(e) => setHpModalInput(e.target.value)}
-                  placeholder="Enter amount"
-                  className={styles.hpModalInput}
-                  autoFocus
-                  onKeyPress={(e) => { if (e.key === 'Enter') handleHpModalSubmit(); }}
-                />
-                <div className={styles.hpModalButtons}>
-                  <button onClick={handleHpModalSubmit} className={styles.confirmBtn}>Apply</button>
-                  <button onClick={() => { setHpModalType(null); setHpModalInput(''); }} className={styles.cancelBtn}>Cancel</button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <button onClick={saveHp} disabled={saving} className={styles.saveBtn}>
-            {saving ? 'Saving...' : 'Save HP'}
-          </button>
-        </div>
-
-        {/* Combat Stats */}
-        <div className={styles.combatStats}>
-          <div
-            className={`${styles.statBox} ${styles.clickable}`}
-            onClick={() => setStatModifiersModal({ isOpen: true, stat: 'AC' })}
-            title="Click to see AC modifiers (from equipped items only)"
-          >
-            <strong>AC:</strong>
-            <span>{calculateAC()}</span>
-          </div>
-          <div
-            className={`${styles.statBox} ${styles.clickable}`}
-            onClick={() => setStatModifiersModal({ isOpen: true, stat: 'Initiative' })}
-            title="Click to see Initiative modifiers (from equipped items only)"
-          >
-            <strong>Initiative:</strong>
-            <span>{(() => {
-              const dexModifier = getAbilityModifier(character.abilityScores?.dex || 10);
-              return (dexModifier >= 0 ? '+' : '') + dexModifier;
-            })()}</span>
-          </div>
-          <div
-            className={`${styles.statBox} ${styles.clickable}`}
-            onClick={() => setStatModifiersModal({ isOpen: true, stat: 'Speed' })}
-            title="Click to see Speed modifiers (from equipped items only)"
-          >
-            <strong>Speed:</strong>
-            <span>{character.speed || 30} ft</span>
-          </div>
-        </div>
-
-        {/* Combat Attacks */}
-        <div className={styles.attacksSection}>
-          <h3>Possible Attacks</h3>
-          {character.items && Array.isArray(character.items) && character.items.length > 0 ? (
-            <>
-              <div className={styles.attackRowHeader}>
-                <div className={styles.attackRowName}>Name</div>
-                <div className={styles.attackRowBonus}>Attack Bonus</div>
-                <div className={styles.attackRowDamage}>Damage</div>
-                <div className={styles.attackRowType}>Damage Type</div>
-                <div className={styles.attackRowSpecial}>Special</div>
-              </div>
-              <div className={styles.attacksList}>
-                {character.items
-                  .filter((item: any) => item.item_type === 'Weapon' || item.type === 'Weapon')
-                  .map((weapon: any, index: number) => {
-                    const bestAbility = getBestAbilityForWeapon(weapon);
-                    const attackBonus = bestAbility.modifier + proficiencyBonus;
-                    const damageDice = weapon.damageDice || '1d4';
-                    const damageType = weapon.damageType || 'bludgeoning';
-                    const isAttuned = isItemAttuned(weapon);
-                    const needsAttunement = requiresAttunement(weapon);
-                    const hasChargeAbilities = weapon.maxCharges && weapon.onHitEffect;
-                    
-                    return (
-                      <div
-                        key={index}
-                        className={styles.attackRow}
-                        onClick={() => {
-                          const variants = getWeaponVariants(weapon);
-                          if (variants.length > 1) {
-                            setWeaponToVariantSelect(weapon);
-                            setSelectedWeaponVariant(variants[0].id);
-                            setWeaponVariantSelectorOpen(true);
-                          } else {
-                            setSelectedAttackForModal(weapon);
-                            setSelectedAttackData({
-                              weapon,
-                              attackBonus,
-                              damageDice,
-                              damageType,
-                              abilityUsed: bestAbility.ability,
-                              abilityModifier: bestAbility.modifier,
-                              isAttuned,
-                              needsAttunement
-                            });
-                          }
-                        }}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        <div className={styles.attackRowName}>{weapon.name}</div>
-                        <div className={styles.attackRowBonus}>+{attackBonus}</div>
-                        <div className={styles.attackRowDamage}>{damageDice}</div>
-                        <div className={styles.attackRowType}>{damageType}</div>
-                        <div className={styles.attackRowSpecial}>
-                          {needsAttunement && (
-                            <span className={isAttuned ? styles.specialAvailable : styles.specialLocked}>
-                              {isAttuned ? '⚡ Ready' : '🔒 Attune'}
-                            </span>
-                          )}
-                          {hasChargeAbilities && !needsAttunement && (
-                            <span className={styles.specialAvailable}>⚡ Charge</span>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-              </div>
-            </>
-          ) : (
-            <p className={styles.noAttacks}>No weapons in inventory. Add items to see possible attacks.</p>
-          )}
-        </div>
-
-        {/* Attack Modal */}
-        {attackModalData && (
-          <div className={styles.attackModal}>
-            <div className={styles.attackModalContent}>
-              <button className={styles.attackModalClose} onClick={() => setAttackModalData(null)}>×</button>
-              <h3>Make Attack: {attackModalData.weapon.name}</h3>
-              
-              {/* ✅ Show attunement warning if weapon requires attunement but not attuned */}
-              {attackModalData.needsAttunement && !attackModalData.isAttuned && (
-                <div className={styles.attunementWarningBox}>
-                  ⚠️ This weapon requires attunement to use special abilities. Current: {attunedCount}/{attunementSlotLimit} attuned.
-                </div>
-              )}
-              
-              <div className={styles.attackModalData}>
-                <div className={styles.attackModalBox}>
-                  <h4>To-Hit Bonus</h4>
-                  <div className={styles.attackModalValue}>+{attackModalData.attackBonus}</div>
-                  <p className={styles.diceLabel}>Roll d20 and add +{attackModalData.attackBonus}</p>
-                </div>
-                <div className={styles.attackModalBox}>
-                  <h4>Damage Roll</h4>
-                  <div className={styles.attackModalValue}>{attackModalData.damageDice}</div>
-                  <p className={styles.diceLabel}>
-                    Add +{attackModalData.abilityModifier || getAbilityModifier(character.abilityScores?.str || 10)}
-                    ({attackModalData.abilityUsed || 'STR'} mod)
-                  </p>
-                  <p className={styles.damageTypeLabel}>Type: {attackModalData.damageType}</p>
-                  {attackModalData.weapon.properties?.some((p: string) =>
-                    typeof p === 'string' ? p.toLowerCase().includes('finesse') : false
-                  ) && (
-                    <p className={styles.finesseNote} style={{ color: '#2d5016', fontSize: '0.85em' }}>
-                      ⚡ Finesse: Using {attackModalData.abilityUsed || 'STR'} (higher of STR/DEX)
-                    </p>
-                  )}
-                </div>
-              </div>
-              
-              {attackModalData.weapon.onHitEffect && (
-                <div className={styles.attackModalEffect}>
-                  <h4>Special Effect</h4>
-                  <p>{attackModalData.weapon.onHitEffect}</p>
-                  {attackModalData.needsAttunement && !attackModalData.isAttuned && (
-                    <p className={styles.lockedNote}>🔒 Requires attunement to use</p>
-                  )}
-                </div>
-              )}
-              
-              {attackModalData.weapon.maxCharges && attackModalData.weapon.currentCharges > 0 && (
-                <div className={styles.chargesExpendPrompt}>
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={expendCharge}
-                      onChange={(e) => setExpendCharge(e.target.checked)}
-                      disabled={attackModalData.needsAttunement && !attackModalData.isAttuned}
-                    />
-                    Expend 1 charge? ({attackModalData.weapon.currentCharges} remaining)
-                    {attackModalData.needsAttunement && !attackModalData.isAttuned && (
-                      <span className={styles.lockedNote}> 🔒 Attune to use charges</span>
-                    )}
-                  </label>
-                </div>
-              )}
-              
-              <div className={styles.attackModalButtons}>
-                <button
-                  className={styles.confirmBtn}
-                  onClick={() => {
-                    if (expendCharge && attackModalData.weapon.currentCharges > 0) {
-                      if (attackModalData.needsAttunement && !attackModalData.isAttuned) {
-                        alert('❌ Must attune to this weapon first to expend charges!');
-                        return;
-                      }
-                      updateItemCharges(attackModalData.weapon.inventoryId, attackModalData.weapon.currentCharges - 1);
-                    }
-                    setAttackModalData(null);
-                    setExpendCharge(false);
-                  }}
-                >
-                  OK, Ready to Roll!
-                </button>
-                <button className={styles.cancelBtn} onClick={() => { setAttackModalData(null); setExpendCharge(false); }}>Cancel</button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Weapon Variant Selector Modal */}
-        {weaponVariantSelectorOpen && weaponToVariantSelect && (
-          <div className={styles.variantSelectorOverlay} onClick={() => {
-            setWeaponVariantSelectorOpen(false);
-            setWeaponToVariantSelect(null);
-          }}>
-            <div className={styles.variantSelectorContent} onClick={(e) => e.stopPropagation()}>
-              <button className={styles.closeBtn} onClick={() => {
-                setWeaponVariantSelectorOpen(false);
-                setWeaponToVariantSelect(null);
-              }}>✕</button>
-              <h2>Select Attack Type for {weaponToVariantSelect.name}</h2>
-              <p className={styles.variantDescription}>This weapon can be used in multiple ways. Choose how you want to attack:</p>
-              <div className={styles.variantOptions}>
-                {getWeaponVariants(weaponToVariantSelect).map((variant) => (
-                  <div
-                    key={variant.id}
-                    className={`${styles.variantOption} ${selectedWeaponVariant === variant.id ? styles.variantOptionSelected : ''}`}
-                    onClick={() => setSelectedWeaponVariant(variant.id)}
-                  >
-                    <div className={styles.variantOptionName}>{variant.name}</div>
-                    <div className={styles.variantOptionDetails}>
-                      <span><strong>Damage:</strong> {variant.damageDice}</span>
-                      <span><strong>Type:</strong> {variant.damageType}</span>
-                      {variant.range && <span><strong>Range:</strong> {variant.range}</span>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className={styles.variantActions}>
-                <button
-                  className={styles.confirmVariantBtn}
-                  onClick={() => {
-                    const selectedVariantObj = getWeaponVariants(weaponToVariantSelect).find(v => v.id === selectedWeaponVariant);
-                    if (selectedVariantObj) {
-                      const bestAbility = getBestAbilityForWeapon(weaponToVariantSelect);
-                      const attackBonus = bestAbility.modifier + proficiencyBonus;
-                      setSelectedAttackForModal(weaponToVariantSelect);
-                      setSelectedAttackData({
-                        weapon: weaponToVariantSelect,
-                        attackBonus,
-                        damageDice: selectedVariantObj.damageDice,
-                        damageType: selectedVariantObj.damageType,
-                        variant: selectedWeaponVariant,
-                        range: selectedVariantObj.range,
-                        abilityUsed: bestAbility.ability,
-                        abilityModifier: bestAbility.modifier,
-                        isAttuned: isItemAttuned(weaponToVariantSelect),
-                        needsAttunement: requiresAttunement(weaponToVariantSelect)
-                      });
-                      setWeaponVariantSelectorOpen(false);
-                      setWeaponToVariantSelect(null);
-                    }
-                  }}
-                >
-                  Proceed with {getWeaponVariants(weaponToVariantSelect).find(v => v.id === selectedWeaponVariant)?.name || 'Attack'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Attack Details Modal */}
-        {selectedAttackForModal && selectedAttackData && (
-          <div className={styles.attackDetailsModalOverlay} onClick={() => setSelectedAttackForModal(null)}>
-            <div className={styles.attackDetailsModalContent} onClick={(e) => e.stopPropagation()}>
-              <button className={styles.closeBtn} onClick={() => setSelectedAttackForModal(null)}>✕</button>
-              <div className={styles.attackDetailsHeader}>
-                <h2>{selectedAttackForModal.name}</h2>
-                <p className={styles.weaponType}>
-                  {selectedAttackForModal.item_type || selectedAttackForModal.type || 'Weapon'}
-                  {selectedAttackData.variant && (
-                    <> • {getWeaponVariants(selectedAttackForModal).find(v => v.id === selectedAttackData.variant)?.name}</>
-                  )}
-                </p>
-              </div>
-              <div className={styles.attackDetailsContent}>
-                {selectedAttackForModal.desc && (
-                  <div className={styles.section}>
-                    <p className={styles.weaponDesc}>{selectedAttackForModal.desc}</p>
-                  </div>
-                )}
-                <div className={styles.attackStatsSection}>
-                  <h3>Attack Statistics</h3>
-                  <div>
-                    <div className={styles.attackStatRow}>
-                      <strong>Attack Bonus:</strong>
-                      <span>+{selectedAttackData.attackBonus}</span>
-                    </div>
-                    <div className={styles.attackStatRow}>
-                      <strong>Damage Roll:</strong>
-                      <span>{selectedAttackData.damageDice} + {selectedAttackData.abilityModifier || getAbilityModifier(character.abilityScores?.str || 10)}</span>
-                    </div>
-                    <div className={styles.attackStatRow}>
-                      <strong>Damage Type:</strong>
-                      <span>{selectedAttackData.damageType}</span>
-                    </div>
-                    {selectedAttackForModal.properties?.some((p: string) =>
-                      typeof p === 'string' ? p.toLowerCase().includes('finesse') : false
-                    ) && (
-                      <div className={styles.calcRow} style={{ backgroundColor: '#fff3cd', padding: '0.25rem', borderRadius: '4px' }}>
-                        <strong>⚡ Finesse:</strong>
-                        <span>Using {selectedAttackData.abilityUsed || 'STR'} (higher of STR/DEX)</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {selectedAttackForModal.properties && selectedAttackForModal.properties.length > 0 && (
-                  <div className={styles.propertiesSection}>
-                    <h3>Properties</h3>
-                    <div className={styles.propertiesList}>
-                      {selectedAttackForModal.properties.map((prop: string, idx: number) => (
-                        <span key={idx} className={styles.propertyTag}>{prop}</span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {selectedAttackForModal.onHitEffect && (
-                  <div className={styles.onHitSection}>
-                    <h3>On-Hit Effect</h3>
-                    <p>{selectedAttackForModal.onHitEffect}</p>
-                    {selectedAttackData.needsAttunement && !selectedAttackData.isAttuned && (
-                      <p className={styles.lockedNote}>🔒 Requires attunement to use this effect</p>
-                    )}
-                  </div>
-                )}
-
-                {selectedAttackForModal.maxCharges && (
-                  <div className={styles.chargesInfoSection}>
-                    <h3>Charges</h3>
-                    <div className={styles.chargesInfo}>
-                      <span><strong>Current</strong> {selectedAttackForModal.currentCharges} / {selectedAttackForModal.maxCharges}</span>
-                      {selectedAttackForModal.chargeRecharge && (
-                        <span><strong>Recharge</strong> {selectedAttackForModal.chargeRecharge}</span>
-                      )}
-                      {selectedAttackData.needsAttunement && !selectedAttackData.isAttuned && (
-                        <span className={styles.lockedNote}>🔒 Attune to expend charges</span>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {selectedAttackForModal.specialAbilities && selectedAttackForModal.specialAbilities.length > 0 && (
-                  <div className={styles.abilitiesSection}>
-                    <h3>Special Abilities</h3>
-                    <ul className={styles.abilitiesList}>
-                      {selectedAttackForModal.specialAbilities.map((ability: string, idx: number) => (
-                        <li key={idx} className={selectedAttackData.needsAttunement && !selectedAttackData.isAttuned ? styles.abilityLocked : ''}>
-                          {ability}
-                          {selectedAttackData.needsAttunement && !selectedAttackData.isAttuned && (
-                            <span className={styles.lockedBadge}> 🔒</span>
-                          )}
+                {getSkillProficiencies().length > 0 && (
+                  <div style={{ marginTop: '0.5rem', padding: '0.5rem', backgroundColor: '#e3f2fd', borderRadius: '4px', border: '1px solid #2196f3' }}>
+                    <strong>📜 Item-Granted Proficiencies:</strong>
+                    <ul style={{ margin: '0.25rem 0 0 1rem', padding: 0 }}>
+                      {getSkillProficiencies().map((prof, idx) => (
+                        <li key={idx} style={{ fontSize: '0.9em', color: '#1565c0' }}>
+                          {prof.proficiency} (from {prof.itemName})
                         </li>
                       ))}
                     </ul>
                   </div>
                 )}
-
-                {(selectedAttackForModal.weight || selectedAttackForModal.cost || selectedAttackForModal.rarity) && (
-                  <div className={styles.otherStatsSection}>
-                    <div>
-                      {selectedAttackForModal.weight && (
-                        <div className={styles.statRow}><strong>Weight:</strong> <span>{selectedAttackForModal.weight} lbs</span></div>
-                      )}
-                      {selectedAttackForModal.cost && (
-                        <div className={styles.statRow}><strong>Cost:</strong> <span>{selectedAttackForModal.cost} gp</span></div>
-                      )}
-                      {selectedAttackForModal.rarity && (
-                        <div className={styles.statRow}><strong>Rarity:</strong> <span>{selectedAttackForModal.rarity}</span></div>
-                      )}
+                {/* Skill Advantages - Always visible */}
+                {skillAdvantages.length > 0 && (
+                  <div style={{ marginBottom: '1rem' }}>
+                    <strong style={{ color: '#ff9800' }}>🎲 Skill Advantages:</strong>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
+                      {skillAdvantages.map((adv, idx) => (
+                        <div
+                          key={idx}
+                          className={`${styles.advantageCard} ${expandedAdvantage === adv.skillName ? styles.advantageCardExpanded : ''}`}
+                          onClick={() => toggleAdvantageExpand(adv.skillName)}
+                          style={{
+                            cursor: 'pointer',
+                            padding: '0.5rem',
+                            backgroundColor: '#fff3e0',
+                            border: '2px solid #ff9800',
+                            borderRadius: '4px',
+                            flex: '1 1 200px',
+                            maxWidth: '300px'
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <strong style={{ color: '#e65100' }}>{adv.skillName}</strong>
+                            <span style={{ fontSize: '0.75em', color: '#ff9800' }}>
+                              {expandedAdvantage === adv.skillName ? '▲' : '▼'}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: '0.85em', color: '#f57c00' }}>from {adv.itemName}</div>
+                          {expandedAdvantage === adv.skillName && adv.description && (
+                            <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid #ffcc80', fontSize: '0.85em', color: '#e65100' }}>
+                              {adv.description}
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
-              </div>
+              </div>            
+            )}
 
-              <div className={styles.attackDetailsActions}>
-                {getWeaponVariants(selectedAttackForModal).length > 1 && (
-                  <button
-                    className={styles.changeVariantBtn}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedAttackForModal(null);
-                      setWeaponToVariantSelect(selectedAttackForModal);
-                      setSelectedWeaponVariant(selectedAttackData.variant || 'melee');
-                      setWeaponVariantSelectorOpen(true);
-                    }}
-                  >
-                    🔄 Change Attack Type
-                  </button>
-                )}
-                <button
-                  className={styles.makeAttackBtn}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setAttackModalData(selectedAttackData);
-                    setSelectedAttackForModal(null);
-                  }}
+            {/* ✅ Tab Content - Weapons */}
+            {activeProficiencyTab === 'weapons' && proficientWeapons.length > 0 && (
+              <div>
+                <strong
+                  style={{ cursor: 'pointer', color: '#4a90e2', textDecoration: 'underline' }}
+                  onClick={() => setProficiencyModal({ isOpen: true, type: 'weapons' })}
+                  title="Click to see weapon proficiency sources"
                 >
-                  ⚔️ Make Attack
-                </button>
-                <button className={styles.closeActionBtn} onClick={() => setSelectedAttackForModal(null)}>Close</button>
+                  Weapons & Armor: {getWeaponProficiencies().length > 0 && `(+${getWeaponProficiencies().length})`}
+                </strong>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
+                  {proficientWeapons.map(weapon => (
+                    <span key={weapon} style={{ padding: '0.25rem 0.5rem', backgroundColor: '#e0e0e0', borderRadius: '4px' }}>
+                      {weapon}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ✅ Tab Content - Tools */}
+            {activeProficiencyTab === 'tools' && proficientTools.length > 0 && (
+              <div>
+                <strong
+                  style={{ cursor: 'pointer', color: '#4a90e2', textDecoration: 'underline' }}
+                  onClick={() => setProficiencyModal({ isOpen: true, type: 'tools' })}
+                  title="Click to see tool proficiency sources"
+                >
+                  Tools: {getToolProficiencies().length > 0 && `(+${getToolProficiencies().length})`}
+                </strong>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
+                  {proficientTools.map(tool => (
+                    <span key={tool} style={{ padding: '0.25rem 0.5rem', backgroundColor: '#e0e0e0', borderRadius: '4px' }}>
+                      {tool}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ✅ Show message if no proficiencies in active tab */}
+            {((activeProficiencyTab === 'skills' && displayedSkills.skills.length === 0) ||
+              (activeProficiencyTab === 'weapons' && proficientWeapons.length === 0) ||
+              (activeProficiencyTab === 'tools' && proficientTools.length === 0)) && (
+              <p style={{ color: '#666', marginTop: '0.5rem' }}>
+                No {activeProficiencyTab} proficiencies yet.
+              </p>
+            )}
+          </div>
+
+          {/* Languages */}
+          <div>
+            <strong
+              style={{ cursor: 'pointer', color: '#4a90e2', textDecoration: 'underline' }}
+              onClick={() => setProficiencyModal({ isOpen: true, type: 'languages' })}
+              title="Click to see language sources"
+            >
+              Languages: {getLanguages().length > 0 && `(+${getLanguages().length})`}
+            </strong>
+            {knownLanguages.length > 0 ? (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
+                {knownLanguages.map(lang => (
+                  <span key={lang} style={{ padding: '0.25rem 0.5rem', backgroundColor: '#e0e0e0', borderRadius: '4px' }}>
+                    {lang}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p>None</p>
+            )}
+          </div>
+
+          {/* Attunement Slots Display */}
+          <div className={styles.attunementDisplay}>
+            <strong>Attunement Slots:</strong>
+            <span className={attunedCount >= attunementSlotLimit ? styles.attunementFull : styles.attunementAvailable}>
+              {attunedCount} / {attunementSlotLimit}
+            </span>
+            {attunedCount >= attunementSlotLimit && (
+              <span className={styles.attunementWarning}> ⚠️ Max attuned items reached!</span>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* ✅ COLLAPSIBLE: Traits Section */}
+      <section className={styles.section}>
+        <div 
+          className={styles.sectionHeader}
+          onClick={() => toggleSection('traits')}
+          style={{ cursor: 'pointer' }}
+        >
+          <div className={styles.sectionTitle}>
+            <span className={`${styles.toggleIcon} ${collapsedSections.traits ? styles.collapsed : ''}`}>
+              ▼
+            </span>
+            <h2>Traits</h2>
+          </div>
+          <span className={styles.collapseHint}>
+            {collapsedSections.traits ? 'Show' : 'Hide'}
+          </span>
+        </div>
+        
+        <div className={`${styles.sectionContent} ${collapsedSections.traits ? styles.collapsed : ''}`}>
+          {allTraits.length > 0 ? (
+            <div className={styles.traitsList}>
+              {allTraits.map((trait, index) => (
+                <div
+                  key={index}
+                  className={`${styles.traitCard} ${expandedTrait === trait.name ? styles.traitCardExpanded : ''}`}
+                  onClick={() => toggleTraitExpand(trait.name)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <div className={styles.traitCardHeader}>
+                    <span className={styles.traitName}>{trait.name}</span>
+                    <span className={styles.traitSource}>{trait.source}</span>
+                    <span className={styles.traitExpandIcon}>
+                      {expandedTrait === trait.name ? '▲' : '▼'}
+                    </span>
+                  </div>
+                  {expandedTrait === trait.name && (
+                    <div className={styles.traitDescription}>
+                      {trait.description}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className={styles.emptyInventory}>No traits yet. Traits will appear from your species, background, class, or equipped items!</p>
+          )}
+        </div>
+      </section>
+
+      {/* ✅ COLLAPSIBLE: Spellcasting Section */}
+      <section className={styles.section}>
+        <div 
+          className={styles.sectionHeader}
+          onClick={() => toggleSection('spellcasting')}
+          style={{ cursor: 'pointer' }}
+        >
+          <div className={styles.sectionTitle}>
+            <span className={`${styles.toggleIcon} ${collapsedSections.spellcasting ? styles.collapsed : ''}`}>
+              ▼
+            </span>
+            <h2>Spellcasting</h2>
+          </div>
+          <span className={styles.collapseHint}>
+            {collapsedSections.spellcasting ? 'Show' : 'Hide'}
+          </span>
+        </div>
+        
+        <div className={`${styles.sectionContent} ${collapsedSections.spellcasting ? styles.collapsed : ''}`}>
+          {/* Spellcasting Stats */}
+          {spellcasterLevel > 0 && (
+            <div className={styles.spellcastingStats} style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', 
+              gap: '0.5rem',
+              marginBottom: '1rem',
+              padding: '1rem',
+              backgroundColor: '#f0f4f8',
+              borderRadius: '8px'
+            }}>
+              <div className={`${styles.statBox} ${styles.clickable}`} 
+                onClick={() => setStatModifiersModal({ isOpen: true, stat: 'SpellDC' })}
+                title="Click to see how Spell Save DC is calculated" >
+                <strong>Spell Save DC</strong>
+                <span style={{ fontSize: '1.5em', color: '#4a90e2' }}>{spellSaveDC}</span>
+              </div>
+              <div className={`${styles.statBox} ${styles.clickable}`}
+                onClick={() => setStatModifiersModal({ isOpen: true, stat: 'SpellAttack' })}
+                title="Click to see how Spell Attack is calculated" >
+                <strong>Spell Attack</strong>
+                <span style={{ fontSize: '1.5em', color: '#4a90e2' }}>+{spellAttackBonus}</span>
+              </div>
+              <div className={styles.statBox}>
+                <strong>Ability</strong>
+                <span style={{ fontSize: '1.5em', color: '#4a90e2' }}>{spellcastingAbility.toUpperCase()}</span>
+              </div>
+              <div className={styles.statBox}>
+                <strong>Caster Level</strong>
+                <span style={{ fontSize: '1.5em', color: '#4a90e2' }}>{spellcasterLevel}</span>
               </div>
             </div>
+          )}
+          
+          {/* Spell Slots */}
+          {spellcasterLevel > 0 && (
+            <div className={styles.spellSlots} style={{ marginBottom: '1rem' }}>
+              <h3>Spell Slots</h3>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                {Object.entries(spellSlots).map(([level, total]) => {
+                  const expended = spellSlotsExpended[level] || 0;
+                  const remaining = total - expended;
+                  return (
+                    <div key={level} style={{ 
+                      padding: '0.5rem', 
+                      backgroundColor: '#fff',
+                      border: '2px solid #4a90e2',
+                      borderRadius: '8px',
+                      textAlign: 'center',
+                      minWidth: '80px'
+                    }}>
+                      <div style={{ fontWeight: 'bold', marginBottom: '0.25rem' }}>
+                        {getOrdinal(parseInt(level))}
+                      </div>
+                      <div style={{ fontSize: '1.5em', fontWeight: 'bold' }}>
+                        {remaining}/{total}
+                      </div>
+                      <div style={{ display: 'flex', gap: '2px', justifyContent: 'center', marginTop: '0.25rem' }}>
+                        {Array.from({ length: total }).map((_, i) => (
+                          <div
+                            key={i}
+                            onClick={() => expendSpellSlot(parseInt(level))}
+                            style={{
+                              width: '12px',
+                              height: '12px',
+                              borderRadius: '2px',
+                              backgroundColor: i < expended ? '#ccc' : '#4a90e2',
+                              cursor: i < expended ? 'default' : 'pointer',
+                              border: '1px solid #333'
+                            }}
+                            title={i < expended ? 'Expended' : 'Available'}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          
+          {/* ✅ Spell Manager - Known & Prepared Spells with Source Badges */}
+          {characterSpells.length > 0 && (
+            <SpellManager
+              characterSpells={characterSpells}
+              spellSlots={spellSlots}
+              spellSaveDC={spellSaveDC}
+              spellAttackBonus={spellAttackBonus}
+              spellcastingAbility={spellcastingAbility}
+              character={character}
+              prepareLimit={spellPrepareLimit}
+              preparedCount={spellPreparedCount}
+              isPrepareUnlimited={spellPrepareUnlimited}
+              onTogglePrepare={toggleSpellPrepared}
+              onCastSpell={expendSpellSlot}
+            />
+          )}
+          
+          {/* Add Spell Button */}
+          <button className={styles.primary} onClick={() => setIsSpellModalOpen(true)} style={{ marginTop: '1rem' }}>
+            Add Spell
+          </button>
+          
+          <SpellSelectionModal
+            isOpen={isSpellModalOpen}
+            onClose={() => setIsSpellModalOpen(false)}
+            onAddSpell={addSpell}
+            availableSpells={availableSpells}
+            spellSaveDC={spellSaveDC}
+            spellAttackBonus={spellAttackBonus}
+          />
+          
+          {/* ✅ REMOVED: Spell Cast Modal is now handled by SpellManager component */}
+        </div>
+      </section>
+
+      {/* ✅ COLLAPSIBLE: Inventory Section */}
+      <section className={styles.section}>
+        <div 
+          className={styles.sectionHeader}
+          onClick={() => toggleSection('inventory')}
+          style={{ cursor: 'pointer' }}
+        >
+          <div className={styles.sectionTitle}>
+            <span className={`${styles.toggleIcon} ${collapsedSections.inventory ? styles.collapsed : ''}`}>
+              ▼
+            </span>
+            <h2>Inventory</h2>
           </div>
-        )}
+          <span className={styles.collapseHint}>
+            {collapsedSections.inventory ? 'Show' : 'Hide'}
+          </span>
+        </div>
+        
+        <div className={`${styles.sectionContent} ${collapsedSections.inventory ? styles.collapsed : ''}`}>
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '10px', flexWrap: 'wrap' }}>
+            <button
+              className={styles.primary}
+              onClick={() => setIsItemModalOpen(true)}
+              disabled={itemsLoading}
+            >
+              {itemsLoading ? 'Loading Items...' : 'Add Item'}
+            </button>
+            {character.items && Array.isArray(character.items) && character.items.length > 0 && (
+              <>
+                <button
+                  className={isBulkDeleteMode ? styles.danger : styles.secondary}
+                  onClick={() => {
+                    if (isBulkDeleteMode) {
+                      setIsBulkDeleteMode(false);
+                      setSelectedItemsForDelete(new Set());
+                    } else {
+                      setIsBulkDeleteMode(true);
+                    }
+                  }}
+                >
+                  {isBulkDeleteMode ? 'Cancel Bulk Delete' : 'Delete Items'}
+                </button>
+                <button
+                  className={showEquippedOnly ? styles.active : styles.secondary}
+                  onClick={() => setShowEquippedOnly(!showEquippedOnly)}
+                  title={showEquippedOnly ? 'Show all items' : 'Show only equipped items'}
+                >
+                  {showEquippedOnly ? 'Show All Items' : 'Equipped Only'}
+                </button>
+                <button
+                  className={showAttunedOnly ? styles.active : styles.secondary}
+                  onClick={() => setShowAttunedOnly(!showAttunedOnly)}
+                  title={showAttunedOnly ? 'Show all items' : 'Show only attuned items'}
+                >
+                  {showAttunedOnly ? 'Show All Items' : 'Attuned Only'}
+                </button>
+              </>
+            )}
+            {isBulkDeleteMode && selectedItemsForDelete.size > 0 && (
+              <button
+                className={styles.danger}
+                onClick={bulkDeleteItems}
+              >
+                Delete {selectedItemsForDelete.size} Item(s)
+              </button>
+            )}
+          </div>
+
+          <ItemModal
+            isOpen={isItemModalOpen}
+            onClose={() => setIsItemModalOpen(false)}
+            onAddItem={addItem}
+            availableItems={availableItems}
+            characterId={character.id}
+          />
+
+          {character.items && Array.isArray(character.items) && character.items.length > 0 ? (
+            <div className={styles.inventoryList}>
+              {character.items
+                .filter((item: any) => {
+                  if (showEquippedOnly) {
+                    return item.is_equipped === true;
+                  }
+                  if (showAttunedOnly) {
+                    return item.is_attuned === true;
+                  }
+                  return true;
+                })
+                .map((item: any) => {
+                  const isSelected = selectedItemsForDelete.has(item.inventoryId);
+                  const itemData = item.item || item;
+                  const isEquippable = canEquip(item);
+                  const isEquipped = item.is_equipped || false;
+                  const needsAttunement = requiresAttunement(item);
+                  const isAttuned = isItemAttuned(item);
+                  const isAttunedAndFull = needsAttunement && attunedCount >= attunementSlotLimit && !isAttuned;
+                  const isWeapon = itemData.item_type === 'Weapon' || itemData.type === 'Weapon';
+                  
+                  return (
+                    <div
+                      key={item.inventoryId}
+                      className={`${styles.inventoryItem} ${isBulkDeleteMode && isSelected ? styles.selectedForDelete : ''} ${isEquipped ? styles.equippedItem : ''} ${isAttuned ? styles.attunedItem : ''}`}
+                      onClick={() => {
+                        if (isBulkDeleteMode) {
+                          toggleItemSelection(item.inventoryId);
+                        } else {
+                          setSelectedItemForDetails(item);
+                        }
+                      }}
+                      style={{
+                        cursor: 'pointer',
+                        backgroundColor: isBulkDeleteMode && isSelected ? 'rgba(255, 100, 100, 0.2)' : (isAttuned ? 'rgba(155, 89, 182, 0.1)' : (isEquipped ? 'rgba(100, 255, 100, 0.1)' : 'transparent'))
+                      }}
+                    >
+                      {isBulkDeleteMode && (
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            toggleItemSelection(item.inventoryId);
+                          }}
+                          style={{ cursor: 'pointer', flexShrink: 0, marginTop: '2px' }}
+                        />
+                      )}
+                      <div className={styles.inventoryItemContent}>
+                        <div className={styles.inventoryItemHeader}>
+                          <span className={styles.inventoryItemName}>
+                            {item.name} {item.quantity > 1 && `(x${item.quantity})`}
+                            {isEquipped && <span className={styles.equippedBadge}>Equipped</span>}
+                            {isAttuned && <span className={styles.attunedBadge}>✨ Attuned</span>}
+                            {needsAttunement && !isAttuned && <span className={styles.attunementBadge}>⚡ Requires Attunement</span>}
+                          </span>
+                          <div className={styles.inventoryItemQuickInfo}>
+                            {item.item_type && <span className={styles.itemType}>{item.item_type}</span>}
+                            
+                            {/* ✅ EQUIP/UNEQUIP BUTTON for equippable items */}
+                            {isEquippable && !isBulkDeleteMode && (
+                              isEquipped ? (
+                                <button
+                                  className={styles.unequipButton}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    unequipItem(item.inventoryId, item.name);
+                                  }}
+                                  title="Unequip this item"
+                                >
+                                  🔓 Unequip
+                                </button>
+                              ) : (
+                                <button
+                                  className={styles.equipButton}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    equipItem(item.inventoryId, item.name, itemData);
+                                  }}
+                                  title="Equip this item"
+                                >
+                                  🔒 Equip
+                                </button>
+                              )
+                            )}
+                            
+                            {/* ✅ ATTUNE/UNATTUNE BUTTONS for ALL items that require attunement */}
+                            {needsAttunement && !isBulkDeleteMode && (
+                              isAttuned ? (
+                                <button
+                                  className={styles.unattuneButton}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    unattuneItem(item.inventoryId, item.name);
+                                  }}
+                                  title="Unattune this item"
+                                >
+                                  ✨ Unattune
+                                </button>
+                              ) : (
+                                <button
+                                  className={`${styles.attuneButton} ${!canAttuneMore() ? styles.attuneButtonDisabled : ''}`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (canAttuneMore()) {
+                                      attuneItem(item.inventoryId, item.name, itemData);
+                                    } else {
+                                      alert(`❌ Cannot attune: You already have ${attunedCount} attuned items (max: ${attunementSlotLimit}). Unattune an item first.`);
+                                    }
+                                  }}
+                                  disabled={!canAttuneMore()}
+                                  title={!canAttuneMore() ? 'Attunement slots full' : 'Attune this item for special abilities'}
+                                >
+                                  ⚡ Attune
+                                </button>
+                              )
+                            )}
+                            
+                            {item.maxCharges && (
+                              <span className={styles.chargesIndicator}>
+                                Charges: {item.currentCharges}/{item.maxCharges}
+                                {needsAttunement && !isAttuned && <span className={styles.lockedBadge}> 🔒</span>}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          ) : (
+            <p className={styles.emptyInventory}>No items yet. Add items to get started!</p>
+          )}
+          {showEquippedOnly && character.items?.filter((item: any) => item.is_equipped === true).length === 0 && (
+            <p className={styles.emptyInventory}>No equipped items. Equip items to see them here!</p>
+          )}
+          {showAttunedOnly && character.items?.filter((item: any) => item.is_attuned === true).length === 0 && (
+            <p className={styles.emptyInventory}>No attuned items. Attune items to see them here!</p>
+          )}
+        </div>
+      </section>
+
+      {/* ✅ COLLAPSIBLE: Combat Section */}
+      <section className={styles.section}>
+        <div 
+          className={styles.sectionHeader}
+          onClick={() => toggleSection('combat')}
+          style={{ cursor: 'pointer' }}
+        >
+          <div className={styles.sectionTitle}>
+            <span className={`${styles.toggleIcon} ${collapsedSections.combat ? styles.collapsed : ''}`}>
+              ▼
+            </span>
+            <h2>Combat</h2>
+          </div>
+          <span className={styles.collapseHint}>
+            {collapsedSections.combat ? 'Show' : 'Hide'}
+          </span>
+        </div>
+        
+        <div className={`${styles.sectionContent} ${collapsedSections.combat ? styles.collapsed : ''}`}>
+          {/* HP Section */}
+          <div className={styles.hpSection}>
+            <div className={styles.hpRow}>
+              <div className={styles.hpContainer}>
+                <strong>Hit Points:</strong>
+                <div className={styles.hpDisplay}>
+                  <div className={styles.hpMainDisplay}>
+                    <span className={styles.hpCurrent}>{hpCurrent}</span>
+                    <span className={styles.hpSeparator}>/</span>
+                    <span className={styles.hpMax}>{hpMax}</span>
+                    {hpTmp > 0 && <span className={styles.hpTemp}>(+{hpTmp} temp)</span>}
+                  </div>
+                </div>
+                <div className={styles.hpControls}>
+                  <button type="button" onClick={() => setHpModalType('heal')} disabled={saving} className={styles.hpButton}>💚 Heal</button>
+                  <button type="button" onClick={() => setHpModalType('damage')} disabled={saving} className={styles.hpButton}>💔 Damage</button>
+                  <button type="button" onClick={() => setHpModalType('temp')} disabled={saving} className={styles.hpButton}>🛡️ Temp HP</button>
+                </div>
+              </div>
+
+              <div className={styles.totalHpContainer}>
+                <strong>Total HP:</strong>
+                <div className={styles.totalHpDisplay}>
+                  <span className={styles.totalHpValue}>{hpCurrent + hpTmp} / {hpMax}</span>
+                </div>
+              </div>
+            </div>
+
+            {hpModalType && (
+              <div className={styles.hpModal}>
+                <div className={styles.hpModalContent}>
+                  <label>
+                    {hpModalType === 'heal' && 'Heal amount:'}
+                    {hpModalType === 'damage' && 'Damage amount:'}
+                    {hpModalType === 'temp' && 'Temporary HP:'}
+                  </label>
+                  <input
+                    type="number"
+                    value={hpModalInput}
+                    onChange={(e) => setHpModalInput(e.target.value)}
+                    placeholder="Enter amount"
+                    className={styles.hpModalInput}
+                    autoFocus
+                    onKeyPress={(e) => { if (e.key === 'Enter') handleHpModalSubmit(); }}
+                  />
+                  <div className={styles.hpModalButtons}>
+                    <button onClick={handleHpModalSubmit} className={styles.confirmBtn}>Apply</button>
+                    <button onClick={() => { setHpModalType(null); setHpModalInput(''); }} className={styles.cancelBtn}>Cancel</button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <button onClick={saveHp} disabled={saving} className={styles.saveBtn}>
+              {saving ? 'Saving...' : 'Save HP'}
+            </button>
+          </div>
+
+          {/* Combat Stats */}
+          <div className={styles.combatStats}>
+            <div
+              className={`${styles.statBox} ${styles.clickable}`}
+              onClick={() => setStatModifiersModal({ isOpen: true, stat: 'AC' })}
+              title="Click to see AC modifiers (from equipped items only)"
+            >
+              <strong>AC:</strong>
+              <span>{calculateAC()}</span>
+            </div>
+            <div
+              className={`${styles.statBox} ${styles.clickable}`}
+              onClick={() => setStatModifiersModal({ isOpen: true, stat: 'Initiative' })}
+              title="Click to see Initiative modifiers (from equipped items only)"
+            >
+              <strong>Initiative:</strong>
+              <span>{(() => {
+                const dexModifier = getAbilityModifier(character.abilityScores?.dex || 10);
+                return (dexModifier >= 0 ? '+' : '') + dexModifier;
+              })()}</span>
+            </div>
+            <div
+              className={`${styles.statBox} ${styles.clickable}`}
+              onClick={() => setStatModifiersModal({ isOpen: true, stat: 'Speed' })}
+              title="Click to see Speed modifiers (from equipped items only)"
+            >
+              <strong>Speed:</strong>
+              <span>{character.speed || 30} ft</span>
+            </div>
+          </div>
+
+          {/* Combat Attacks */}
+          <div className={styles.attacksSection}>
+            <h3>Possible Attacks</h3>
+            {character.items && Array.isArray(character.items) && character.items.length > 0 ? (
+              <>
+                <div className={styles.attackRowHeader}>
+                  <div className={styles.attackRowName}>Name</div>
+                  <div className={styles.attackRowBonus}>Attack Bonus</div>
+                  <div className={styles.attackRowDamage}>Damage</div>
+                  <div className={styles.attackRowType}>Damage Type</div>
+                  <div className={styles.attackRowSpecial}>Special</div>
+                </div>
+                <div className={styles.attacksList}>
+                  {character.items
+                    .filter((item: any) => item.item_type === 'Weapon' || item.type === 'Weapon')
+                    .map((weapon: any, index: number) => {
+                      const bestAbility = getBestAbilityForWeapon(weapon);
+                      const attackBonus = bestAbility.modifier + proficiencyBonus;
+                      const damageDice = weapon.damageDice || '1d4';
+                      const damageType = weapon.damageType || 'bludgeoning';
+                      const isAttuned = isItemAttuned(weapon);
+                      const needsAttunement = requiresAttunement(weapon);
+                      const hasChargeAbilities = weapon.maxCharges && weapon.onHitEffect;
+                      
+                      return (
+                        <div
+                          key={index}
+                          className={styles.attackRow}
+                          onClick={() => {
+                            const variants = getWeaponVariants(weapon);
+                            if (variants.length > 1) {
+                              setWeaponToVariantSelect(weapon);
+                              setSelectedWeaponVariant(variants[0].id);
+                              setWeaponVariantSelectorOpen(true);
+                            } else {
+                              setSelectedAttackForModal(weapon);
+                              setSelectedAttackData({
+                                weapon,
+                                attackBonus,
+                                damageDice,
+                                damageType,
+                                abilityUsed: bestAbility.ability,
+                                abilityModifier: bestAbility.modifier,
+                                isAttuned,
+                                needsAttunement
+                              });
+                            }
+                          }}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          <div className={styles.attackRowName}>{weapon.name}</div>
+                          <div className={styles.attackRowBonus}>+{attackBonus}</div>
+                          <div className={styles.attackRowDamage}>{damageDice}</div>
+                          <div className={styles.attackRowType}>{damageType}</div>
+                          <div className={styles.attackRowSpecial}>
+                            {needsAttunement && (
+                              <span className={isAttuned ? styles.specialAvailable : styles.specialLocked}>
+                                {isAttuned ? '⚡ Ready' : '🔒 Attune'}
+                              </span>
+                            )}
+                            {hasChargeAbilities && !needsAttunement && (
+                              <span className={styles.specialAvailable}>⚡ Charge</span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </>
+            ) : (
+              <p className={styles.noAttacks}>No weapons in inventory. Add items to see possible attacks.</p>
+            )}
+          </div>
+
+          {/* Attack Modal */}
+          {attackModalData && (
+            <div className={styles.attackModal}>
+              <div className={styles.attackModalContent}>
+                <button className={styles.attackModalClose} onClick={() => setAttackModalData(null)}>×</button>
+                <h3>Make Attack: {attackModalData.weapon.name}</h3>
+                
+                {/* ✅ Show attunement warning if weapon requires attunement but not attuned */}
+                {attackModalData.needsAttunement && !attackModalData.isAttuned && (
+                  <div className={styles.attunementWarningBox}>
+                    ⚠️ This weapon requires attunement to use special abilities. Current: {attunedCount}/{attunementSlotLimit} attuned.
+                  </div>
+                )}
+                
+                <div className={styles.attackModalData}>
+                  <div className={styles.attackModalBox}>
+                    <h4>To-Hit Bonus</h4>
+                    <div className={styles.attackModalValue}>+{attackModalData.attackBonus}</div>
+                    <p className={styles.diceLabel}>Roll d20 and add +{attackModalData.attackBonus}</p>
+                  </div>
+                  <div className={styles.attackModalBox}>
+                    <h4>Damage Roll</h4>
+                    <div className={styles.attackModalValue}>{attackModalData.damageDice}</div>
+                    <p className={styles.diceLabel}>
+                      Add +{attackModalData.abilityModifier || getAbilityModifier(character.abilityScores?.str || 10)}
+                      ({attackModalData.abilityUsed || 'STR'} mod)
+                    </p>
+                    <p className={styles.damageTypeLabel}>Type: {attackModalData.damageType}</p>
+                    {attackModalData.weapon.properties?.some((p: string) =>
+                      typeof p === 'string' ? p.toLowerCase().includes('finesse') : false
+                    ) && (
+                      <p className={styles.finesseNote} style={{ color: '#2d5016', fontSize: '0.85em' }}>
+                        ⚡ Finesse: Using {attackModalData.abilityUsed || 'STR'} (higher of STR/DEX)
+                      </p>
+                    )}
+                  </div>
+                </div>
+                
+                {attackModalData.weapon.onHitEffect && (
+                  <div className={styles.attackModalEffect}>
+                    <h4>Special Effect</h4>
+                    <p>{attackModalData.weapon.onHitEffect}</p>
+                    {attackModalData.needsAttunement && !attackModalData.isAttuned && (
+                      <p className={styles.lockedNote}>🔒 Requires attunement to use</p>
+                    )}
+                  </div>
+                )}
+                
+                {attackModalData.weapon.maxCharges && attackModalData.weapon.currentCharges > 0 && (
+                  <div className={styles.chargesExpendPrompt}>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={expendCharge}
+                        onChange={(e) => setExpendCharge(e.target.checked)}
+                        disabled={attackModalData.needsAttunement && !attackModalData.isAttuned}
+                      />
+                      Expend 1 charge? ({attackModalData.weapon.currentCharges} remaining)
+                      {attackModalData.needsAttunement && !attackModalData.isAttuned && (
+                        <span className={styles.lockedNote}> 🔒 Attune to use charges</span>
+                      )}
+                    </label>
+                  </div>
+                )}
+                
+                <div className={styles.attackModalButtons}>
+                  <button
+                    className={styles.confirmBtn}
+                    onClick={() => {
+                      if (expendCharge && attackModalData.weapon.currentCharges > 0) {
+                        if (attackModalData.needsAttunement && !attackModalData.isAttuned) {
+                          alert('❌ Must attune to this weapon first to expend charges!');
+                          return;
+                        }
+                        updateItemCharges(attackModalData.weapon.inventoryId, attackModalData.weapon.currentCharges - 1);
+                      }
+                      setAttackModalData(null);
+                      setExpendCharge(false);
+                    }}
+                  >
+                    OK, Ready to Roll!
+                  </button>
+                  <button className={styles.cancelBtn} onClick={() => { setAttackModalData(null); setExpendCharge(false); }}>Cancel</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Weapon Variant Selector Modal */}
+          {weaponVariantSelectorOpen && weaponToVariantSelect && (
+            <div className={styles.variantSelectorOverlay} onClick={() => {
+              setWeaponVariantSelectorOpen(false);
+              setWeaponToVariantSelect(null);
+            }}>
+              <div className={styles.variantSelectorContent} onClick={(e) => e.stopPropagation()}>
+                <button className={styles.closeBtn} onClick={() => {
+                  setWeaponVariantSelectorOpen(false);
+                  setWeaponToVariantSelect(null);
+                }}>✕</button>
+                <h2>Select Attack Type for {weaponToVariantSelect.name}</h2>
+                <p className={styles.variantDescription}>This weapon can be used in multiple ways. Choose how you want to attack:</p>
+                <div className={styles.variantOptions}>
+                  {getWeaponVariants(weaponToVariantSelect).map((variant) => (
+                    <div
+                      key={variant.id}
+                      className={`${styles.variantOption} ${selectedWeaponVariant === variant.id ? styles.variantOptionSelected : ''}`}
+                      onClick={() => setSelectedWeaponVariant(variant.id)}
+                    >
+                      <div className={styles.variantOptionName}>{variant.name}</div>
+                      <div className={styles.variantOptionDetails}>
+                        <span><strong>Damage:</strong> {variant.damageDice}</span>
+                        <span><strong>Type:</strong> {variant.damageType}</span>
+                        {variant.range && <span><strong>Range:</strong> {variant.range}</span>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className={styles.variantActions}>
+                  <button
+                    className={styles.confirmVariantBtn}
+                    onClick={() => {
+                      const selectedVariantObj = getWeaponVariants(weaponToVariantSelect).find(v => v.id === selectedWeaponVariant);
+                      if (selectedVariantObj) {
+                        const bestAbility = getBestAbilityForWeapon(weaponToVariantSelect);
+                        const attackBonus = bestAbility.modifier + proficiencyBonus;
+                        setSelectedAttackForModal(weaponToVariantSelect);
+                        setSelectedAttackData({
+                          weapon: weaponToVariantSelect,
+                          attackBonus,
+                          damageDice: selectedVariantObj.damageDice,
+                          damageType: selectedVariantObj.damageType,
+                          variant: selectedWeaponVariant,
+                          range: selectedVariantObj.range,
+                          abilityUsed: bestAbility.ability,
+                          abilityModifier: bestAbility.modifier,
+                          isAttuned: isItemAttuned(weaponToVariantSelect),
+                          needsAttunement: requiresAttunement(weaponToVariantSelect)
+                        });
+                        setWeaponVariantSelectorOpen(false);
+                        setWeaponToVariantSelect(null);
+                      }
+                    }}
+                  >
+                    Proceed with {getWeaponVariants(weaponToVariantSelect).find(v => v.id === selectedWeaponVariant)?.name || 'Attack'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Attack Details Modal */}
+          {selectedAttackForModal && selectedAttackData && (
+            <div className={styles.attackDetailsModalOverlay} onClick={() => setSelectedAttackForModal(null)}>
+              <div className={styles.attackDetailsModalContent} onClick={(e) => e.stopPropagation()}>
+                <button className={styles.closeBtn} onClick={() => setSelectedAttackForModal(null)}>✕</button>
+                <div className={styles.attackDetailsHeader}>
+                  <h2>{selectedAttackForModal.name}</h2>
+                  <p className={styles.weaponType}>
+                    {selectedAttackForModal.item_type || selectedAttackForModal.type || 'Weapon'}
+                    {selectedAttackData.variant && (
+                      <> • {getWeaponVariants(selectedAttackForModal).find(v => v.id === selectedAttackData.variant)?.name}</>
+                    )}
+                  </p>
+                </div>
+                <div className={styles.attackDetailsContent}>
+                  {selectedAttackForModal.desc && (
+                    <div className={styles.section}>
+                      <p className={styles.weaponDesc}>{selectedAttackForModal.desc}</p>
+                    </div>
+                  )}
+                  <div className={styles.attackStatsSection}>
+                    <h3>Attack Statistics</h3>
+                    <div>
+                      <div className={styles.attackStatRow}>
+                        <strong>Attack Bonus:</strong>
+                        <span>+{selectedAttackData.attackBonus}</span>
+                      </div>
+                      <div className={styles.attackStatRow}>
+                        <strong>Damage Roll:</strong>
+                        <span>{selectedAttackData.damageDice} + {selectedAttackData.abilityModifier || getAbilityModifier(character.abilityScores?.str || 10)}</span>
+                      </div>
+                      <div className={styles.attackStatRow}>
+                        <strong>Damage Type:</strong>
+                        <span>{selectedAttackData.damageType}</span>
+                      </div>
+                      {selectedAttackForModal.properties?.some((p: string) =>
+                        typeof p === 'string' ? p.toLowerCase().includes('finesse') : false
+                      ) && (
+                        <div className={styles.calcRow} style={{ backgroundColor: '#fff3cd', padding: '0.25rem', borderRadius: '4px' }}>
+                          <strong>⚡ Finesse:</strong>
+                          <span>Using {selectedAttackData.abilityUsed || 'STR'} (higher of STR/DEX)</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {selectedAttackForModal.properties && selectedAttackForModal.properties.length > 0 && (
+                    <div className={styles.propertiesSection}>
+                      <h3>Properties</h3>
+                      <div className={styles.propertiesList}>
+                        {selectedAttackForModal.properties.map((prop: string, idx: number) => (
+                          <span key={idx} className={styles.propertyTag}>{prop}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedAttackForModal.onHitEffect && (
+                    <div className={styles.onHitSection}>
+                      <h3>On-Hit Effect</h3>
+                      <p>{selectedAttackForModal.onHitEffect}</p>
+                      {selectedAttackData.needsAttunement && !selectedAttackData.isAttuned && (
+                        <p className={styles.lockedNote}>🔒 Requires attunement to use this effect</p>
+                      )}
+                    </div>
+                  )}
+
+                  {selectedAttackForModal.maxCharges && (
+                    <div className={styles.chargesInfoSection}>
+                      <h3>Charges</h3>
+                      <div className={styles.chargesInfo}>
+                        <span><strong>Current</strong> {selectedAttackForModal.currentCharges} / {selectedAttackForModal.maxCharges}</span>
+                        {selectedAttackForModal.chargeRecharge && (
+                          <span><strong>Recharge</strong> {selectedAttackForModal.chargeRecharge}</span>
+                        )}
+                        {selectedAttackData.needsAttunement && !selectedAttackData.isAttuned && (
+                          <span className={styles.lockedNote}>🔒 Attune to expend charges</span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedAttackForModal.specialAbilities && selectedAttackForModal.specialAbilities.length > 0 && (
+                    <div className={styles.abilitiesSection}>
+                      <h3>Special Abilities</h3>
+                      <ul className={styles.abilitiesList}>
+                        {selectedAttackForModal.specialAbilities.map((ability: string, idx: number) => (
+                          <li key={idx} className={selectedAttackData.needsAttunement && !selectedAttackData.isAttuned ? styles.abilityLocked : ''}>
+                            {ability}
+                            {selectedAttackData.needsAttunement && !selectedAttackData.isAttuned && (
+                              <span className={styles.lockedBadge}> 🔒</span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {(selectedAttackForModal.weight || selectedAttackForModal.cost || selectedAttackForModal.rarity) && (
+                    <div className={styles.otherStatsSection}>
+                      <div>
+                        {selectedAttackForModal.weight && (
+                          <div className={styles.statRow}><strong>Weight:</strong> <span>{selectedAttackForModal.weight} lbs</span></div>
+                        )}
+                        {selectedAttackForModal.cost && (
+                          <div className={styles.statRow}><strong>Cost:</strong> <span>{selectedAttackForModal.cost} gp</span></div>
+                        )}
+                        {selectedAttackForModal.rarity && (
+                          <div className={styles.statRow}><strong>Rarity:</strong> <span>{selectedAttackForModal.rarity}</span></div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className={styles.attackDetailsActions}>
+                  {getWeaponVariants(selectedAttackForModal).length > 1 && (
+                    <button
+                      className={styles.changeVariantBtn}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedAttackForModal(null);
+                        setWeaponToVariantSelect(selectedAttackForModal);
+                        setSelectedWeaponVariant(selectedAttackData.variant || 'melee');
+                        setWeaponVariantSelectorOpen(true);
+                      }}
+                    >
+                      🔄 Change Attack Type
+                    </button>
+                  )}
+                  <button
+                    className={styles.makeAttackBtn}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setAttackModalData(selectedAttackData);
+                      setSelectedAttackForModal(null);
+                    }}
+                  >
+                    ⚔️ Make Attack
+                  </button>
+                  <button className={styles.closeActionBtn} onClick={() => setSelectedAttackForModal(null)}>Close</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </section>
 
       {/* Item Details Modal */}
@@ -3226,7 +2987,6 @@ const CharacterDisplay = () => {
             unequipItem(selectedItemForDetails.inventoryId, selectedItemForDetails.name);
           }
         }}
-        // @ts-ignore - onAttune and onUnattune are custom handlers for attunement functionality
         onAttune={() => {
           if (selectedItemForDetails && canAttuneMore()) {
             attuneItem(selectedItemForDetails.inventoryId, selectedItemForDetails.name, selectedItemForDetails.item || selectedItemForDetails);
@@ -3244,6 +3004,15 @@ const CharacterDisplay = () => {
         canAttuneMore={canAttuneMore()}
         attunedCount={attunedCount}
         attunementLimit={attunementSlotLimit}
+      />
+
+      {/* Spell Details Modal */}
+      <SpellDetailsModal
+        isOpen={isSpellDetailsModalOpen}
+        onClose={() => setIsSpellDetailsModalOpen(false)}
+        spell={selectedSpellForDetails}
+        spellSaveDC={spellSaveDC}
+        spellAttackBonus={spellAttackBonus}
       />
 
       {/* Stat Modifiers Modal */}

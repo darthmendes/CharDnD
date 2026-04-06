@@ -1,0 +1,315 @@
+/* SpellDetailsModal.module.css - D&D Themed Spell Details */
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modalContent {
+  background: linear-gradient(135deg, #f5e6d3 0%, #e8d5c4 100%);
+  border: 3px solid #8b7355;
+  border-radius: 15px;
+  max-width: 650px;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  animation: slideIn 0.3s ease-out;
+  padding: 25px;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.closeBtn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: #c0392b;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+  z-index: 10;
+}
+
+.closeBtn:hover {
+  background: #a93226;
+}
+
+/* Header Section */
+.spellHeader {
+  padding-bottom: 20px;
+  border-bottom: 2px solid #8b7355;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.spellHeader h2 {
+  margin: 0 0 10px 0;
+  color: #2c3e50;
+  font-size: 28px;
+  font-weight: 700;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+.spellLevel {
+  margin: 5px 0;
+  color: #5d4e37;
+  font-weight: 600;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Content Section */
+.spellContent {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+/* Spell Section Base */
+.spellSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 15px;
+  background-color: rgba(255, 255, 255, 0.5);
+  border-radius: 8px;
+  border: 1px solid #8b7355;
+}
+
+.spellSection strong {
+  color: #5d4e37;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Info Grid */
+.infoGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  color: #2c3e50;
+  font-size: 14px;
+}
+
+.infoRow strong {
+  color: #5d4e37;
+  font-weight: 600;
+  min-width: 120px;
+}
+
+.infoRow span {
+  color: #34495e;
+  text-align: right;
+  flex: 1;
+}
+
+/* Concentration and Ritual Tags */
+.concentrationTag,
+.ritualTag {
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 8px;
+  text-align: center;
+}
+
+.concentrationTag {
+  background-color: #fff8e7;
+  border: 1px solid #f39c12;
+  color: #d68910;
+}
+
+.ritualTag {
+  background-color: #f3e5f5;
+  border: 1px solid #9c27b0;
+  color: #6a1b9a;
+}
+
+/* Description */
+.description {
+  color: #2c3e50;
+  line-height: 1.6;
+  font-size: 15px;
+  margin: 0;
+  padding: 12px;
+  background-color: rgba(255, 255, 255, 0.7);
+  border-left: 4px solid #3498db;
+  border-radius: 4px;
+}
+
+/* Save Ability Box - Yellow/Orange */
+.abilityBox {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  background-color: #fff8e7;
+  border: 2px solid #f39c12;
+  border-radius: 6px;
+}
+
+.abilityBox strong {
+  color: #d68910;
+  font-size: 14px;
+}
+
+.abilityBox span {
+  color: #b8860b;
+  font-size: 13px;
+}
+
+.saveNote {
+  font-size: 12px !important;
+  color: #d68910 !important;
+  font-style: italic;
+}
+
+/* Attack Box - Green */
+.attackBox {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  background-color: #e8f5e9;
+  border: 2px solid #4caf50;
+  border-radius: 6px;
+}
+
+.attackBox strong {
+  color: #2e7d32;
+  font-size: 14px;
+}
+
+.attackBox span {
+  color: #388e3c;
+  font-size: 13px;
+}
+
+/* Damage Box - Orange */
+.damageBox {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  background-color: #fff3e0;
+  border: 2px solid #ff9800;
+  border-radius: 6px;
+}
+
+.damageBox strong {
+  color: #e65100;
+  font-size: 14px;
+}
+
+.damageBox span {
+  color: #bf360c;
+  font-size: 13px;
+}
+
+/* Healing Box - Pink */
+.healingBox {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  background-color: #fce4ec;
+  border: 2px solid #e91e63;
+  border-radius: 6px;
+}
+
+.healingBox strong {
+  color: #ad1457;
+  font-size: 14px;
+}
+
+.healingBox span {
+  color: #c2185b;
+  font-size: 13px;
+}
+
+/* Area of Effect Box - Blue */
+.aoeBox {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  background-color: #e3f2fd;
+  border: 2px solid #2196f3;
+  border-radius: 6px;
+  color: #1565c0;
+  font-size: 13px;
+}
+
+/* Higher Levels */
+.higherLevels {
+  color: #2c3e50;
+  line-height: 1.6;
+  font-size: 14px;
+  padding: 10px;
+  background-color: rgba(255, 255, 255, 0.5);
+  border-radius: 4px;
+}
+
+/* Scrollbar Styling */
+.modalContent::-webkit-scrollbar {
+  width: 10px;
+}
+
+.modalContent::-webkit-scrollbar-track {
+  background: rgba(139, 115, 85, 0.1);
+  border-radius: 4px;
+}
+
+.modalContent::-webkit-scrollbar-thumb {
+  background: #8b7355;
+  border-radius: 4px;
+}
+
+.modalContent::-webkit-scrollbar-thumb:hover {
+  background: #5d4e37;
+}

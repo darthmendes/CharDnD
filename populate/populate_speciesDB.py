@@ -1,6 +1,7 @@
 """
 Seed D&D 5e PHB species into the database.
-Includes Humans, Elves, Dwarves, and Halflings with full subspecies and traits.
+Includes ALL core species: Humans, Elves, Dwarves, Halflings, Dragonborn, Gnomes, Half-Elves, Half-Orcs, Tieflings
+with full subspecies and traits.
 """
 
 from Backend.services.SpeciesService import SpeciesService
@@ -9,10 +10,10 @@ from Backend.models.species import Species, Subspecies, SpeciesTraits
 from Backend.models import session
 
 def add_species_and_subspecies():
-    # === HUMAN (Variant Human) ===
+    # === HUMAN ===
     human_data = {
         "name": "Human",
-        "ability_bonuses": {"STR" : 1, "DEX" : 1, "CON" : 1, "INT" : 1, "WIS" : 1, "CHA" : 1},
+        "ability_bonuses": {"STR": 1, "DEX": 1, "CON": 1, "INT": 1, "WIS": 1, "CHA": 1},
         "size": "Medium",
         "age_adulthood": 18,
         "lifespan": 80,
@@ -41,25 +42,24 @@ def add_species_and_subspecies():
     }
     result = SpeciesService.new(elf_data)
     if result["success"]:
-        elf_id = result['data']['id']
+        elfID = result['data']['id']
         print(f"[SUCCESS] Created {result['data']['name']}")
         
-        # Add elf subspecies
         elf_subspecies = [
             {
                 "name": "High Elf",
-                "species_id": elf_id,
+                "speciesID": elfID,
                 "ability_bonuses": {"INT": 1}
             },
             {
                 "name": "Wood Elf",
-                "species_id": elf_id,
+                "speciesID": elfID,
                 "ability_bonuses": {"WIS": 1},
                 "movement": {"walk": 35}
             },
             {
                 "name": "Dark Elf (Drow)",
-                "species_id": elf_id,
+                "speciesID": elfID,
                 "ability_bonuses": {"CHA": 1},
                 "darkvision": 120
             }
@@ -87,19 +87,18 @@ def add_species_and_subspecies():
     }
     result = SpeciesService.new(dwarf_data)
     if result["success"]:
-        dwarf_id = result['data']['id']
+        dwarfID = result['data']['id']
         print(f"[SUCCESS] Created {result['data']['name']}")
         
-        # Add dwarf subspecies
         dwarf_subspecies = [
             {
                 "name": "Hill Dwarf",
-                "species_id": dwarf_id,
+                "speciesID": dwarfID,
                 "ability_bonuses": {"WIS": 1}
             },
             {
                 "name": "Mountain Dwarf",
-                "species_id": dwarf_id,
+                "speciesID": dwarfID,
                 "ability_bonuses": {"STR": 2}
             }
         ]
@@ -126,19 +125,18 @@ def add_species_and_subspecies():
     }
     result = SpeciesService.new(halfling_data)
     if result["success"]:
-        halfling_id = result['data']['id']
+        halflingID = result['data']['id']
         print(f"[SUCCESS] Created {result['data']['name']}")
         
-        # Add halfling subspecies
         halfling_subspecies = [
             {
                 "name": "Lightfoot Halfling",
-                "species_id": halfling_id,
+                "speciesID": halflingID,
                 "ability_bonuses": {"CHA": 1}
             },
             {
                 "name": "Stout Halfling",
-                "species_id": halfling_id,
+                "speciesID": halflingID,
                 "ability_bonuses": {"CON": 1}
             }
         ]
@@ -151,154 +149,347 @@ def add_species_and_subspecies():
     else:
         print(f"[ERROR] Failed to create Halfling: {result['error']}")
 
+    # === DRAGONBORN (NEW) ===
+    dragonborn_data = {
+        "name": "Dragonborn",
+        "ability_bonuses": {"STR": 2, "CHA": 1},
+        "size": "Medium",
+        "age_adulthood": 15,
+        "lifespan": 80,
+        "alignment_tendency": "Good",
+        "movement": {"walk": 30},
+        "darkvision": 0,
+        "ignore_heavy_armor_speed_penalty": False
+    }
+    result = SpeciesService.new(dragonborn_data)
+    if result["success"]:
+        print(f"[SUCCESS] Created {result['data']['name']}")
+    else:
+        print(f"[ERROR] Failed to create Dragonborn: {result['error']}")
+
+    # === GNOME (NEW) ===
+    gnome_data = {
+        "name": "Gnome",
+        "ability_bonuses": {"INT": 2},
+        "size": "Small",
+        "age_adulthood": 40,
+        "lifespan": 500,
+        "alignment_tendency": "Good",
+        "movement": {"walk": 25},
+        "darkvision": 60,
+        "ignore_heavy_armor_speed_penalty": False
+    }
+    result = SpeciesService.new(gnome_data)
+    if result["success"]:
+        gnomeID = result['data']['id']
+        print(f"[SUCCESS] Created {result['data']['name']}")
+        
+        gnome_subspecies = [
+            {
+                "name": "Forest Gnome",
+                "speciesID": gnomeID,
+                "ability_bonuses": {"DEX": 1}
+            },
+            {
+                "name": "Rock Gnome",
+                "speciesID": gnomeID,
+                "ability_bonuses": {"CON": 1}
+            },
+            {
+                "name": "Deep Gnome (Svirfneblin)",
+                "speciesID": gnomeID,
+                "ability_bonuses": {"DEX": 1},
+                "darkvision": 120
+            }
+        ]
+        for sub_data in gnome_subspecies:
+            result = SpeciesService.new_subspecies(sub_data)
+            if result["success"]:
+                print(f"  [SUCCESS] Created subspecies {result['data']['name']}")
+            else:
+                print(f"  [ERROR] Failed to create subspecies: {result['error']}")
+    else:
+        print(f"[ERROR] Failed to create Gnome: {result['error']}")
+
+    # === HALF-ELF (NEW) ===
+    half_elf_data = {
+        "name": "Half-Elf",
+        "ability_bonuses": {"CHA": 2},
+        "size": "Medium",
+        "age_adulthood": 20,
+        "lifespan": 180,
+        "alignment_tendency": "Any",
+        "movement": {"walk": 30},
+        "darkvision": 60,
+        "ignore_heavy_armor_speed_penalty": False
+    }
+    result = SpeciesService.new(half_elf_data)
+    if result["success"]:
+        print(f"[SUCCESS] Created {result['data']['name']}")
+    else:
+        print(f"[ERROR] Failed to create Half-Elf: {result['error']}")
+
+    # === HALF-ORC (NEW) ===
+    half_orc_data = {
+        "name": "Half-Orc",
+        "ability_bonuses": {"STR": 2, "CON": 1},
+        "size": "Medium",
+        "age_adulthood": 14,
+        "lifespan": 75,
+        "alignment_tendency": "Chaotic",
+        "movement": {"walk": 30},
+        "darkvision": 60,
+        "ignore_heavy_armor_speed_penalty": False
+    }
+    result = SpeciesService.new(half_orc_data)
+    if result["success"]:
+        print(f"[SUCCESS] Created {result['data']['name']}")
+    else:
+        print(f"[ERROR] Failed to create Half-Orc: {result['error']}")
+
+    # === TIEFLING (NEW) ===
+    tiefling_data = {
+        "name": "Tiefling",
+        "ability_bonuses": {"CHA": 2, "INT": 1},
+        "size": "Medium",
+        "age_adulthood": 18,
+        "lifespan": 100,
+        "alignment_tendency": "Any",
+        "movement": {"walk": 30},
+        "darkvision": 60,
+        "ignore_heavy_armor_speed_penalty": False
+    }
+    result = SpeciesService.new(tiefling_data)
+    if result["success"]:
+        print(f"[SUCCESS] Created {result['data']['name']}")
+    else:
+        print(f"[ERROR] Failed to create Tiefling: {result['error']}")
+
     print("\n[SUCCESS] Species population complete!")
     print("[INFO] Remember to link proficiencies, languages, and traits via your existing systems.")
 
 def add_species_traits():
     """Link trait features to species and subspecies."""
     try:
-        # Get Elf species and its traits
+        # === ELF TRAITS ===
         elf = session.query(Species).filter_by(name="Elf").first()
-        if not elf:
-            print("[ERROR] Elf species not found. Run add_species_and_subspecies() first.")
-            return
-        
-        fey_ancestry = session.query(Features).filter_by(name="Fey Ancestry").first()
-        trance = session.query(Features).filter_by(name="Trance").first()
-        keen_senses = session.query(Features).filter_by(name="Keen Senses").first()
+        if elf:
+            fey_ancestry = session.query(Features).filter_by(name="Fey Ancestry").first()
+            trance = session.query(Features).filter_by(name="Trance").first()
+            keen_senses = session.query(Features).filter_by(name="Keen Senses").first()
 
-        # Link traits to Elf (base species)
-        if elf and fey_ancestry:
-            existing = session.query(SpeciesTraits).filter_by(
-                species_id=elf.id, 
-                feature_id=fey_ancestry.id
-            ).first()
-            if not existing:
-                session.add(SpeciesTraits(species_id=elf.id, feature_id=fey_ancestry.id))
-                print(f"  [SUCCESS] Linked trait: Fey Ancestry to Elf")
-        
-        if elf and trance:
-            existing = session.query(SpeciesTraits).filter_by(
-                species_id=elf.id, 
-                feature_id=trance.id
-            ).first()
-            if not existing:
-                session.add(SpeciesTraits(species_id=elf.id, feature_id=trance.id))
-                print(f"  [SUCCESS] Linked trait: Trance to Elf")
-        
-        if elf and keen_senses:
-            existing = session.query(SpeciesTraits).filter_by(
-                species_id=elf.id, 
-                feature_id=keen_senses.id
-            ).first()
-            if not existing:
-                session.add(SpeciesTraits(species_id=elf.id, feature_id=keen_senses.id))
-                print(f"  [SUCCESS] Linked trait: Keen Senses to Elf")
+            if elf and fey_ancestry:
+                existing = session.query(SpeciesTraits).filter_by(speciesID=elf.id, featureID=fey_ancestry.id).first()
+                if not existing:
+                    session.add(SpeciesTraits(speciesID=elf.id, featureID=fey_ancestry.id))
+                    print(f"  [SUCCESS] Linked trait: Fey Ancestry to Elf")
+            
+            if elf and trance:
+                existing = session.query(SpeciesTraits).filter_by(speciesID=elf.id, featureID=trance.id).first()
+                if not existing:
+                    session.add(SpeciesTraits(speciesID=elf.id, featureID=trance.id))
+                    print(f"  [SUCCESS] Linked trait: Trance to Elf")
+            
+            if elf and keen_senses:
+                existing = session.query(SpeciesTraits).filter_by(speciesID=elf.id, featureID=keen_senses.id).first()
+                if not existing:
+                    session.add(SpeciesTraits(speciesID=elf.id, featureID=keen_senses.id))
+                    print(f"  [SUCCESS] Linked trait: Keen Senses to Elf")
 
-        # Link Drow-specific traits
+        # Drow-specific traits
         drow = session.query(Subspecies).filter_by(name="Dark Elf (Drow)").first()
         sunlight_sensitivity = session.query(Features).filter_by(name="Sunlight Sensitivity").first()
         drow_magic = session.query(Features).filter_by(name="Drow Magic").first()
 
         if drow and sunlight_sensitivity:
-            existing = session.query(SpeciesTraits).filter_by(
-                subspecies_id=drow.id, 
-                feature_id=sunlight_sensitivity.id
-            ).first()
+            existing = session.query(SpeciesTraits).filter_by(subspeciesID=drow.id, featureID=sunlight_sensitivity.id).first()
             if not existing:
-                session.add(SpeciesTraits(subspecies_id=drow.id, feature_id=sunlight_sensitivity.id))
+                session.add(SpeciesTraits(subspeciesID=drow.id, featureID=sunlight_sensitivity.id))
                 print(f"  [SUCCESS] Linked trait: Sunlight Sensitivity to Drow")
         
         if drow and drow_magic:
-            existing = session.query(SpeciesTraits).filter_by(
-                subspecies_id=drow.id, 
-                feature_id=drow_magic.id
-            ).first()
+            existing = session.query(SpeciesTraits).filter_by(subspeciesID=drow.id, featureID=drow_magic.id).first()
             if not existing:
-                session.add(SpeciesTraits(subspecies_id=drow.id, feature_id=drow_magic.id))
+                session.add(SpeciesTraits(subspeciesID=drow.id, featureID=drow_magic.id))
                 print(f"  [SUCCESS] Linked trait: Drow Magic to Drow")
 
-        # Link Dwarf traits
+        # === DWARF TRAITS ===
         dwarf = session.query(Species).filter_by(name="Dwarf").first()
         if dwarf:
             darkvision = session.query(Features).filter_by(name="Darkvision").first()
             dwarven_resilience = session.query(Features).filter_by(name="Dwarven Resilience").first()
             stonecunning = session.query(Features).filter_by(name="Stonecunning").first()
+            dwarven_combat_training = session.query(Features).filter_by(name="Dwarven Combat Training").first()
+            tool_proficiency = session.query(Features).filter_by(name="Tool Proficiency").first()
             
-            if dwarf and darkvision:
-                existing = session.query(SpeciesTraits).filter_by(
-                    species_id=dwarf.id, 
-                    feature_id=darkvision.id
-                ).first()
-                if not existing:
-                    session.add(SpeciesTraits(species_id=dwarf.id, feature_id=darkvision.id))
-                    print(f"  [SUCCESS] Linked trait: Darkvision to Dwarf")
+            traits_to_link = [
+                (darkvision, "Darkvision"),
+                (dwarven_resilience, "Dwarven Resilience"),
+                (stonecunning, "Stonecunning"),
+                (dwarven_combat_training, "Dwarven Combat Training"),
+                (tool_proficiency, "Tool Proficiency")
+            ]
             
-            if dwarf and dwarven_resilience:
-                existing = session.query(SpeciesTraits).filter_by(
-                    species_id=dwarf.id, 
-                    feature_id=dwarven_resilience.id
-                ).first()
-                if not existing:
-                    session.add(SpeciesTraits(species_id=dwarf.id, feature_id=dwarven_resilience.id))
-                    print(f"  [SUCCESS] Linked trait: Dwarven Resilience to Dwarf")
-            
-            if dwarf and stonecunning:
-                existing = session.query(SpeciesTraits).filter_by(
-                    species_id=dwarf.id, 
-                    feature_id=stonecunning.id
-                ).first()
-                if not existing:
-                    session.add(SpeciesTraits(species_id=dwarf.id, feature_id=stonecunning.id))
-                    print(f"  [SUCCESS] Linked trait: Stonecunning to Dwarf")
+            for trait_feature, trait_name in traits_to_link:
+                if dwarf and trait_feature:
+                    existing = session.query(SpeciesTraits).filter_by(speciesID=dwarf.id, featureID=trait_feature.id).first()
+                    if not existing:
+                        session.add(SpeciesTraits(speciesID=dwarf.id, featureID=trait_feature.id))
+                        print(f"  [SUCCESS] Linked trait: {trait_name} to Dwarf")
 
-        # Link Halfling traits
+        # === HALFLING TRAITS ===
         halfling = session.query(Species).filter_by(name="Halfling").first()
         if halfling:
             lucky = session.query(Features).filter_by(name="Lucky").first()
             brave = session.query(Features).filter_by(name="Brave").first()
             halfling_nimbleness = session.query(Features).filter_by(name="Halfling Nimbleness").first()
             
-            if halfling and lucky:
-                existing = session.query(SpeciesTraits).filter_by(
-                    species_id=halfling.id, 
-                    feature_id=lucky.id
-                ).first()
-                if not existing:
-                    session.add(SpeciesTraits(species_id=halfling.id, feature_id=lucky.id))
-                    print(f"  [SUCCESS] Linked trait: Lucky to Halfling")
+            traits_to_link = [
+                (lucky, "Lucky"),
+                (brave, "Brave"),
+                (halfling_nimbleness, "Halfling Nimbleness")
+            ]
             
-            if halfling and brave:
-                existing = session.query(SpeciesTraits).filter_by(
-                    species_id=halfling.id, 
-                    feature_id=brave.id
-                ).first()
-                if not existing:
-                    session.add(SpeciesTraits(species_id=halfling.id, feature_id=brave.id))
-                    print(f"  [SUCCESS] Linked trait: Brave to Halfling")
-            
-            if halfling and halfling_nimbleness:
-                existing = session.query(SpeciesTraits).filter_by(
-                    species_id=halfling.id, 
-                    feature_id=halfling_nimbleness.id
-                ).first()
-                if not existing:
-                    session.add(SpeciesTraits(species_id=halfling.id, feature_id=halfling_nimbleness.id))
-                    print(f"  [SUCCESS] Linked trait: Halfling Nimbleness to Halfling")
+            for trait_feature, trait_name in traits_to_link:
+                if halfling and trait_feature:
+                    existing = session.query(SpeciesTraits).filter_by(speciesID=halfling.id, featureID=trait_feature.id).first()
+                    if not existing:
+                        session.add(SpeciesTraits(speciesID=halfling.id, featureID=trait_feature.id))
+                        print(f"  [SUCCESS] Linked trait: {trait_name} to Halfling")
 
-        # Link Human traits
+        # === HUMAN TRAITS ===
         human = session.query(Species).filter_by(name="Human").first()
         if human:
             extra_language = session.query(Features).filter_by(name="Extra Language").first()
             
             if human and extra_language:
-                existing = session.query(SpeciesTraits).filter_by(
-                    species_id=human.id, 
-                    feature_id=extra_language.id
-                ).first()
+                existing = session.query(SpeciesTraits).filter_by(speciesID=human.id, featureID=extra_language.id).first()
                 if not existing:
-                    session.add(SpeciesTraits(species_id=human.id, feature_id=extra_language.id))
+                    session.add(SpeciesTraits(speciesID=human.id, featureID=extra_language.id))
                     print(f"  [SUCCESS] Linked trait: Extra Language to Human")
+
+        # === DRAGONBORN TRAITS (NEW) ===
+        dragonborn = session.query(Species).filter_by(name="Dragonborn").first()
+        if dragonborn:
+            draconic_ancestry = session.query(Features).filter_by(name="Draconic Ancestry").first()
+            breath_weapon = session.query(Features).filter_by(name="Breath Weapon").first()
+            damage_resistance = session.query(Features).filter_by(name="Damage Resistance").first()
+            
+            traits_to_link = [
+                (draconic_ancestry, "Draconic Ancestry"),
+                (breath_weapon, "Breath Weapon"),
+                (damage_resistance, "Damage Resistance")
+            ]
+            
+            for trait_feature, trait_name in traits_to_link:
+                if dragonborn and trait_feature:
+                    existing = session.query(SpeciesTraits).filter_by(speciesID=dragonborn.id, featureID=trait_feature.id).first()
+                    if not existing:
+                        session.add(SpeciesTraits(speciesID=dragonborn.id, featureID=trait_feature.id))
+                        print(f"  [SUCCESS] Linked trait: {trait_name} to Dragonborn")
+
+        # === GNOME TRAITS (NEW) ===
+        gnome = session.query(Species).filter_by(name="Gnome").first()
+        if gnome:
+            gnome_cunning = session.query(Features).filter_by(name="Gnome Cunning").first()
+            
+            if gnome and gnome_cunning:
+                existing = session.query(SpeciesTraits).filter_by(speciesID=gnome.id, featureID=gnome_cunning.id).first()
+                if not existing:
+                    session.add(SpeciesTraits(speciesID=gnome.id, featureID=gnome_cunning.id))
+                    print(f"  [SUCCESS] Linked trait: Gnome Cunning to Gnome")
+
+        # Forest Gnome specific
+        forest_gnome = session.query(Subspecies).filter_by(name="Forest Gnome").first()
+        if forest_gnome:
+            natural_illusionist = session.query(Features).filter_by(name="Natural Illusionist").first()
+            speak_with_small_beasts = session.query(Features).filter_by(name="Speak with Small Beasts").first()
+            
+            traits_to_link = [
+                (natural_illusionist, "Natural Illusionist"),
+                (speak_with_small_beasts, "Speak with Small Beasts")
+            ]
+            
+            for trait_feature, trait_name in traits_to_link:
+                if forest_gnome and trait_feature:
+                    existing = session.query(SpeciesTraits).filter_by(subspeciesID=forest_gnome.id, featureID=trait_feature.id).first()
+                    if not existing:
+                        session.add(SpeciesTraits(subspeciesID=forest_gnome.id, featureID=trait_feature.id))
+                        print(f"  [SUCCESS] Linked trait: {trait_name} to Forest Gnome")
+
+        # Rock Gnome specific
+        rock_gnome = session.query(Subspecies).filter_by(name="Rock Gnome").first()
+        if rock_gnome:
+            artifice_lore = session.query(Features).filter_by(name="Artificer's Lore").first()
+            tinker = session.query(Features).filter_by(name="Tinker").first()
+            
+            traits_to_link = [
+                (artifice_lore, "Artificer's Lore"),
+                (tinker, "Tinker")
+            ]
+            
+            for trait_feature, trait_name in traits_to_link:
+                if rock_gnome and trait_feature:
+                    existing = session.query(SpeciesTraits).filter_by(subspeciesID=rock_gnome.id, featureID=trait_feature.id).first()
+                    if not existing:
+                        session.add(SpeciesTraits(subspeciesID=rock_gnome.id, featureID=trait_feature.id))
+                        print(f"  [SUCCESS] Linked trait: {trait_name} to Rock Gnome")
+
+        # === HALF-ELF TRAITS (NEW) ===
+        half_elf = session.query(Species).filter_by(name="Half-Elf").first()
+        if half_elf:
+            fey_ancestry_half = session.query(Features).filter_by(name="Fey Ancestry").first()
+            skill_versatility = session.query(Features).filter_by(name="Skill Versatility").first()
+            
+            traits_to_link = [
+                (fey_ancestry_half, "Fey Ancestry"),
+                (skill_versatility, "Skill Versatility")
+            ]
+            
+            for trait_feature, trait_name in traits_to_link:
+                if half_elf and trait_feature:
+                    existing = session.query(SpeciesTraits).filter_by(speciesID=half_elf.id, featureID=trait_feature.id).first()
+                    if not existing:
+                        session.add(SpeciesTraits(speciesID=half_elf.id, featureID=trait_feature.id))
+                        print(f"  [SUCCESS] Linked trait: {trait_name} to Half-Elf")
+
+        # === HALF-ORC TRAITS (NEW) ===
+        half_orc = session.query(Species).filter_by(name="Half-Orc").first()
+        if half_orc:
+            menacing = session.query(Features).filter_by(name="Menacing").first()
+            relentless_endurance = session.query(Features).filter_by(name="Relentless Endurance").first()
+            savage_attacks = session.query(Features).filter_by(name="Savage Attacks").first()
+            
+            traits_to_link = [
+                (menacing, "Menacing"),
+                (relentless_endurance, "Relentless Endurance"),
+                (savage_attacks, "Savage Attacks")
+            ]
+            
+            for trait_feature, trait_name in traits_to_link:
+                if half_orc and trait_feature:
+                    existing = session.query(SpeciesTraits).filter_by(speciesID=half_orc.id, featureID=trait_feature.id).first()
+                    if not existing:
+                        session.add(SpeciesTraits(speciesID=half_orc.id, featureID=trait_feature.id))
+                        print(f"  [SUCCESS] Linked trait: {trait_name} to Half-Orc")
+
+        # === TIEFLING TRAITS (NEW) ===
+        tiefling = session.query(Species).filter_by(name="Tiefling").first()
+        if tiefling:
+            hellish_resistance = session.query(Features).filter_by(name="Hellish Resistance").first()
+            hellish_legacy = session.query(Features).filter_by(name="Hellish Legacy").first()
+            
+            traits_to_link = [
+                (hellish_resistance, "Hellish Resistance"),
+                (hellish_legacy, "Hellish Legacy")
+            ]
+            
+            for trait_feature, trait_name in traits_to_link:
+                if tiefling and trait_feature:
+                    existing = session.query(SpeciesTraits).filter_by(speciesID=tiefling.id, featureID=trait_feature.id).first()
+                    if not existing:
+                        session.add(SpeciesTraits(speciesID=tiefling.id, featureID=trait_feature.id))
+                        print(f"  [SUCCESS] Linked trait: {trait_name} to Tiefling")
 
         session.commit()
         print("\n[SUCCESS] Species traits linking complete!")

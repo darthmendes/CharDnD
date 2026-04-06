@@ -95,8 +95,8 @@ class ItemSpell(Base):
     __tablename__ = "item_spells"
     
     id = Column(Integer, primary_key=True, autoincrement=True)
-    item_id = Column(Integer, ForeignKey("items.id"), nullable=False, index=True)
-    spell_id = Column(Integer, ForeignKey("spells.id"), nullable=False, index=True)
+    itemID = Column(Integer, ForeignKey("items.id"), nullable=False, index=True)
+    spellID = Column(Integer, ForeignKey("spells.id"), nullable=False, index=True)
     
     # === Fixed Values (for items) ===
     save_dc_fixed = Column(Integer)  # Fixed DC (e.g., 15) - NULL if uses wielder's ability
@@ -125,8 +125,8 @@ class ItemSpell(Base):
     def to_dict(self):
         return {
             'id': self.id,
-            'item_id': self.item_id,
-            'spell_id': self.spell_id,
+            'itemID': self.itemID,
+            'spellID': self.spellID,
             'spell': self.spell.to_dict() if self.spell else None,
             'save_dc_fixed': self.save_dc_fixed,
             'attack_bonus_fixed': self.attack_bonus_fixed,

@@ -1,7 +1,7 @@
 from typing import Dict, Any, Optional, Tuple
 from ..models.character import Character, CharacterClass
 from ..models.species import Species
-from ..models.dndclass import DnDclass
+from ..models.dndclass import DnDclass, ClassSpell
 from ..models.background import Background  # ✅ Add this import
 from ..models import session
 
@@ -111,6 +111,36 @@ class CharacterService:
                                 item_data.get('quantity', 1)
                             )
 
+            # ✅ Auto-add class spells as KNOWN but UNPREPARED (user must prepare them manually)
+            # Only add spells that character level qualifies for, exclude cantrips
+            auto_spell_classes = ['Cleric', 'Druid']
+            classes_to_load = [c for c in classes_data if c['className'] in auto_spell_classes] if classes_data else []
+            
+            if classes_to_load:
+                from .SpellService import SpellService
+                from ..models.spells import Spell
+                
+                spell_ids_to_add = set()
+                for cls_data in classes_to_load:
+                    # Get all spells for this class via ClassSpell junction table
+                    class_obj = session.query(DnDclass).filter_by(name=cls_data['className']).first()
+                    if class_obj:
+                        class_level = cls_data.get('level', 1)
+                        # Filter by: min_level <= character level AND spell level > 0 (exclude cantrips)
+                        class_spells = session.query(ClassSpell).filter(
+                            ClassSpell.classID == class_obj.id,
+                            ClassSpell.min_level <= class_level
+                        ).all()
+                        for cs in class_spells:
+                            # Check spell level to exclude cantrips
+                            spell = session.query(Spell).filter_by(id=cs.spellID).first()
+                            if spell and spell.level > 0:  # Only add non-cantrip spells
+                                spell_ids_to_add.add(cs.spellID)
+                
+                # Add all spells as KNOWN but UNPREPARED (is_prepared=False)
+                if spell_ids_to_add:
+                    SpellService.add_spells_bulk_to_character(new_char.id, list(spell_ids_to_add), is_prepared=False)
+
             return {
                 "success": True,
                 "data": {
@@ -125,7 +155,7 @@ class CharacterService:
             return {"success": False, "error": f"Database error: {str(e)}"}
 
     @classmethod
-    def get_by_id(cls, id: int) -> Optional[Character]:
+    def get_byID(cls, id: int) -> Optional[Character]:
         return session.query(Character).filter_by(id=id).first()
 
     @classmethod
@@ -138,7 +168,7 @@ class CharacterService:
 
     @classmethod
     def update(cls, id: int, **kwargs) -> Dict[str, Any]:
-        char = cls.get_by_id(id)
+        char = cls.get_byID(id)
         if not char:
             return {"success": False, "error": "Character not found."}
 
@@ -162,7 +192,7 @@ class CharacterService:
 
     @classmethod
     def delete(cls, id: int) -> Dict[str, Any]:
-        char = cls.get_by_id(id)
+        char = cls.get_byID(id)
         if not char:
             return {"success": False, "error": "Character not found."}
 

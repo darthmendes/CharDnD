@@ -14,7 +14,7 @@ from Backend.models.dndclass import DnDclass
 # ============================================================================
 
 # Map class names to database IDs (UPDATE THESE TO MATCH YOUR DB)
-CLASS_IDS = {
+CLASSIDS = {
     "Artificer": 4,
     "Bard": 5,
     "Cleric": 3,
@@ -1187,30 +1187,30 @@ def seed_class_spells_manual(db: Session, SPELL_CLASS_MAPPING):
     errors = 0
     
     for spell_name, class_configs in SPELL_CLASS_MAPPING.items():
-        spell_id = db_spells.get(spell_name)
-        if not spell_id:
+        spellID = db_spells.get(spell_name)
+        if not spellID:
             print(f"⚠️  Spell not in DB: {spell_name}")
             errors += 1
             continue
         
         for config in class_configs:
             class_name = config.get("class")
-            class_id = db_classes.get(class_name)
+            classID = db_classes.get(class_name)
             
-            if not class_id:
+            if not classID:
                 print(f"⚠️  Class not in DB: {class_name}")
                 errors += 1
                 continue
             
             # Calculate min_level (override if provided in config)
-            spell_obj = db.query(Spell).get(spell_id)
+            spell_obj = db.query(Spell).get(spellID)
             spell_level = spell_obj.level if spell_obj else 0
             min_level = config.get("min_level") or get_min_level(spell_level, class_name)
             
             # Check for existing relationship
             existing = db.query(ClassSpell).filter_by(
-                class_id=class_id,
-                spell_id=spell_id,
+                classID=classID,
+                spellID=spellID,
                 subclass=config.get("subclass")
             ).first()
             
@@ -1220,8 +1220,8 @@ def seed_class_spells_manual(db: Session, SPELL_CLASS_MAPPING):
             
             # Create new relationship
             class_spell = ClassSpell(
-                class_id=class_id,
-                spell_id=spell_id,
+                classID=classID,
+                spellID=spellID,
                 min_level=min_level,
                 subclass=config.get("subclass"),
                 is_always_prepared=config.get("is_always_prepared", False)

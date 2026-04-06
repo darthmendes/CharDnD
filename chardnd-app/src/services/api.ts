@@ -71,6 +71,27 @@ export const fetchLanguages = async (): Promise<any[]> => {
 };
 
 /**
+ * Fetch species traits
+ */
+export const fetchSpeciesTraits = async (speciesName: string, subspeciesName?: string): Promise<any[]> => {
+  try {
+    const url = new URL(`${API_BASE}/species/${encodeURIComponent(speciesName)}/traits`);
+    if (subspeciesName) {
+      url.searchParams.append('subspecies', subspeciesName);
+    }
+    const response = await fetch(url.toString());
+    if (!response.ok) {
+      console.error(`Failed to fetch traits for species: ${speciesName}`);
+      return [];
+    }
+    return response.json();
+  } catch (err) {
+    console.error('Error fetching species traits:', err);
+    return [];
+  }
+};
+
+/**
  * Fetch a specific character by ID
  */
 export const fetchCharacter = async (id: number): Promise<any> => {

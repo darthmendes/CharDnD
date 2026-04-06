@@ -62,7 +62,7 @@ class ClassService:
     @classmethod
     def update(cls, id: int, **kwargs) -> Dict[str, Any]:
         """Update an existing DnD class."""
-        dnd_class = cls.get_by_id(id)
+        dnd_class = cls.get_byID(id)
         if not dnd_class:
             return {"success": False, "error": "Class not found."}
         
@@ -84,7 +84,7 @@ class ClassService:
             return {"success": False, "error": f"Unexpected error: {str(e)}"}
     
     @classmethod
-    def get_by_id(cls, id: int) -> Optional[DnDclass]:
+    def get_byID(cls, id: int) -> Optional[DnDclass]:
         """Retrieve a class by ID."""
         return session.query(DnDclass).filter_by(id=id).first()
     
@@ -96,7 +96,7 @@ class ClassService:
     @classmethod
     def delete(cls, id: int) -> Dict[str, Any]:
         """Delete a class by ID."""
-        dnd_class = cls.get_by_id(id)
+        dnd_class = cls.get_byID(id)
         if not dnd_class:
             return {"success": False, "error": "Class not found."}
         

@@ -63,7 +63,7 @@ class Subclass(Base):
     __tablename__ = "subclasses"
     
     id = Column(Integer, primary_key=True)
-    class_id = Column(Integer, ForeignKey("dndclass.id"), nullable=False)
+    classID = Column(Integer, ForeignKey("dndclass.id"), nullable=False)
     name = Column(String, nullable=False)  # e.g., "Path of the Berserker"
     subclass_flavor = Column(String)       # e.g., "Primal Path"
     
@@ -115,8 +115,8 @@ class ClassSpell(Base):
     __tablename__ = "class_spells"
     
     id = Column(Integer, primary_key=True, autoincrement=True)
-    class_id = Column(Integer, ForeignKey("dndclass.id"), nullable=False, index=True)
-    spell_id = Column(Integer, ForeignKey("spells.id"), nullable=False, index=True)
+    classID = Column(Integer, ForeignKey("dndclass.id"), nullable=False, index=True)
+    spellID = Column(Integer, ForeignKey("spells.id"), nullable=False, index=True)
     
     # Optional restrictions
     min_level = Column(Integer, default=1)  # Minimum class level to learn
@@ -130,8 +130,8 @@ class ClassSpell(Base):
     def to_dict(self):
         return {
             'id': self.id,
-            'class_id': self.class_id,
-            'spell_id': self.spell_id,
+            'classID': self.classID,
+            'spellID': self.spellID,
             'min_level': self.min_level,
             'subclass': self.subclass,
             'is_always_prepared': self.is_always_prepared,

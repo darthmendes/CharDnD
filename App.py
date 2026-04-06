@@ -63,7 +63,7 @@ def delete_character(id):
 @app.route('/API/characters/<int:id>', methods=['GET'])
 def get_character(id):
     """Retrieve a character by ID."""
-    char = Character.get_by_id(id)
+    char = Character.get_byID(id)
     if not char:
         return jsonify({"error": "Character not found"}), HTTPStatus.NOT_FOUND
     return jsonify(char.to_dict()), HTTPStatus.OK
@@ -77,23 +77,23 @@ def list_characters():
     return jsonify(result), HTTPStatus.OK
 
 
-@app.route('/API/characters/<int:char_id>/items', methods=['POST'])
-def add_item_to_character(char_id):
+@app.route('/API/characters/<int:charID>/items', methods=['POST'])
+def add_item_to_character(charID):
     """Add an item or pack to a character's inventory."""
     data = request.json
     if not data:
         return jsonify({"error": "Request body must be valid JSON"}), HTTPStatus.BAD_REQUEST
     
     if 'pack_name' in data:
-        result = Item.add_pack_to_character(char_id, data['pack_name'])
+        result = Item.add_pack_to_character(charID, data['pack_name'])
     elif 'itemID' in data:
-        result = Item.add_item_to_character(char_id, data['itemID'], data.get('quantity', 1))
+        result = Item.add_item_to_character(charID, data['itemID'], data.get('quantity', 1))
     else:
         return jsonify({"error": "Missing itemID or pack_name"}), HTTPStatus.BAD_REQUEST
 
     if result["success"]:
         # Fetch and return the updated character
-        char = Character.get_by_id(char_id)
+        char = Character.get_byID(charID)
         if char:
             return jsonify(char.to_dict()), HTTPStatus.OK
         else:
@@ -102,12 +102,12 @@ def add_item_to_character(char_id):
         return jsonify(result), HTTPStatus.BAD_REQUEST
 
 
-@app.route('/API/characters/<int:char_id>/inventory/<int:inventory_id>', methods=['DELETE'])
-def delete_inventory_item(char_id, inventory_id):
+@app.route('/API/characters/<int:charID>/inventory/<int:inventoryID>', methods=['DELETE'])
+def delete_inventory_item(charID, inventoryID):
     """Delete an item from character's inventory."""
-    result = Item.delete_inventory_item(inventory_id, char_id)
+    result = Item.delete_inventory_item(inventoryID, charID)
     if result["success"]:
-        char = Character.get_by_id(char_id)
+        char = Character.get_byID(charID)
         if char:
             return jsonify(char.to_dict()), HTTPStatus.OK
         return jsonify(result), HTTPStatus.OK
@@ -115,16 +115,16 @@ def delete_inventory_item(char_id, inventory_id):
         return jsonify(result), HTTPStatus.BAD_REQUEST
 
 
-@app.route('/API/characters/<int:char_id>/inventory/<int:inventory_id>/charges', methods=['PATCH'])
-def update_item_charges(char_id, inventory_id):
+@app.route('/API/characters/<int:charID>/inventory/<int:inventoryID>/charges', methods=['PATCH'])
+def update_item_charges(charID, inventoryID):
     """Update current charges of an inventory item."""
     data = request.json
     if not data or 'currentCharges' not in data:
         return jsonify({"error": "Missing currentCharges field"}), HTTPStatus.BAD_REQUEST
     
-    result = Item.update_item_charges(inventory_id, char_id, data['currentCharges'])
+    result = Item.update_item_charges(inventoryID, charID, data['currentCharges'])
     if result["success"]:
-        char = Character.get_by_id(char_id)
+        char = Character.get_byID(charID)
         if char:
             return jsonify(char.to_dict()), HTTPStatus.OK
         return jsonify(result), HTTPStatus.OK
@@ -132,12 +132,12 @@ def update_item_charges(char_id, inventory_id):
         return jsonify(result), HTTPStatus.BAD_REQUEST
 
 
-@app.route('/API/characters/<int:char_id>/inventory/<int:inventory_id>/remove-one', methods=['PATCH'])
-def remove_one_item(char_id, inventory_id):
+@app.route('/API/characters/<int:charID>/inventory/<int:inventoryID>/remove-one', methods=['PATCH'])
+def remove_one_item(charID, inventoryID):
     """Remove 1 item from inventory (or delete entire entry if quantity is 1)."""
-    result = Item.remove_one_item(inventory_id, char_id)
+    result = Item.remove_one_item(inventoryID, charID)
     if result["success"]:
-        char = Character.get_by_id(char_id)
+        char = Character.get_byID(charID)
         if char:
             return jsonify(char.to_dict()), HTTPStatus.OK
         return jsonify(result), HTTPStatus.OK
@@ -145,12 +145,12 @@ def remove_one_item(char_id, inventory_id):
         return jsonify(result), HTTPStatus.BAD_REQUEST
 
 
-@app.route('/API/characters/<int:char_id>/inventory/<int:inventory_id>/equip', methods=['PATCH'])
-def equip_item(char_id, inventory_id):
+@app.route('/API/characters/<int:charID>/inventory/<int:inventoryID>/equip', methods=['PATCH'])
+def equip_item(charID, inventoryID):
     """Equip an armor/shield item. Automatically unequips conflicting items."""
-    result = Item.equip_item(inventory_id, char_id)
+    result = Item.equip_item(inventoryID, charID)
     if result["success"]:
-        char = Character.get_by_id(char_id)
+        char = Character.get_byID(charID)
         if char:
             return jsonify(char.to_dict()), HTTPStatus.OK
         return jsonify(result), HTTPStatus.OK
@@ -158,12 +158,12 @@ def equip_item(char_id, inventory_id):
         return jsonify(result), HTTPStatus.BAD_REQUEST
 
 
-@app.route('/API/characters/<int:char_id>/inventory/<int:inventory_id>/unequip', methods=['PATCH'])
-def unequip_item(char_id, inventory_id):
+@app.route('/API/characters/<int:charID>/inventory/<int:inventoryID>/unequip', methods=['PATCH'])
+def unequip_item(charID, inventoryID):
     """Unequip an armor/shield item."""
-    result = Item.unequip_item(inventory_id, char_id)
+    result = Item.unequip_item(inventoryID, charID)
     if result["success"]:
-        char = Character.get_by_id(char_id)
+        char = Character.get_byID(charID)
         if char:
             return jsonify(char.to_dict()), HTTPStatus.OK
         return jsonify(result), HTTPStatus.OK
@@ -173,22 +173,22 @@ def unequip_item(char_id, inventory_id):
 
 # app.py
 
-@app.route('/API/characters/<int:char_id>/inventory/<int:inventory_id>/attune', methods=['PATCH'])
-def attune_item(char_id, inventory_id):
+@app.route('/API/characters/<int:charID>/inventory/<int:inventoryID>/attune', methods=['PATCH'])
+def attune_item(charID, inventoryID):
     """Attune to a magic item."""
     from Backend.models import session
     from Backend.models.character import CharacterInventory
     
     try:
         # Get character
-        char = Character.get_by_id(char_id)
+        char = Character.get_byID(charID)
         if not char:
             return jsonify({"error": "Character not found", "success": False}), 404
         
         # ✅ FIX: Use 'inventory' not 'inventory_items'
         inventory_item = session.query(CharacterInventory).filter_by(
-            id=inventory_id,
-            characterID=char_id
+            id=inventoryID,
+            characterID=charID
         ).first()
         
         if not inventory_item:
@@ -216,7 +216,7 @@ def attune_item(char_id, inventory_id):
         
         # ✅ FIX: Use 'inventory' not 'inventory_items'
         attuned_count = session.query(CharacterInventory).filter_by(
-            characterID=char_id,
+            characterID=charID,
             is_attuned=True
         ).count()
         
@@ -238,7 +238,7 @@ def attune_item(char_id, inventory_id):
         session.commit()
         
         # Return updated character
-        char = Character.get_by_id(char_id)
+        char = Character.get_byID(charID)
         if char:
             return jsonify(char.to_dict()), 200
         return jsonify({"success": True}), 200
@@ -248,22 +248,22 @@ def attune_item(char_id, inventory_id):
         return jsonify({"error": str(e), "success": False}), 500
 
 
-@app.route('/API/characters/<int:char_id>/inventory/<int:inventory_id>/unattune', methods=['PATCH'])
-def unattune_item(char_id, inventory_id):
+@app.route('/API/characters/<int:charID>/inventory/<int:inventoryID>/unattune', methods=['PATCH'])
+def unattune_item(charID, inventoryID):
     """Unattune from a magic item."""
     from Backend.models import session
     from Backend.models.character import CharacterInventory
     
     try:
         # Get character
-        char = Character.get_by_id(char_id)
+        char = Character.get_byID(charID)
         if not char:
             return jsonify({"error": "Character not found", "success": False}), 404
         
         # Get inventory item
         inventory_item = session.query(CharacterInventory).filter_by(
-            id=inventory_id,
-            characterID=char_id
+            id=inventoryID,
+            characterID=charID
         ).first()
         
         if not inventory_item:
@@ -281,7 +281,7 @@ def unattune_item(char_id, inventory_id):
         session.commit()
         
         # Return updated character
-        char = Character.get_by_id(char_id)
+        char = Character.get_byID(charID)
         if char:
             return jsonify(char.to_dict()), 200
         return jsonify({"success": True}), 200
@@ -318,7 +318,7 @@ def delete_species(id):
 
 @app.route('/API/species/<int:id>', methods=['GET'])
 def get_species(id):
-    species = Species.get_by_id(id)
+    species = Species.get_byID(id)
     if not species:
         return jsonify({"error": "Species not found"}), HTTPStatus.NOT_FOUND
     return jsonify(species.to_dict()), HTTPStatus.OK
@@ -330,6 +330,71 @@ def list_species():
     result = [s.to_dict() for s in all_species]
     return jsonify(result), HTTPStatus.OK
 
+
+@app.route('/API/species/<species_name>/traits', methods=['GET'])
+def get_species_traits(species_name):
+    """Get all traits for a species (with optional subspecies filter)."""
+    try:
+        from Backend.models import session
+        from Backend.models.species import Species as SpeciesModel, Subspecies, SpeciesTraits
+        from Backend.models.features import Features
+        
+        # Find the species
+        species = session.query(SpeciesModel).filter(
+            SpeciesModel.name.ilike(species_name)
+        ).first()
+        
+        if not species:
+            return jsonify({"error": "Species not found"}), HTTPStatus.NOT_FOUND
+        
+        # Get subspecies from query params if provided
+        subspecies_name = request.args.get('subspecies')
+        
+        traits = []
+        
+        # Get base species traits
+        base_traits = session.query(SpeciesTraits).filter(
+            SpeciesTraits.speciesID == species.id,
+            SpeciesTraits.subspeciesID == None
+        ).all()
+        
+        for st in base_traits:
+            feature = session.query(Features).filter(Features.id == st.featureID).first()
+            if feature:
+                traits.append({
+                    "feature_name": feature.name,
+                    "name": feature.name,
+                    "description": feature.desc,
+                    "source": species.name
+                })
+        
+        # Get subspecies traits if specified
+        if subspecies_name:
+            sub = session.query(Subspecies).filter(
+                Subspecies.name.ilike(subspecies_name),
+                Subspecies.speciesID == species.id
+            ).first()
+            
+            if sub:
+                sub_traits = session.query(SpeciesTraits).filter(
+                    SpeciesTraits.subspeciesID == sub.id
+                ).all()
+                
+                for st in sub_traits:
+                    feature = session.query(Features).filter(Features.id == st.featureID).first()
+                    if feature:
+                        traits.append({
+                            "feature_name": feature.name,
+                            "name": feature.name,
+                            "description": feature.desc,
+                            "source": sub.name
+                        })
+        
+        return jsonify(traits), HTTPStatus.OK
+    
+    except Exception as e:
+        print(f"Error fetching species traits: {str(e)}")
+        return jsonify({"error": str(e)}), HTTPStatus.INTERNAL_SERVER_ERROR
 
 ################################################################
 # Class Routes
@@ -359,7 +424,7 @@ def delete_class(id):
 
 @app.route('/API/classes/<int:id>', methods=['GET'])
 def get_class(id):
-    dnd_class = DnDClass.get_by_id(id)
+    dnd_class = DnDClass.get_byID(id)
     if not dnd_class:
         return jsonify({"error": "Class not found"}), HTTPStatus.NOT_FOUND
     return jsonify(dnd_class.to_dict()), HTTPStatus.OK
@@ -384,10 +449,10 @@ def list_backgrounds():
     return jsonify({"error": result["error"]}), 500
 
 
-@app.route('/API/backgrounds/<int:bg_id>', methods=['GET'])
-def get_background(bg_id):
+@app.route('/API/backgrounds/<int:bgID>', methods=['GET'])
+def get_background(bgID):
     from Backend.services.BackgroundService import BackgroundService
-    result = BackgroundService.get_by_id(bg_id)
+    result = BackgroundService.get_byID(bgID)
     if result["success"]:
         return jsonify(result["data"]), 200
     return jsonify({"error": result["error"]}), 404
@@ -413,7 +478,7 @@ def create_item():
 
 @app.route('/API/items/<int:id>', methods=['GET'])
 def get_item(id):
-    item = Item.get_by_id(id)
+    item = Item.get_byID(id)
     if not item:
         return jsonify({"error": "Item not found"}), HTTPStatus.NOT_FOUND
     return jsonify(item.to_dict()), HTTPStatus.OK
@@ -459,78 +524,78 @@ def list_spells():
     except Exception as e:
         return jsonify({"error": str(e)}), HTTPStatus.INTERNAL_SERVER_ERROR
 
-@app.route('/API/characters/<int:char_id>/spell-slots', methods=['GET'])
-def get_spell_slots(char_id):
+@app.route('/API/characters/<int:charID>/spell-slots', methods=['GET'])
+def get_spell_slots(charID):
     """Get character's available spell slots."""
-    result = Spell.get_character_spell_slots(char_id)
+    result = Spell.get_character_spell_slots(charID)
     if result["success"]:
         return jsonify(result["data"]), HTTPStatus.OK
     else:
         return jsonify({"error": result["error"]}), HTTPStatus.NOT_FOUND
 
 
-@app.route('/API/characters/<int:char_id>/spell-slots/expended', methods=['PATCH'])
-def update_expended_slots(char_id):
+@app.route('/API/characters/<int:charID>/spell-slots/expended', methods=['PATCH'])
+def update_expended_slots(charID):
     """Update expended spell slots."""
     data = request.json
     if not data or 'level' not in data or 'amount' not in data:
         return jsonify({"error": "Missing level or amount"}), HTTPStatus.BAD_REQUEST
     
-    result = Spell.update_expended_slots(char_id, data['level'], data['amount'])
+    result = Spell.update_expended_slots(charID, data['level'], data['amount'])
     if result["success"]:
         return jsonify({"success": True, "expended": result["data"]}), HTTPStatus.OK
     else:
         return jsonify({"error": result["error"]}), HTTPStatus.BAD_REQUEST
 
 
-@app.route('/API/characters/<int:char_id>/spells', methods=['GET'])
-def get_character_spells(char_id):
+@app.route('/API/characters/<int:charID>/spells', methods=['GET'])
+def get_character_spells(charID):
     """Get all spells known by character."""
-    result = Spell.get_character_spells(char_id)
+    result = Spell.get_character_spells(charID)
     if result["success"]:
         return jsonify(result["data"]), HTTPStatus.OK
     else:
         return jsonify({"error": result["error"]}), HTTPStatus.NOT_FOUND
 
 
-@app.route('/API/characters/<int:char_id>/spells', methods=['POST'])
-def add_character_spell(char_id):
+@app.route('/API/characters/<int:charID>/spells', methods=['POST'])
+def add_character_spell(charID):
     """Add a spell to character's known spells."""
     data = request.json
     if not data:
         return jsonify({"error": "Request body must be valid JSON"}), HTTPStatus.BAD_REQUEST
     
-    result = Spell.add_spell_to_character(char_id, data)
+    result = Spell.add_spell_to_character(charID, data)
     if result["success"]:
         return jsonify({"success": True, "spell": result["data"]}), HTTPStatus.CREATED
     else:
         return jsonify({"error": result["error"]}), HTTPStatus.BAD_REQUEST
 
 
-@app.route('/API/characters/<int:char_id>/spells/<int:spell_id>', methods=['DELETE'])
-def remove_character_spell(char_id, spell_id):
+@app.route('/API/characters/<int:charID>/spells/<int:spellID>', methods=['DELETE'])
+def remove_character_spell(charID, spellID):
     """Remove a spell from character's known spells."""
-    result = Spell.remove_spell_from_character(char_id, spell_id)
+    result = Spell.remove_spell_from_character(charID, spellID)
     if result["success"]:
         return jsonify({"success": True}), HTTPStatus.OK
     else:
         return jsonify({"error": result["error"]}), HTTPStatus.NOT_FOUND
 
 
-@app.route('/API/characters/<int:char_id>/spells/<int:spell_id>/prepare', methods=['PATCH'])
-def toggle_spell_prepared(char_id, spell_id):
+@app.route('/API/characters/<int:charID>/spells/<int:spellID>/prepare', methods=['PATCH'])
+def toggle_spell_prepared(charID, spellID):
     """Toggle whether a spell is prepared."""
-    result = Spell.toggle_spell_prepared(char_id, spell_id)
+    result = Spell.toggle_spell_prepared(charID, spellID)
     if result["success"]:
         return jsonify({"success": True, "is_prepared": result["data"]["is_prepared"]}), HTTPStatus.OK
     else:
         return jsonify({"error": result["error"]}), HTTPStatus.NOT_FOUND
 
 
-@app.route('/API/characters/<int:char_id>/prepare-limit', methods=['GET'])
-def get_prepare_limit(char_id):
+@app.route('/API/characters/<int:charID>/prepare-limit', methods=['GET'])
+def get_prepare_limit(charID):
     """Get spell prepare limit for character based on D&D 5e rules."""
-    result = Spell.calculate_prepare_limit(char_id)
+    result = Spell.calculate_prepare_limit(charID)
     if result["success"]:
         return jsonify({
             "prepare_limit": result["prepare_limit"],
@@ -560,14 +625,14 @@ def get_class_spells(class_name):
         
         # Get spells from junction table for base class only
         class_spells = session.query(ClassSpell).filter(
-            ClassSpell.class_id == dnd_class.id,
+            ClassSpell.classID == dnd_class.id,
             ClassSpell.subclass == None
         ).all()
         
         # Get the actual spell objects
-        spell_ids = [cs.spell_id for cs in class_spells]
+        spellIDs = [cs.spellID for cs in class_spells]
         spells = session.query(SpellModel).filter(
-            SpellModel.id.in_(spell_ids)
+            SpellModel.id.in_(spellIDs)
         ).all()
         
         return jsonify([spell.to_dict() for spell in spells]), HTTPStatus.OK

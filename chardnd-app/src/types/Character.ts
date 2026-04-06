@@ -35,6 +35,7 @@ export interface Character {
   proficientTools?: string[];
   knownLanguages?: string[];
   hitPoints?: number;
+  attunementSlotBonus?: number;
 
   hpMax?: number;
   hpCurrent?: number;
@@ -44,6 +45,11 @@ export interface Character {
   speed?: number;
   savingThrows?: { [key: string]: number }; 
   passivePerception?: number;
+  traits?: Array<{
+    name: string;
+    description: string;
+    source: string;
+  }>;
   items?: Array<{
     id?: number;
     name: string;

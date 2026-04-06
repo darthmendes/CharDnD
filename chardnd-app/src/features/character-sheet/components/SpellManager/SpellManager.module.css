@@ -1,243 +1,188 @@
-/* SpellManager.module.css */
+/* SpellManager styling - Similar to ItemModal */
 
-.spellManager {
-  background: #f8f9fa;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 1rem;
-  margin: 1rem 0;
+/* Container */
+.container {
+  background: linear-gradient(135deg, #f5e6d3 0%, #e8d5c4 100%);
+  border: 3px solid #8b7355;
+  border-radius: 15px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-  gap: 1rem;
-}
-
-.header h3 {
-  margin: 0;
-  color: #333;
-  flex-shrink: 0;
-}
-
-.spellStats {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.statButton {
-  background: #e3f2fd;
-  border: 1px solid #1976d2;
-  color: #1976d2;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 0.9rem;
-}
-
-.statButton:hover {
-  background: #bbdefb;
-  box-shadow: 0 2px 4px rgba(25, 118, 210, 0.3);
-  transform: translateY(-1px);
-}
-
-.statButton:active {
-  transform: translateY(0);
-}
-
-.prepareStatus {
-  background: #e8f5e9;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-size: 0.9rem;
-  color: #2e7d32;
-  font-weight: 500;
-  flex-shrink: 0;
-}
-
+/* Tabs */
 .tabs {
   display: flex;
-  gap: 0;
+  gap: 0.5rem;
   margin-bottom: 1rem;
-  border-bottom: 2px solid #ddd;
+  border-bottom: 2px solid #8b7355;
+  padding-bottom: 0.5rem;
 }
 
 .tab {
-  background: none;
+  padding: 0.5rem 1rem;
   border: none;
-  padding: 0.75rem 1.5rem;
+  background: #e8d5c4;
+  color: #333;
   cursor: pointer;
-  color: #666;
-  border-bottom: 3px solid transparent;
-  font-weight: 500;
-  transition: all 0.2s ease;
+  border-radius: 8px 8px 0 0;
+  font-weight: 600;
+  transition: all 0.3s;
 }
 
 .tab:hover {
-  color: #333;
-  background: #f0f0f0;
+  background: #d4bfa8;
+  transform: translateY(-2px);
 }
 
 .tab.active {
-  color: #1976d2;
-  border-bottom-color: #1976d2;
+  background: #4a90e2;
+  color: white;
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
 }
 
+/* Spell List */
 .spellList {
   max-height: 600px;
   overflow-y: auto;
-  padding: 0.5rem;
-}
-
-.section {
-  margin-bottom: 1.5rem;
-}
-
-.sectionTitle {
-  margin: 0.5rem 0 1rem 0;
-  color: #666;
-  font-size: 0.9rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid #ddd;
+  border: 1px solid #c9a961;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .spellRow {
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  margin-bottom: 0.75rem;
-  transition: all 0.2s ease;
+  padding: 1rem;
+  border-bottom: 1px solid #dfd3c8;
+  transition: background 0.2s;
+}
+
+.spellRow:last-child {
+  border-bottom: none;
 }
 
 .spellRow:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: rgba(74, 144, 226, 0.08);
 }
 
 .spellHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem;
-  cursor: pointer;
+  gap: 1rem;
 }
 
 .spellInfo {
+  flex: 1;
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  flex: 1;
-  min-width: 0;
 }
 
 .expandBtn {
   background: none;
   border: none;
   cursor: pointer;
-  color: #999;
-  font-size: 0.8rem;
-  padding: 0.25rem;
-  transition: color 0.2s ease;
-  flex-shrink: 0;
+  font-size: 1rem;
+  padding: 0.25rem 0.5rem;
+  color: #8b7355;
+  transition: color 0.2s;
 }
 
 .expandBtn:hover {
-  color: #333;
+  color: #4a90e2;
 }
 
+/* Spell Name */
 .spellName {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
+  cursor: pointer;
   flex-wrap: wrap;
-  min-width: 0;
+  transition: color 0.2s;
+}
+
+.spellName:hover {
+  color: #4a90e2;
 }
 
 .spellName strong {
-  color: #333;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-weight: 700;
 }
 
 .spellLevel {
-  background: #e3f2fd;
-  color: #1976d2;
-  padding: 0.2rem 0.6rem;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  white-space: nowrap;
+  font-size: 0.85em;
+  color: #666;
+  font-style: italic;
 }
 
 .concentration {
-  background: #fff3e0;
-  color: #f57c00;
-  padding: 0.2rem 0.6rem;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  white-space: nowrap;
+  font-size: 0.85em;
+  color: #d9534f;
+  font-weight: 600;
 }
 
+/* Source Badge */
+.sourceBadge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.7em;
+  font-weight: 700;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+/* Spell Actions */
 .spellActions {
   display: flex;
   gap: 0.5rem;
-  margin-left: 1rem;
-  flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.spellActions button {
+  pointer-events: auto;
+  padding: 0.4rem 0.8rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
 }
 
 .castBtn {
-  background: #1976d2;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 500;
-  transition: background 0.2s ease;
-  white-space: nowrap;
+  background: #7ed321;
+  color: #333;
 }
 
 .castBtn:hover {
-  background: #1565c0;
-}
-
-.castBtn:active {
-  transform: scale(0.98);
+  background: #6bb619;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(126, 211, 33, 0.3);
 }
 
 .toggleBtn {
-  background: #f5f5f5;
-  color: #666;
-  border: 1px solid #ddd;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  white-space: nowrap;
+  background: #f5a623;
+  color: white;
 }
 
 .toggleBtn:hover:not(:disabled) {
-  background: #e8f5e9;
-  border-color: #4caf50;
-  color: #2e7d32;
+  background: #d98618;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(245, 166, 35, 0.3);
 }
 
 .toggleBtn.prepared {
-  background: #c8e6c9;
-  color: #1b5e20;
-  border-color: #4caf50;
+  background: #4caf50;
+}
+
+.toggleBtn.prepared:hover {
+  background: #3d8b40;
 }
 
 .toggleBtn:disabled {
@@ -246,88 +191,40 @@
 }
 
 .alwaysPrepared {
-  background: #fff9c4;
-  color: #f57f17;
-  padding: 0.5rem 1rem;
+  display: inline-block;
+  padding: 0.3rem 0.8rem;
+  background: #4a90e2;
+  color: white;
   border-radius: 4px;
-  font-size: 0.85rem;
-  font-weight: 500;
+  font-size: 0.85em;
+  font-weight: 600;
   white-space: nowrap;
 }
 
+/* Spell Details */
 .spellDetails {
-  background: #fafafa;
-  border-top: 1px solid #eee;
-  padding: 1rem;
-  border-radius: 0 0 6px 6px;
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.5);
+  border-left: 3px solid #4a90e2;
+  border-radius: 4px;
 }
 
 .detailRow {
-  display: flex;
-  gap: 1rem;
-  padding: 0.5rem 0;
-  font-size: 0.9rem;
+  margin: 0.5rem 0;
+  font-size: 0.9em;
   line-height: 1.4;
 }
 
 .detailRow strong {
-  color: #333;
-  min-width: fit-content;
+  color: #8b7355;
+  font-weight: 600;
 }
 
-.description {
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid #ddd;
-  color: #555;
-  line-height: 1.6;
-  font-size: 0.9rem;
-}
-
-.higherLevels {
-  margin-top: 0.75rem;
-  padding: 0.75rem;
-  background: #e3f2fd;
-  border-left: 3px solid #1976d2;
-  border-radius: 2px;
-  color: #0d47a1;
-  font-size: 0.9rem;
-  line-height: 1.5;
-}
-
+/* Empty Message */
 .emptyMessage {
+  padding: 2rem 1rem;
   text-align: center;
-  color: #999;
-  padding: 2rem;
+  color: #666;
   font-style: italic;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .spellHeader {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
-  }
-
-  .spellActions {
-    width: 100%;
-    margin-left: 0;
-    gap: 0.5rem;
-  }
-
-  .castBtn,
-  .toggleBtn {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .spellList {
-    max-height: 500px;
-  }
-
-  .tab {
-    padding: 0.5rem 1rem;
-    font-size: 0.85rem;
-  }
 }

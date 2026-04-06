@@ -53,17 +53,17 @@ class SpeciesService:
     @classmethod
     def new_subspecies(cls, data: Dict[str, Any]) -> Dict[str, Any]:
         """Create a new subspecies."""
-        required = ['name', 'species_id']
+        required = ['name', 'speciesID']
         for field in required:
             if field not in data or not data[field]:
                 return {"success": False, "error": f"Missing required field: {field}"}
         
-        parent = session.query(Species).get(data['species_id'])
+        parent = session.query(Species).get(data['speciesID'])
         if not parent:
             return {"success": False, "error": "Parent species not found."}
         
         existing = session.query(Subspecies).filter_by(
-            species_id=data['species_id'],
+            speciesID=data['speciesID'],
             name=data['name']
         ).first()
         if existing:
@@ -72,7 +72,7 @@ class SpeciesService:
         try:
             new_sub = Subspecies()
             valid_fields = {
-                'name', 'species_id',
+                'name', 'speciesID',
                 'ability_bonuses', 'ability_choices',
                 'movement', 'darkvision', 'hp_bonus_per_level'
             }
@@ -98,7 +98,7 @@ class SpeciesService:
     @classmethod
     def update(cls, id: int, **kwargs) -> Dict[str, Any]:
         """Update an existing species."""
-        species = cls.get_by_id(id)
+        species = cls.get_byID(id)
         if not species:
             return {"success": False, "error": "Species not found."}
         
@@ -139,7 +139,7 @@ class SpeciesService:
             return {"success": False, "error": f"Update failed: {str(e)}"}
 
     @classmethod
-    def get_by_id(cls, id: int) -> Optional[Species]:
+    def get_byID(cls, id: int) -> Optional[Species]:
         """Retrieve a species by ID (with subspecies and traits loaded)."""
         from sqlalchemy.orm import joinedload, selectinload
         return session.query(Species).options(
@@ -157,19 +157,19 @@ class SpeciesService:
         ).filter_by(name=name).first()
 
     @classmethod
-    def get_subspecies_by_id(cls, id: int) -> Optional[Subspecies]:
+    def get_subspecies_byID(cls, id: int) -> Optional[Subspecies]:
         """Retrieve a subspecies by ID."""
         return session.query(Subspecies).get(id)
 
     @classmethod
     def delete(cls, id: int) -> Dict[str, Any]:
         """Delete a species by ID (and its subspecies)."""
-        species = cls.get_by_id(id)
+        species = cls.get_byID(id)
         if not species:
             return {"success": False, "error": "Species not found."}
         
         try:
-            session.query(Subspecies).filter_by(species_id=id).delete()
+            session.query(Subspecies).filter_by(speciesID=id).delete()
             session.delete(species)
             session.commit()
             return {"success": True, "message": "Species deleted successfully."}
@@ -180,7 +180,7 @@ class SpeciesService:
     @classmethod
     def delete_subspecies(cls, id: int) -> Dict[str, Any]:
         """Delete a subspecies by ID."""
-        sub = cls.get_subspecies_by_id(id)
+        sub = cls.get_subspecies_byID(id)
         if not sub:
             return {"success": False, "error": "Subspecies not found."}
         

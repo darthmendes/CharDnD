@@ -178,8 +178,8 @@ class CharacterSpell(Base):
     __tablename__ = "character_spells"
     
     id = Column(Integer, primary_key=True, autoincrement=True)
-    character_id = Column(Integer, ForeignKey("characters.id"), nullable=False, index=True)
-    spell_id = Column(Integer, ForeignKey("spells.id"), nullable=False, index=True)
+    characterID = Column(Integer, ForeignKey("characters.id"), nullable=False, index=True)
+    spellID = Column(Integer, ForeignKey("spells.id"), nullable=False, index=True)
     
     # === Source Tracking ===
     source = Column(String, nullable=False)  # "class", "species", "background", "feat", "item"
@@ -201,15 +201,14 @@ class CharacterSpell(Base):
     def to_dict(self):
         return {
             'id': self.id,
-            'character_id': self.character_id,
-            'spell_id': self.spell_id,
+            'characterID': self.characterID,
+            'spellID': self.spellID,
             'spell': self.spell.to_dict() if self.spell else None,
             'source': self.source,
             'source_name': self.source_name,
             'source_detail': self.source_detail,
             'is_prepared': self.is_prepared,
             'always_prepared': self.always_prepared,
-            'spellcasting_ability': self.spellcasting_ability,
             'date_added': self.date_added.isoformat() if self.date_added else None,
             'date_prepared': self.date_prepared.isoformat() if self.date_prepared else None
         }
