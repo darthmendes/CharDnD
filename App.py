@@ -435,6 +435,56 @@ def list_classes():
     all_classes = DnDClass.get_all()
     return jsonify([c.to_dict() for c in all_classes]), 200
 
+# Backend/routes/character_resources.py
+from flask import Flask, request, jsonify
+from Backend.models import session
+from Backend.models.character import CharacterClassResource
+
+@app.route('/API/characters/<int:char_id>/classes/<int:class_id>/resources', methods=['GET'])
+def get_class_resources(char_id, class_id):
+    """Get all resources for a specific class"""
+    resources = session.query(CharacterClassResource).filter_by(
+        character_class_id=class_id
+    ).all()
+    return jsonify([r.to_dict() for r in resources]), 200
+
+@app.route('/API/characters/<int:char_id>/classes/<int:class_id>/resources/<resource_type>', methods=['PATCH'])
+def update_resource(char_id, class_id, resource_type):
+    """Update a specific resource (e.g., spend rage, regain ki point)"""
+    data = request.json
+    resource = session.query(CharacterClassResource).filter_by(
+        character_class_id=class_id,
+        resource_type=resource_type
+    ).first()
+    
+    if not resource:
+        return jsonify({"error": "Resource not found"}), 404
+    
+    if 'current_value' in data:
+        resource.current_value = max(0, min(data['current_value'], resource.max_value))
+    
+    session.commit()
+    return jsonify(resource.to_dict()), 200
+
+@app.route('/API/characters/<int:char_id>/rest', methods=['POST'])
+def take_rest(char_id):
+    """Take a short or long rest - recover appropriate resources"""
+    data = request.json
+    rest_type = data.get('rest_type')  # 'short' or 'long'
+    
+    # Get all character classes
+    char_classes = session.query(DnDClass).filter_by(characterID=char_id).all()
+    
+    for char_class in char_classes:
+        for resource in char_class.resources:
+            if rest_type == 'short' and resource.recovers_on_short_rest:
+                resource.current_value = resource.max_value
+            elif rest_type == 'long' and resource.recovers_on_long_rest:
+                resource.current_value = resource.max_value
+    
+    session.commit()
+    return jsonify({"message": f"{rest_type} rest completed"}), 200
+
 
 ################################################################
 # Background Routes
@@ -638,6 +688,23 @@ def get_class_spells(class_name):
         return jsonify([spell.to_dict() for spell in spells]), HTTPStatus.OK
     except Exception as e:
         return jsonify({"error": str(e)}), HTTPStatus.INTERNAL_SERVER_ERROR
+
+################################################################
+# Misc
+################################################################
+
+@app.route('/API/fighting-styles', methods=['GET'])
+def get_fighting_styles():
+    fighting_styles = [
+        {'id': 1, 'name': 'Archery', 'description': '+2 to hit with ranged weapons'},
+        {'id': 2, 'name': 'Defense', 'description': '+1 AC while wearing armor'},
+        {'id': 3, 'name': 'Dueling', 'description': '+2 damage with one-handed weapon'},
+        {'id': 4, 'name': 'Great Weapon Fighting', 'description': 'Reroll 1s and 2s on damage'},
+        {'id': 5, 'name': 'Protection', 'description': '-4 to hit allies adjacent to you'},
+        {'id': 6, 'name': 'Two-Weapon Fighting', 'description': 'Add ability modifier to off-hand damage'}
+    ]
+    return jsonify(fighting_styles), 200
+
 ################################################################
 # App Entry
 ################################################################

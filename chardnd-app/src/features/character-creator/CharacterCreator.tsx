@@ -9,6 +9,7 @@ import Step1Name from './steps/Step1Name';
 import Step2Background from './steps/Step2Background';
 import Step2Species from './steps/Step2Species';
 import Step3Class from './steps/Step3Class';
+import Step3_5ClassChoices from './steps/Step3_5ClassChoices';
 import Step5Abilities from './steps/Step5AbilityScores';
 import Step6Equipment from './steps/Step6Equipment';
 
@@ -253,8 +254,9 @@ const CharacterCreator: React.FC = () => {
       case 2: return <Step2Background {...commonProps} />;
       case 3: return <Step2Species {...commonProps} />;
       case 4: return <Step3Class {...commonProps} />;
-      case 5: return <Step5Abilities {...commonProps} />;
-      case 6: return <Step6Equipment {...commonProps} />;
+      case 5: return <Step3_5ClassChoices {...commonProps} />;
+      case 6: return <Step5Abilities {...commonProps} />;
+      case 7: return <Step6Equipment {...commonProps} />;
       default: return null;
     }
   };

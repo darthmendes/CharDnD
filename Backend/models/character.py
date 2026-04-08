@@ -141,6 +141,43 @@ class CharacterClass(Base):
 
     character = relationship("Character", back_populates="classes_assoc")
     dndclass = relationship("DnDclass", back_populates="character_assoc")
+    resources = relationship("CharacterClassResource", back_populates="character_class")
+
+
+class CharacterClassResource(Base):
+    """
+    Tracks expendable class resources (Rages, Ki Points, Wild Shapes, etc.)
+    Links to CharacterClass to support multiclassing.
+    """
+    __tablename__ = "character_class_resources"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    character_class_id = Column(Integer, ForeignKey("characterclass.id"), nullable=False)
+    
+    # Resource type (e.g., "rage", "ki_point", "wild_shape", "spell_slot")
+    resource_type = Column(String, nullable=False)
+    
+    # Current and maximum values
+    current_value = Column(Integer, default=0)
+    max_value = Column(Integer, default=0)
+    
+    # Recovery mechanics
+    recovers_on_short_rest = Column(Boolean, default=False)
+    recovers_on_long_rest = Column(Boolean, default=True)
+    
+    # Relationships
+    character_class = relationship("CharacterClass", back_populates="resources")
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'character_class_id': self.character_class_id,
+            'resource_type': self.resource_type,
+            'current_value': self.current_value,
+            'max_value': self.max_value,
+            'recovers_on_short_rest': self.recovers_on_short_rest,
+            'recovers_on_long_rest': self.recovers_on_long_rest
+        }
 
 class CharacterInventory(Base):
     """

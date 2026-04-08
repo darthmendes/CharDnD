@@ -999,7 +999,10 @@ def create_rogue():
         Features(
             name='Expertise',
             desc="At 1st level, choose two of your skill proficiencies, or one of your skill proficiencies and your proficiency with thieves' tools. Your proficiency bonus is doubled for any ability check you make that uses either of the chosen proficiencies. At 6th level, you can choose two more of your proficiencies to gain this benefit.",
-            properties={}
+            properties={
+                "valid_types": ["skill", "tool"], 
+                "effect": "double_proficiency",    
+                "max_selections_total": 2}
         ),
         Features(
             name='Sneak Attack',
@@ -1067,7 +1070,10 @@ def create_rogue():
 
     # Sneak Attack progression
     sneak_attack = features[1]
+    expertise = features[0]
     sneak_attack_levels = [
+        FeatureLevel(featureID=expertise.id, level=1, attributes={"choices": 2}),
+        FeatureLevel(featureID=expertise.id, level=6, attributes={"choices": 2}),
         FeatureLevel(featureID=sneak_attack.id, level=1, attributes={'damage': '1d6'}),
         FeatureLevel(featureID=sneak_attack.id, level=3, attributes={'damage': '2d6'}),
         FeatureLevel(featureID=sneak_attack.id, level=5, attributes={'damage': '3d6'}),
