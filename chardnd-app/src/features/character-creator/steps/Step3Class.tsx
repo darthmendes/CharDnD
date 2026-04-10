@@ -352,56 +352,6 @@ const Step3Class: React.FC<Props> = ({ character, updateClasses, dndClasses }) =
                 </ul>
               </div>
 
-              {/* Subclass Selector and Info */}
-              {previewLevel >= subclassAvailableLevel && selectedClassData.subclasses && selectedClassData.subclasses.length > 0 && (
-                <div style={{
-                  padding: '0.75rem',
-                  backgroundColor: '#fff9e6',
-                  border: '1px solid #d9c8a9',
-                  borderRadius: '4px',
-                  marginTop: '1rem'
-                }}>
-                  <label htmlFor={`subclass-select-${previewIndex}`} style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-                    {selectedClassData.subclasses[0]?.subclass_flavor || 'Subclass'}
-                  </label>
-                  <select
-                    id={`subclass-select-${previewIndex}`}
-                    className={styles.select}
-                    value={previewClass?.subclass || ''}
-                    onChange={(e) => handleSubclassChange(previewIndex, e)}
-                    style={{ marginBottom: '0.5rem' }}
-                  >
-                    <option value="">-- Choose a subclass --</option>
-                    {selectedClassData.subclasses.map((sc: any) => (
-                      <option key={sc.id} value={sc.name}>
-                        {sc.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {/* Subclass Features */}
-              {selectedSubclass && selectedSubclass.features && selectedSubclass.features.length > 0 && (
-                <div style={{
-                  padding: '0.75rem',
-                  backgroundColor: '#f0e6d2',
-                  border: '1px solid #d9c8a9',
-                  borderRadius: '4px',
-                  marginTop: '1rem'
-                }}>
-                  <strong style={{ display: 'block', marginBottom: '0.5rem' }}>Subclass Features (Level {previewLevel})</strong>
-                  <div style={{ fontSize: '0.9em' }}>
-                    {getFeaturesByLevel(selectedSubclass.features, previewLevel).map((feature: Feature) => (
-                      <div key={feature.name} style={{ marginBottom: '0.5rem' }}>
-                        <em><b>{feature.name}</b></em>
-                        {feature.description && <p style={{ margin: '0.25rem 0 0 0' }}>{feature.description}</p>}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {/* Class Features */}
               {safeArray(selectedClassData.class_features).length > 0 && (
                 <div>

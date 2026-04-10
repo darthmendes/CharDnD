@@ -20,6 +20,7 @@ export interface CharacterClassLevel {
   className: string;
   level: number;
   subclass?: string;
+  chosenSkills?: string[];
 }
 
 export interface AbilityScores {
@@ -46,6 +47,7 @@ export interface CharacterData {
   speciesChoices?: Record<string, string>;
   speciesLanguages?: string[]; // ✅ Languages selected during species choice
   optionalLanguages?: string[]; // ✅ Track which optional languages were selected
+  backgroundLanguages?: string[]; // ✅ Languages selected from background
   classes: CharacterClassLevel[];
   abilityScores: AbilityScores;
   equipment: EquipmentItem[];

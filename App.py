@@ -5,9 +5,13 @@
 # author: darthmendes
 #
 
+import logging
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from http import HTTPStatus
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 # Services
 from Backend.services.CharacterService import CharacterService as Character
@@ -122,6 +126,10 @@ def update_item_charges(charID, inventoryID):
     if not data or 'currentCharges' not in data:
         return jsonify({"error": "Missing currentCharges field"}), HTTPStatus.BAD_REQUEST
     
+    # Validate currentCharges is a non-negative integer
+    if not isinstance(data['currentCharges'], int) or data['currentCharges'] < 0:
+        return jsonify({"error": "currentCharges must be a non-negative integer"}), HTTPStatus.BAD_REQUEST
+    
     result = Item.update_item_charges(inventoryID, charID, data['currentCharges'])
     if result["success"]:
         char = Character.get_byID(charID)
@@ -176,119 +184,29 @@ def unequip_item(charID, inventoryID):
 @app.route('/API/characters/<int:charID>/inventory/<int:inventoryID>/attune', methods=['PATCH'])
 def attune_item(charID, inventoryID):
     """Attune to a magic item."""
-    from Backend.models import session
-    from Backend.models.character import CharacterInventory
-    
-    try:
-        # Get character
-        char = Character.get_byID(charID)
-        if not char:
-            return jsonify({"error": "Character not found", "success": False}), 404
-        
-        # ✅ FIX: Use 'inventory' not 'inventory_items'
-        inventory_item = session.query(CharacterInventory).filter_by(
-            id=inventoryID,
-            characterID=charID
-        ).first()
-        
-        if not inventory_item:
-            return jsonify({"error": "Inventory item not found", "success": False}), 404
-        
-        # Check if item requires attunement
-        item = inventory_item.item
-        requires_attunement = (
-            item.property_data and item.property_data.get('requires_attunement', False) or
-            (item.rarity and item.rarity in ['Rare', 'Very Rare', 'Legendary', 'Artifact'])
-        )
-        
-        if not requires_attunement:
-            return jsonify({
-                "error": "This item does not require attunement",
-                "success": False
-            }), 400
-        
-        # Check if already attuned
-        if inventory_item.is_attuned:
-            return jsonify({
-                "error": "Item is already attuned",
-                "success": False
-            }), 400
-        
-        # ✅ FIX: Use 'inventory' not 'inventory_items'
-        attuned_count = session.query(CharacterInventory).filter_by(
-            characterID=charID,
-            is_attuned=True
-        ).count()
-        
-        # Check attunement limit (default 4)
-        attunement_limit = 4
-        if hasattr(char, 'attunementSlotBonus'):
-            attunement_limit += char.attunementSlotBonus
-        
-        if attuned_count >= attunement_limit:
-            return jsonify({
-                "error": f"Attunement slot limit reached ({attuned_count}/{attunement_limit})",
-                "success": False,
-                "attuned_count": attuned_count,
-                "attunement_limit": attunement_limit
-            }), 400
-        
-        # Attune the item
-        inventory_item.is_attuned = True
-        session.commit()
-        
-        # Return updated character
+    result = Item.attune_item(inventoryID, charID)
+    if result["success"]:
         char = Character.get_byID(charID)
         if char:
-            return jsonify(char.to_dict()), 200
-        return jsonify({"success": True}), 200
-        
-    except Exception as e:
-        session.rollback()
-        return jsonify({"error": str(e), "success": False}), 500
+            return jsonify(char.to_dict()), HTTPStatus.OK
+        return jsonify(result), HTTPStatus.OK
+    else:
+        status = HTTPStatus.NOT_FOUND if "not found" in result.get("error", "").lower() else HTTPStatus.BAD_REQUEST
+        return jsonify(result), status
 
 
 @app.route('/API/characters/<int:charID>/inventory/<int:inventoryID>/unattune', methods=['PATCH'])
 def unattune_item(charID, inventoryID):
     """Unattune from a magic item."""
-    from Backend.models import session
-    from Backend.models.character import CharacterInventory
-    
-    try:
-        # Get character
-        char = Character.get_byID(charID)
-        if not char:
-            return jsonify({"error": "Character not found", "success": False}), 404
-        
-        # Get inventory item
-        inventory_item = session.query(CharacterInventory).filter_by(
-            id=inventoryID,
-            characterID=charID
-        ).first()
-        
-        if not inventory_item:
-            return jsonify({"error": "Inventory item not found", "success": False}), 404
-        
-        # Check if already unattuned
-        if not inventory_item.is_attuned:
-            return jsonify({
-                "error": "Item is not attuned",
-                "success": False
-            }), 400
-        
-        # Unattune the item
-        inventory_item.is_attuned = False
-        session.commit()
-        
-        # Return updated character
+    result = Item.unattune_item(inventoryID, charID)
+    if result["success"]:
         char = Character.get_byID(charID)
         if char:
-            return jsonify(char.to_dict()), 200
-        return jsonify({"success": True}), 200
-        
-    except Exception as e:
-        session.rollback()
-        return jsonify({"error": str(e), "success": False}), 500
+            return jsonify(char.to_dict()), HTTPStatus.OK
+        return jsonify(result), HTTPStatus.OK
+    else:
+        status = HTTPStatus.NOT_FOUND if "not found" in result.get("error", "").lower() else HTTPStatus.BAD_REQUEST
+        return jsonify(result), status
     
 ################################################################
 # Species Routes
@@ -393,7 +311,7 @@ def get_species_traits(species_name):
         return jsonify(traits), HTTPStatus.OK
     
     except Exception as e:
-        print(f"Error fetching species traits: {str(e)}")
+        logger.error(f"Error fetching species traits: {str(e)}")
         return jsonify({"error": str(e)}), HTTPStatus.INTERNAL_SERVER_ERROR
 
 ################################################################
@@ -469,11 +387,15 @@ def update_resource(char_id, class_id, resource_type):
 @app.route('/API/characters/<int:char_id>/rest', methods=['POST'])
 def take_rest(char_id):
     """Take a short or long rest - recover appropriate resources"""
+    from Backend.models.character import CharacterClass as CharClassAssoc
     data = request.json
     rest_type = data.get('rest_type')  # 'short' or 'long'
     
-    # Get all character classes
-    char_classes = session.query(DnDClass).filter_by(characterID=char_id).all()
+    if rest_type not in ('short', 'long'):
+        return jsonify({"error": "rest_type must be 'short' or 'long'"}), HTTPStatus.BAD_REQUEST
+    
+    # Get all character classes using the correct model
+    char_classes = session.query(CharClassAssoc).filter_by(characterID=char_id).all()
     
     for char_class in char_classes:
         for resource in char_class.resources:
@@ -663,8 +585,10 @@ def get_class_spells(class_name):
     try:
         from Backend.models import session
         from Backend.models.dndclass import DnDclass, ClassSpell
-        from Backend.models.spells import Spell as SpellModel
+        from Backend.models.spells import Spell
         
+        level_filter = request.args.get('level', type=int)  # Optional filter
+
         # Find the class
         dnd_class = session.query(DnDclass).filter(
             DnDclass.name.ilike(class_name)
@@ -678,12 +602,17 @@ def get_class_spells(class_name):
             ClassSpell.classID == dnd_class.id,
             ClassSpell.subclass == None
         ).all()
-        
+
         # Get the actual spell objects
         spellIDs = [cs.spellID for cs in class_spells]
-        spells = session.query(SpellModel).filter(
-            SpellModel.id.in_(spellIDs)
-        ).all()
+        spells = session.query(Spell).filter(
+            Spell.id.in_(spellIDs)
+        )
+        
+        if level_filter is not None:
+            spells = spells.filter(Spell.level == level_filter)
+            
+        spells = spells.all()
         
         return jsonify([spell.to_dict() for spell in spells]), HTTPStatus.OK
     except Exception as e:

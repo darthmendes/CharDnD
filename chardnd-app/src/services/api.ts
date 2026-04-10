@@ -63,11 +63,8 @@ export const fetchBackgrounds = async (): Promise<any[]> => {
  * Fetch all languages
  */
 export const fetchLanguages = async (): Promise<any[]> => {
-  const response = await fetch('http://127.0.0.1:8001/API/languages');
-  if (!response.ok) {
-    throw new Error('Failed to fetch languages');
-  }
-  return response.json();
+  const response = await fetch(`${API_BASE}/languages`);
+  return handleResponse(response);
 };
 
 /**
@@ -105,6 +102,228 @@ export const fetchCharacter = async (id: number): Promise<any> => {
 export const deleteCharacter = async (id: number): Promise<any> => {
   const response = await fetch(`${API_BASE}/characters/${id}`, {
     method: 'DELETE',
+  });
+  return handleResponse(response);
+};
+
+/**
+ * Fetch all characters
+ */
+export const fetchAllCharacters = async (): Promise<{ id: number; name: string }[]> => {
+  const response = await fetch(`${API_BASE}/characters`);
+  return handleResponse(response);
+};
+
+/**
+ * Update a character by ID
+ */
+export const updateCharacter = async (id: number, data: Record<string, any>): Promise<any> => {
+  const response = await fetch(`${API_BASE}/characters/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  return handleResponse(response);
+};
+
+/**
+ * Add item to character inventory
+ */
+export const addItemToCharacter = async (charId: number, itemId: number, quantity: number = 1): Promise<any> => {
+  const response = await fetch(`${API_BASE}/characters/${charId}/items`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ itemID: itemId, quantity }),
+  });
+  return handleResponse(response);
+};
+
+/**
+ * Delete inventory item
+ */
+export const deleteInventoryItem = async (charId: number, inventoryId: number): Promise<any> => {
+  const response = await fetch(`${API_BASE}/characters/${charId}/inventory/${inventoryId}`, {
+    method: 'DELETE',
+  });
+  return handleResponse(response);
+};
+
+/**
+ * Update item charges
+ */
+export const updateItemCharges = async (charId: number, inventoryId: number, currentCharges: number): Promise<any> => {
+  const response = await fetch(`${API_BASE}/characters/${charId}/inventory/${inventoryId}/charges`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ currentCharges }),
+  });
+  return handleResponse(response);
+};
+
+/**
+ * Equip item
+ */
+export const equipItem = async (charId: number, inventoryId: number): Promise<any> => {
+  const response = await fetch(`${API_BASE}/characters/${charId}/inventory/${inventoryId}/equip`, {
+    method: 'PATCH',
+  });
+  return handleResponse(response);
+};
+
+/**
+ * Unequip item
+ */
+export const unequipItem = async (charId: number, inventoryId: number): Promise<any> => {
+  const response = await fetch(`${API_BASE}/characters/${charId}/inventory/${inventoryId}/unequip`, {
+    method: 'PATCH',
+  });
+  return handleResponse(response);
+};
+
+/**
+ * Attune item
+ */
+export const attuneItem = async (charId: number, inventoryId: number): Promise<any> => {
+  const response = await fetch(`${API_BASE}/characters/${charId}/inventory/${inventoryId}/attune`, {
+    method: 'PATCH',
+  });
+  return handleResponse(response);
+};
+
+/**
+ * Unattune item
+ */
+export const unattuneItem = async (charId: number, inventoryId: number): Promise<any> => {
+  const response = await fetch(`${API_BASE}/characters/${charId}/inventory/${inventoryId}/unattune`, {
+    method: 'PATCH',
+  });
+  return handleResponse(response);
+};
+
+/**
+ * Remove one item from inventory
+ */
+export const removeOneItem = async (charId: number, inventoryId: number): Promise<any> => {
+  const response = await fetch(`${API_BASE}/characters/${charId}/inventory/${inventoryId}/remove-one`, {
+    method: 'PATCH',
+  });
+  return handleResponse(response);
+};
+
+/**
+ * Fetch spell slots for a character
+ */
+export const fetchSpellSlots = async (charId: number): Promise<any> => {
+  const response = await fetch(`${API_BASE}/characters/${charId}/spell-slots`);
+  return handleResponse(response);
+};
+
+/**
+ * Expend spell slot
+ */
+export const expendSpellSlot = async (charId: number, level: number, amount: number = 1): Promise<any> => {
+  const response = await fetch(`${API_BASE}/characters/${charId}/spell-slots/expended`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ level, amount }),
+  });
+  return handleResponse(response);
+};
+
+/**
+ * Fetch character spells
+ */
+export const fetchCharacterSpells = async (charId: number): Promise<any[]> => {
+  const response = await fetch(`${API_BASE}/characters/${charId}/spells`);
+  return handleResponse(response);
+};
+
+/**
+ * Add spell to character
+ */
+export const addSpellToCharacter = async (charId: number, spellId: number): Promise<any> => {
+  const response = await fetch(`${API_BASE}/characters/${charId}/spells`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ spellID: spellId }),
+  });
+  return handleResponse(response);
+};
+
+/**
+ * Toggle spell prepared status
+ */
+export const toggleSpellPrepared = async (charId: number, spellId: number): Promise<any> => {
+  const response = await fetch(`${API_BASE}/characters/${charId}/spells/${spellId}/prepare`, {
+    method: 'PATCH',
+  });
+  return handleResponse(response);
+};
+
+/**
+ * Fetch prepare limit for character
+ */
+export const fetchPrepareLimit = async (charId: number): Promise<any> => {
+  const response = await fetch(`${API_BASE}/characters/${charId}/prepare-limit`);
+  return handleResponse(response);
+};
+
+/**
+ * Bulk prepare spells
+ */
+export const bulkPrepareSpells = async (charId: number, spellIds: number[]): Promise<any> => {
+  const response = await fetch(`${API_BASE}/characters/${charId}/spells/bulk-prepare`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ spellIDs: spellIds }),
+  });
+  return handleResponse(response);
+};
+
+/**
+ * Bulk unprepare spells
+ */
+export const bulkUnprepareSpells = async (charId: number, spellIds: number[]): Promise<any> => {
+  const response = await fetch(`${API_BASE}/characters/${charId}/spells/bulk-unprepare`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ spellIDs: spellIds }),
+  });
+  return handleResponse(response);
+};
+
+/**
+ * Fetch class spells
+ */
+export const fetchClassSpells = async (className: string): Promise<any[]> => {
+  const response = await fetch(`${API_BASE}/classes/${encodeURIComponent(className)}/spells`);
+  return handleResponse(response);
+};
+
+/**
+ * Fetch all spells
+ */
+export const fetchAllSpells = async (): Promise<any[]> => {
+  const response = await fetch(`${API_BASE}/spells`);
+  return handleResponse(response);
+};
+
+/**
+ * Fetch a single item by ID
+ */
+export const fetchItem = async (itemId: number | string): Promise<any> => {
+  const response = await fetch(`${API_BASE}/items/${itemId}`);
+  return handleResponse(response);
+};
+
+/**
+ * Create a new item
+ */
+export const createItem = async (itemData: any): Promise<any> => {
+  const response = await fetch(`${API_BASE}/items/creator`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(itemData),
   });
   return handleResponse(response);
 };

@@ -73,7 +73,7 @@ const CharacterCreator: React.FC = () => {
     loadData();
   }, []);
 
-  const totalSteps = 6;
+  const totalSteps = 7;
 
   const nextStep = () => step < totalSteps && setStep(step + 1);
   const prevStep = () => step > 1 && setStep(step - 1);
@@ -99,7 +99,7 @@ const CharacterCreator: React.FC = () => {
     if (character.classes && character.classes.length > 0) {
       const classEntry = character.classes[0];
       const classData = classList.find(c => c.name === classEntry.className);
-      
+
       if (classData) {
         // ✅ Add chosen skills from skill_choices (stored in chosenSkills array)
         if (classEntry.chosenSkills && Array.isArray(classEntry.chosenSkills)) {
@@ -109,7 +109,7 @@ const CharacterCreator: React.FC = () => {
             }
           }
         }
-        
+
         // ✅ Add weapon proficiencies from class
         if (classData.weapon_proficiencies && Array.isArray(classData.weapon_proficiencies)) {
           for (const weapon of classData.weapon_proficiencies) {
@@ -118,7 +118,7 @@ const CharacterCreator: React.FC = () => {
             }
           }
         }
-        
+
         // ✅ Add tool proficiencies from class
         if (classData.tool_proficiencies && Array.isArray(classData.tool_proficiencies)) {
           for (const tool of classData.tool_proficiencies) {
@@ -127,7 +127,7 @@ const CharacterCreator: React.FC = () => {
             }
           }
         }
-        
+
         // ✅ Add armor proficiencies as weapons (for display consistency)
         if (classData.armor_proficiencies && Array.isArray(classData.armor_proficiencies)) {
           for (const armor of classData.armor_proficiencies) {
@@ -174,7 +174,7 @@ const CharacterCreator: React.FC = () => {
 
     return { skills, weapons, tools, allLanguages };
   };
-  
+
   const { allLanguages: langList } = getAllProficiencies();
   const allLanguages = langList || [];
 
@@ -200,7 +200,7 @@ const CharacterCreator: React.FC = () => {
 
       // ✅ Get all proficiencies for submission
       const { skills, weapons, tools } = getAllProficiencies();
-      
+
       const payload = {
         name: character.name,
         species: character.species,

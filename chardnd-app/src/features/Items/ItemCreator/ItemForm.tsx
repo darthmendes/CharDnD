@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import styles from '../../character-creator/CharacterCreator.module.css';
+import { createItem } from '../../../services/api';
 
 // ✅ Official D&D 5e item types — no "None"
 const VALID_ITEM_TYPES = [
@@ -64,16 +65,16 @@ const ItemForm: React.FC = () => {
           : value,
     }));
   };
-  
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-  // Block minus sign (-), underscore (_), and e/E (scientific notation)
-  if (e.key === '-' || e.key === '_' || e.key === 'e' || e.key === 'E') {
-    e.preventDefault();
-  }
-};
+    // Block minus sign (-), underscore (_), and e/E (scientific notation)
+    if (e.key === '-' || e.key === '_' || e.key === 'e' || e.key === 'E') {
+      e.preventDefault();
+    }
+  };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // ⚠️ Ensure type is selected (required field)
     if (!formData.item_type) {
       setError('Please select an item type.');
@@ -84,26 +85,15 @@ const ItemForm: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('http://127.0.0.1:8001/API/items/creator', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `HTTP ${response.status}`);
-      }
-
-      const newItem = await response.json();
+      const newItem = await createItem(formData);
       console.log('Item created:', newItem);
 
       if (returnTo) {
         try {
-          let targetPath = returnTo.startsWith('http') 
-            ? new URL(returnTo).pathname 
+          let targetPath = returnTo.startsWith('http')
+            ? new URL(returnTo).pathname
             : returnTo;
-          
+
           const searchParams = new URLSearchParams();
           searchParams.set('newItem', JSON.stringify(newItem));
           navigate(`${targetPath}?${searchParams.toString()}`, { replace: true });

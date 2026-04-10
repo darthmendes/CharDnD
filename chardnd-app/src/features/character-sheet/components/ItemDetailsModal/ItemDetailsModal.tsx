@@ -32,6 +32,15 @@ interface ItemDetailsModalProps {
   onDelete?: () => void;
   onEquip?: () => void;
   onUnequip?: () => void;
+  onAttune?: () => void;
+  onUnattune?: () => void;
+  canEquip?: boolean;
+  isEquipped?: boolean;
+  requiresAttunement?: boolean;
+  isAttuned?: boolean;
+  canAttuneMore?: boolean;
+  attunedCount?: number;
+  attunementLimit?: number;
 }
 
 const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
@@ -44,6 +53,15 @@ const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
   onDelete,
   onEquip,
   onUnequip,
+  onAttune,
+  onUnattune,
+  canEquip,
+  isEquipped,
+  requiresAttunement,
+  isAttuned,
+  canAttuneMore,
+  attunedCount,
+  attunementLimit,
 }) => {
   if (!isOpen || !item) return null;
 
@@ -165,14 +183,24 @@ const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
 
         <div className={styles.closeAction}>
           <div className={styles.actionButtons}>
-            {item.type === 'Armor' && onEquip && !(item.isEquipped || item.is_equipped) && (
+            {canEquip && onEquip && !isEquipped && (
               <button onClick={onEquip} className={styles.equipBtn}>
                 ⚔️ Equip
               </button>
             )}
-            {item.type === 'Armor' && onUnequip && (item.isEquipped || item.is_equipped) && (
+            {canEquip && onUnequip && isEquipped && (
               <button onClick={onUnequip} className={styles.unequipBtn}>
                 ✓ Unequip
+              </button>
+            )}
+            {requiresAttunement && !isAttuned && onAttune && canAttuneMore && (
+              <button onClick={onAttune} className={styles.equipBtn}>
+                ✨ Attune ({attunedCount}/{attunementLimit})
+              </button>
+            )}
+            {requiresAttunement && isAttuned && onUnattune && (
+              <button onClick={onUnattune} className={styles.unequipBtn}>
+                ✓ Unattune ({attunedCount}/{attunementLimit})
               </button>
             )}
             {onAddItem && (

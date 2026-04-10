@@ -2,7 +2,7 @@
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, scoped_session
 
 from .config import DATABASES_PATH
 
@@ -11,7 +11,9 @@ Base = declarative_base()
 # Use os.path.join for cross-platform compatibility
 db_path = os.path.join(DATABASES_PATH, DB_NAME)
 engine = create_engine(f'sqlite:///{db_path}')
-Session = sessionmaker(bind=engine)
+
+# Use scoped_session for thread-safe session management
+Session = scoped_session(sessionmaker(bind=engine))
 session = Session()
 
 # Import all models here to ensure they are registered with Base
@@ -27,5 +29,3 @@ from .spells import Spell
 
 # Create all tables
 Base.metadata.create_all(engine)
-Session = sessionmaker(bind=engine)
-session = Session()

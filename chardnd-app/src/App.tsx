@@ -3,25 +3,34 @@ import { useState, useEffect } from 'react';
 import CharacterList from './features/character-sheet/CharacterList';
 import HomePage from './components/Homepage';
 import { useNavigate } from 'react-router';
+import { fetchAllCharacters } from './services/api';
+
+interface CharacterSummary {
+  id: number;
+  name: string;
+}
 
 function App() {
   const navigate = useNavigate();
-  const [characters, setCharacters] = useState([])
+  const [characters, setCharacters] = useState<CharacterSummary[]>([]);
 
   useEffect(() => {
-    fetchCharacters()
-  },[])
-  const fetchCharacters = async () => {
-    const response = await fetch("http://127.0.0.1:8001//API//characters")
-    const data = await response.json()
-    setCharacters(data)
-    console.log(data)
-  }
+    loadCharacters();
+  }, []);
+
+  const loadCharacters = async () => {
+    try {
+      const data = await fetchAllCharacters();
+      setCharacters(data);
+    } catch (err) {
+      console.error('Failed to fetch characters:', err);
+    }
+  };
 
   const goToItemCreator = () => {
     navigate('items/creator');
   }
-  
+
   const goToCharacterCreator = () => {
     navigate('characters/creator');
   }
@@ -40,7 +49,7 @@ function App() {
         <HomePage />
       </div>
       <div>
-        <CharacterList characters={characters}/>
+        <CharacterList characters={characters} />
       </div>
     </>
   );

@@ -1,15 +1,27 @@
+import React from 'react';
 
-const CharacterList = ({ characters }) => {
-    return  <div>
-                <h2>Character List</h2>
-                <ul>
-                    {characters.map((character) => (
-                        <li>
-                            <a href={`/characters/${character.id}`} key={character.id}>{character.name}</a>
-                        </li>
-                    ))}
-                </ul>
-            </div>
+interface CharacterSummary {
+    id: number;
+    name: string;
 }
 
-export default CharacterList
+interface Props {
+    characters: CharacterSummary[];
+}
+
+const CharacterList: React.FC<Props> = ({ characters }) => {
+    return (
+        <div>
+            <h2>Character List</h2>
+            <ul>
+                {characters.map((character) => (
+                    <li key={character.id}>
+                        <a href={`/characters/${character.id}`}>{character.name}</a>
+                    </li>
+                ))}
+            </ul>
+        </div>
+    );
+};
+
+export default CharacterList;

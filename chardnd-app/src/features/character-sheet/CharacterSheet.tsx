@@ -11,7 +11,28 @@ import SpellDetailsModal from './components/SpellDetailsModal/SpellDetailsModal'
 import StatModifiersModal from './components/StatModifiersModal/StatModifiersModal';
 import ProficiencyModal from './components/ProficiencyModal/ProficiencyModal';
 import SpellManager from './components/SpellManager/SpellManager';
-import { fetchItems, fetchSpeciesTraits } from '../../services/api';
+import { 
+  fetchItems, 
+  fetchSpeciesTraits, 
+  fetchCharacter,
+  updateCharacter,
+  addItemToCharacter,
+  deleteInventoryItem as apiDeleteInventoryItem,
+  removeOneItem as apiRemoveOneItem,
+  updateItemCharges as apiUpdateItemCharges,
+  equipItem as apiEquipItem,
+  unequipItem as apiUnequipItem,
+  attuneItem as apiAttuneItem,
+  unattuneItem as apiUnattuneItem,
+  fetchSpellSlots,
+  fetchCharacterSpells,
+  addSpellToCharacter,
+  toggleSpellPrepared as apiToggleSpellPrepared,
+  fetchPrepareLimit,
+  fetchClassSpells,
+  fetchAllSpells,
+  expendSpellSlot as apiExpendSpellSlot,
+} from '../../services/api';
 
 // 🔽 D&D 5e XP Thresholds
 const LEVEL_XP_TABLE = [
@@ -50,12 +71,12 @@ const CharacterDisplay = () => {
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
   const [isSpellModalOpen, setIsSpellModalOpen] = useState(false);
   const [isSpellDetailsModalOpen, setIsSpellDetailsModalOpen] = useState(false);
-  const [selectedSpellForDetails, setSelectedSpellForDetails] = useState<any | null>(null);
+  const [selectedSpellForDetails] = useState<any | null>(null);
   
   // ✅ State for items
   const [availableItems, setAvailableItems] = useState<any[]>([]);
   const [itemsLoading, setItemsLoading] = useState(true);
-  const [selectedAttackItem, setSelectedAttackItem] = useState<any | null>(null);
+  const [_selectedAttackItem, _setSelectedAttackItem] = useState<any | null>(null);
   const [attackModalData, setAttackModalData] = useState<any | null>(null);
   const [selectedItemForDetails, setSelectedItemForDetails] = useState<any | null>(null);
   
@@ -128,14 +149,12 @@ const CharacterDisplay = () => {
   // ✅ NEW: Spell casting state
   const [spellSlots, setSpellSlots] = useState<{[key: string]: number}>({});
   const [spellSlotsExpended, setSpellSlotsExpended] = useState<{[key: string]: number}>({});
-  const [spellSlotsRemaining, setSpellSlotsRemaining] = useState<{[key: string]: number}>({});
+  const [, setSpellSlotsRemaining] = useState<{[key: string]: number}>({});
   const [spellcasterLevel, setSpellcasterLevel] = useState<number>(0);
   const [spellcastingAbility, setSpellcastingAbility] = useState<string>('int');
   const [spellSaveDC, setSpellSaveDC] = useState<number>(10);
   const [spellAttackBonus, setSpellAttackBonus] = useState<number>(0);
   const [characterSpells, setCharacterSpells] = useState<any[]>([]);
-  const [isSpellCastModalOpen, setIsSpellCastModalOpen] = useState(false);
-  const [selectedSpellForCast, setSelectedSpellForCast] = useState<any | null>(null);
   
   // ✅ NEW: Spell preparation state
   const [spellPrepareLimit, setSpellPrepareLimit] = useState<number | null>(null);
@@ -143,14 +162,12 @@ const CharacterDisplay = () => {
   const [spellPrepareUnlimited, setSpellPrepareUnlimited] = useState<boolean>(false);
 
   // ✅ NEW: Class-based spell lists state
-  const [classSpellsByClass, setClassSpellsByClass] = useState<{[className: string]: {[level: number]: any[]}}>({});
-  const [activeSpellLevels, setActiveSpellLevels] = useState<{[className: string]: number}>({});
-  const [activeClassSpellTab, setActiveClassSpellTab] = useState<{[className: string]: 'available' | 'prepared'}>({});
-  const [classSpellLoading, setClassSpellLoading] = useState<{[className: string]: boolean}>({});
+  const [, setClassSpellsByClass] = useState<{[className: string]: {[level: number]: any[]}}>({});
+  const [, setActiveSpellLevels] = useState<{[className: string]: number}>({});
+  const [, setActiveClassSpellTab] = useState<{[className: string]: 'available' | 'prepared'}>({});
+  const [, setClassSpellLoading] = useState<{[className: string]: boolean}>({});
 
-  // ✅ Spell bulk preparation state
-  const [spellBulkSelectMode, setSpellBulkSelectMode] = useState(false);
-  const [selectedSpellsForBulk, setSelectedSpellsForBulk] = useState<Set<number>>(new Set());
+  // ✅ Spell bulk preparation state (unused - for future feature)
 
   // Navigation
   const goToMain = () => navigate('/');
@@ -202,13 +219,7 @@ const CharacterDisplay = () => {
     if (!id || saving) return;
     setSaving(true);
     try {
-      const response = await fetch(`http://127.0.0.1:8001/API/characters/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ level: localLevel, xp: localXp }),
-      });
-      if (!response.ok) throw new Error('Save failed');
-      const updated: Character = await response.json();
+      const updated = await updateCharacter(parseInt(id), { level: localLevel, xp: localXp });
       setCharacter(updated);
       alert('✅ Level & XP saved!');
     } catch (err: any) {
@@ -263,13 +274,7 @@ const CharacterDisplay = () => {
     if (!id || saving) return;
     setSaving(true);
     try {
-      const response = await fetch(`http://127.0.0.1:8001/API/characters/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ hpCurrent, hpTmp }),
-      });
-      if (!response.ok) throw new Error('Save failed');
-      const updated: Character = await response.json();
+      const updated = await updateCharacter(parseInt(id), { hpCurrent, hpTmp });
       setCharacter(updated);
       alert('✅ HP saved!');
     } catch (err: any) {
@@ -282,12 +287,10 @@ const CharacterDisplay = () => {
 
   // 📥 Load character (✅ FIXED: Fetch species traits)
   useEffect(() => {
-    const fetchCharacter = async () => {
+    const loadCharacter = async () => {
       if (!id) return;
       try {
-        const response = await fetch(`http://127.0.0.1:8001/API/characters/${id}`);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const data: Character = await response.json();
+        const data = await fetchCharacter(parseInt(id));
         
         // ✅ Fetch species traits if species exists
         if (data.species) {
@@ -327,7 +330,7 @@ const CharacterDisplay = () => {
         setLoading(false);
       }
     };
-    fetchCharacter();
+    loadCharacter();
   }, [id]);
 
   // 📥 Load items for modal
@@ -352,33 +355,24 @@ const CharacterDisplay = () => {
       if (!id || !character) return;
       try {
         // Load spell slots
-        const slotsResponse = await fetch(`http://127.0.0.1:8001/API/characters/${id}/spell-slots`);
-        if (slotsResponse.ok) {
-          const slotsData = await slotsResponse.json();
-          setSpellSlots(slotsData.spell_slots);
-          setSpellSlotsExpended(slotsData.spell_slots_expended);
-          setSpellSlotsRemaining(slotsData.spell_slots_remaining);
-          setSpellcasterLevel(slotsData.spellcaster_level);
-          setSpellcastingAbility(slotsData.spellcasting_ability);
-          setSpellSaveDC(slotsData.spell_save_dc);
-          setSpellAttackBonus(slotsData.spell_attack_bonus);
-        }
+        const slotsData = await fetchSpellSlots(parseInt(id));
+        setSpellSlots(slotsData.spell_slots);
+        setSpellSlotsExpended(slotsData.spell_slots_expended);
+        setSpellSlotsRemaining(slotsData.spell_slots_remaining);
+        setSpellcasterLevel(slotsData.spellcaster_level);
+        setSpellcastingAbility(slotsData.spellcasting_ability);
+        setSpellSaveDC(slotsData.spell_save_dc);
+        setSpellAttackBonus(slotsData.spell_attack_bonus);
         
         // Load character spells
-        const spellsResponse = await fetch(`http://127.0.0.1:8001/API/characters/${id}/spells`);
-        if (spellsResponse.ok) {
-          const spellsData = await spellsResponse.json();
-          setCharacterSpells(spellsData);
-        }
+        const spellsData = await fetchCharacterSpells(parseInt(id));
+        setCharacterSpells(spellsData);
         
         // ✅ NEW: Load prepare limit
-        const prepareResponse = await fetch(`http://127.0.0.1:8001/API/characters/${id}/prepare-limit`);
-        if (prepareResponse.ok) {
-          const prepareData = await prepareResponse.json();
-          setSpellPrepareLimit(prepareData.prepare_limit);
-          setSpellPreparedCount(prepareData.prepared_count);
-          setSpellPrepareUnlimited(prepareData.unlimited);
-        }
+        const prepareData = await fetchPrepareLimit(parseInt(id));
+        setSpellPrepareLimit(prepareData.prepare_limit);
+        setSpellPreparedCount(prepareData.prepared_count);
+        setSpellPrepareUnlimited(prepareData.unlimited);
       } catch (err) {
         console.error('Failed to load spell data:', err);
       }
@@ -399,22 +393,19 @@ const CharacterDisplay = () => {
         setClassSpellLoading(prev => ({ ...prev, [className]: true }));
         try {
           // Fetch spells available to this class
-          const response = await fetch(`http://127.0.0.1:8001/API/classes/${className}/spells`);
-          if (response.ok) {
-            const spells = await response.json();
-            // Group by spell level
-            const byLevel: {[level: number]: any[]} = {};
-            for (const spell of spells) {
-              const level = spell.level || 0;
-              if (!byLevel[level]) byLevel[level] = [];
-              byLevel[level].push(spell);
-            }
-            spellsByClass[className] = byLevel;
-            initialActiveLevels[className] = 0; // Default to cantrips tab
-            // ✅ FIX #2: Default to 'prepared' tab for prepared casters
-            const isPreparedCaster = ['Cleric', 'Druid', 'Paladin', 'Wizard'].includes(className);
-            initialActiveTabs[className] = isPreparedCaster ? 'prepared' : 'available';
+          const spells = await fetchClassSpells(className);
+          // Group by spell level
+          const byLevel: {[level: number]: any[]} = {};
+          for (const spell of spells) {
+            const level = spell.level || 0;
+            if (!byLevel[level]) byLevel[level] = [];
+            byLevel[level].push(spell);
           }
+          spellsByClass[className] = byLevel;
+          initialActiveLevels[className] = 0; // Default to cantrips tab
+          // ✅ FIX #2: Default to 'prepared' tab for prepared casters
+          const isPreparedCaster = ['Cleric', 'Druid', 'Paladin', 'Wizard'].includes(className);
+          initialActiveTabs[className] = isPreparedCaster ? 'prepared' : 'available';
         } catch (err) {
           console.error(`Failed to load spells for ${className}:`, err);
         } finally {
@@ -437,13 +428,7 @@ const CharacterDisplay = () => {
     if (!id || !localAbilityScores || saving) return;
     setSaving(true);
     try {
-      const response = await fetch(`http://127.0.0.1:8001/API/characters/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ abilityScores: localAbilityScores }),
-      });
-      if (!response.ok) throw new Error('Save failed');
-      const updatedCharacter: Character = await response.json();
+      const updatedCharacter = await updateCharacter(parseInt(id), { abilityScores: localAbilityScores });
       setCharacter(updatedCharacter);
       alert('✅ Ability scores saved!');
     } catch (err: any) {
@@ -457,13 +442,7 @@ const CharacterDisplay = () => {
   // Add item
   const addItem = async (item: { name: string; id?: number; [key: string]: any }, quantity: number = 1) => {
     try {
-      const response = await fetch(`http://127.0.0.1:8001/API/characters/${id}/items`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ itemID: item.id, quantity }),
-      });
-      if (!response.ok) throw new Error('Failed to add item');
-      const updatedCharacter: Character = await response.json();
+      const updatedCharacter = await addItemToCharacter(parseInt(id!), item.id!, quantity);
       setCharacter(updatedCharacter);
       alert(`✅ Added ${quantity} × ${item.name} to inventory`);
     } catch (err: any) {
@@ -482,45 +461,23 @@ const CharacterDisplay = () => {
         return;
       }
 
-      const response = await fetch(`http://127.0.0.1:8001/API/characters/${id}/spells`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ spellID: spellId }),
-      });
-      if (!response.ok) throw new Error('Failed to add spell');
-      
-      const result = await response.json();
+      await addSpellToCharacter(parseInt(id!), spellId);
       setIsSpellModalOpen(false);
       alert(`✅ Added ${spell.name} to spells`);
       
       // Refresh spell list
-      const spellsResponse = await fetch(`http://127.0.0.1:8001/API/characters/${id}/spells`);
-      if (spellsResponse.ok) {
-        const spellsData = await spellsResponse.json();
-        setCharacterSpells(spellsData);
-      }
+      const spellsData = await fetchCharacterSpells(parseInt(id!));
+      setCharacterSpells(spellsData);
     } catch (err: any) {
       console.error(err);
       alert('❌ Could not add spell: ' + err.message);
     }
   };
 
-  // Open spell details modal
-  const openSpellDetails = (spell: any) => {
-    setSelectedSpellForDetails(spell);
-    setIsSpellDetailsModalOpen(true);
-  };
-
   // Add one more of the same item
   const addMoreItem = async (item: any) => {
     try {
-      const response = await fetch(`http://127.0.0.1:8001/API/characters/${id}/items`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ itemID: item.id, quantity: 1 }),
-      });
-      if (!response.ok) throw new Error('Failed to add item');
-      const updatedCharacter: Character = await response.json();
+      const updatedCharacter = await addItemToCharacter(parseInt(id!), item.id, 1);
       setCharacter(updatedCharacter);
       alert(`✅ Added 1 more × ${item.name}`);
     } catch (err: any) {
@@ -533,12 +490,7 @@ const CharacterDisplay = () => {
   const deleteInventoryItem = async (inventoryId: number, itemName: string) => {
     if (!window.confirm(`Delete ${itemName} from inventory?`)) return;
     try {
-      const response = await fetch(`http://127.0.0.1:8001/API/characters/${id}/inventory/${inventoryId}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (!response.ok) throw new Error('Failed to delete item');
-      const updatedCharacter: Character = await response.json();
+      const updatedCharacter = await apiDeleteInventoryItem(parseInt(id!), inventoryId);
       setCharacter(updatedCharacter);
       alert(`✅ Deleted ${itemName}`);
     } catch (err: any) {
@@ -550,15 +502,7 @@ const CharacterDisplay = () => {
   // Remove 1 item from inventory
   const removeOneItem = async (inventoryId: number, itemName: string, quantity: number) => {
     try {
-      const response = await fetch(
-        `http://127.0.0.1:8001/API/characters/${id}/inventory/${inventoryId}/remove-one`,
-        {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
-      if (!response.ok) throw new Error('Failed to remove item');
-      const updatedCharacter: Character = await response.json();
+      const updatedCharacter = await apiRemoveOneItem(parseInt(id!), inventoryId);
       setCharacter(updatedCharacter);
       const message = quantity > 1
         ? `✅ Removed 1 × ${itemName} (${quantity - 1} remaining)`
@@ -573,16 +517,7 @@ const CharacterDisplay = () => {
   // Update item charges
   const updateItemCharges = async (inventoryId: number, newCharges: number) => {
     try {
-      const response = await fetch(
-        `http://127.0.0.1:8001/API/characters/${id}/inventory/${inventoryId}/charges`,
-        {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ currentCharges: newCharges }),
-        }
-      );
-      if (!response.ok) throw new Error('Failed to update charges');
-      const updatedCharacter: Character = await response.json();
+      const updatedCharacter = await apiUpdateItemCharges(parseInt(id!), inventoryId, newCharges);
       setCharacter(updatedCharacter);
     } catch (err: any) {
       console.error(err);
@@ -593,20 +528,11 @@ const CharacterDisplay = () => {
   // ✅ NEW: Expend spell slot
   const expendSpellSlot = async (level: number) => {
     try {
-      const response = await fetch(`http://127.0.0.1:8001/API/characters/${id}/spell-slots/expended`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ level, amount: 1 }),
-      });
-      if (response.ok) {
-        // Refresh spell slots
-        const slotsResponse = await fetch(`http://127.0.0.1:8001/API/characters/${id}/spell-slots`);
-        if (slotsResponse.ok) {
-          const slotsData = await slotsResponse.json();
-          setSpellSlotsRemaining(slotsData.spell_slots_remaining);
-          setSpellSlotsExpended(slotsData.spell_slots_expended);
-        }
-      }
+      await apiExpendSpellSlot(parseInt(id!), level, 1);
+      // Refresh spell slots
+      const slotsData = await fetchSpellSlots(parseInt(id!));
+      setSpellSlotsRemaining(slotsData.spell_slots_remaining);
+      setSpellSlotsExpended(slotsData.spell_slots_expended);
     } catch (err) {
       console.error('Failed to expend spell slot:', err);
     }
@@ -615,174 +541,30 @@ const CharacterDisplay = () => {
   // ✅ NEW: Toggle spell prepared status
   const toggleSpellPrepared = async (spellId: number) => {
     try {
-      const response = await fetch(`http://127.0.0.1:8001/API/characters/${id}/spells/${spellId}/prepare`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (response.ok) {
-        // Refresh spells and prepare limit
-        const spellsResponse = await fetch(`http://127.0.0.1:8001/API/characters/${id}/spells`);
-        if (spellsResponse.ok) {
-          const spellsData = await spellsResponse.json();
-          setCharacterSpells(spellsData);
-        }
-        
-        // Refresh prepare limit
-        const prepareResponse = await fetch(`http://127.0.0.1:8001/API/characters/${id}/prepare-limit`);
-        if (prepareResponse.ok) {
-          const prepareData = await prepareResponse.json();
-          setSpellPrepareLimit(prepareData.prepare_limit);
-          setSpellPreparedCount(prepareData.prepared_count);
-          setSpellPrepareUnlimited(prepareData.unlimited);
-        }
-      }
+      await apiToggleSpellPrepared(parseInt(id!), spellId);
+      // Refresh spells and prepare limit
+      const spellsData = await fetchCharacterSpells(parseInt(id!));
+      setCharacterSpells(spellsData);
+      
+      // Refresh prepare limit
+      const prepareData = await fetchPrepareLimit(parseInt(id!));
+      setSpellPrepareLimit(prepareData.prepare_limit);
+      setSpellPreparedCount(prepareData.prepared_count);
+      setSpellPrepareUnlimited(prepareData.unlimited);
     } catch (err) {
       console.error('Failed to toggle spell prepared:', err);
     }
   };
 
-  // ✅ Toggle single spell in bulk selection
-  const toggleSpellBulkSelection = (spellId: number) => {
-    setSelectedSpellsForBulk(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(spellId)) {
-        newSet.delete(spellId);
-      } else {
-        newSet.add(spellId);
-      }
-      return newSet;
-    });
-  };
-
-  // ✅ Select all visible spells
-  const selectAllVisibleSpells = () => {
-    const allSpellIds = new Set<number>();
-    Object.values(classSpellsByClass).forEach(classSpells => {
-      Object.values(classSpells).forEach(levelSpells => {
-        levelSpells.forEach((spell: any) => {
-          allSpellIds.add(spell.id);
-        });
-      });
-    });
-    setSelectedSpellsForBulk(allSpellIds);
-  };
-
-  // ✅ Deselect all spells
-  const deselectAllSpells = () => {
-    setSelectedSpellsForBulk(new Set());
-  };
-
-  // ✅ Bulk prepare spells
-  const bulkPrepareSpells = async () => {
-    if (selectedSpellsForBulk.size === 0) {
-      alert('No spells selected');
-      return;
-    }
-    try {
-      const spellIds = Array.from(selectedSpellsForBulk);
-      const response = await fetch(`http://127.0.0.1:8001/API/characters/${id}/spells/bulk-prepare`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ spellIDs: spellIds }),
-      });
-      
-      if (response.ok) {
-        alert(`✅ Prepared ${spellIds.length} spell(s)`);
-        setSelectedSpellsForBulk(new Set());
-        setSpellBulkSelectMode(false);
-        
-        // Refresh spells and prepare limit
-        const spellsResponse = await fetch(`http://127.0.0.1:8001/API/characters/${id}/spells`);
-        if (spellsResponse.ok) {
-          const spellsData = await spellsResponse.json();
-          setCharacterSpells(spellsData);
-        }
-        
-        const prepareResponse = await fetch(`http://127.0.0.1:8001/API/characters/${id}/prepare-limit`);
-        if (prepareResponse.ok) {
-          const prepareData = await prepareResponse.json();
-          setSpellPrepareLimit(prepareData.prepare_limit);
-          setSpellPreparedCount(prepareData.prepared_count);
-          setSpellPrepareUnlimited(prepareData.unlimited);
-        }
-      } else {
-        alert('❌ Failed to prepare spells');
-      }
-    } catch (err) {
-      console.error('Failed to bulk prepare spells:', err);
-      alert('❌ Error preparing spells');
-    }
-  };
-
-  // ✅ Bulk unprepare spells
-  const bulkUnprepareSpells = async () => {
-    if (selectedSpellsForBulk.size === 0) {
-      alert('No spells selected');
-      return;
-    }
-    try {
-      const spellIds = Array.from(selectedSpellsForBulk);
-      const response = await fetch(`http://127.0.0.1:8001/API/characters/${id}/spells/bulk-unprepare`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ spellIDs: spellIds }),
-      });
-      
-      if (response.ok) {
-        alert(`✅ Unprepared ${spellIds.length} spell(s)`);
-        setSelectedSpellsForBulk(new Set());
-        setSpellBulkSelectMode(false);
-        
-        // Refresh spells and prepare limit
-        const spellsResponse = await fetch(`http://127.0.0.1:8001/API/characters/${id}/spells`);
-        if (spellsResponse.ok) {
-          const spellsData = await spellsResponse.json();
-          setCharacterSpells(spellsData);
-        }
-        
-        const prepareResponse = await fetch(`http://127.0.0.1:8001/API/characters/${id}/prepare-limit`);
-        if (prepareResponse.ok) {
-          const prepareData = await prepareResponse.json();
-          setSpellPrepareLimit(prepareData.prepare_limit);
-          setSpellPreparedCount(prepareData.prepared_count);
-          setSpellPrepareUnlimited(prepareData.unlimited);
-        }
-      } else {
-        alert('❌ Failed to unprepare spells');
-      }
-    } catch (err) {
-      console.error('Failed to bulk unprepare spells:', err);
-      alert('❌ Error unpreparing spells');
-    }
-  };
-
-  // ✅ Helper to set active spell level for a class
-  const setActiveSpellLevel = (className: string, level: number) => {
-    setActiveSpellLevels(prev => ({ ...prev, [className]: level }));
-  };
-
-  // ✅ Helper to set active tab for class spells
-  const updateActiveClassSpellTab = (className: string, tab: 'available' | 'prepared') => {
-    setActiveClassSpellTab(prev => ({ ...prev, [className]: tab }));
-  };
-
   // ✅ NEW: Attune item (does NOT require equipment)
-  const attuneItem = async (inventoryId: number, itemName: string, itemData: any) => {
+  const attuneItem = async (inventoryId: number, itemName: string, _itemData: any) => {
     const attunedCount = getAttunedCount();
     if (attunedCount >= attunementSlotLimit) {
       alert(`❌ Cannot attune: You already have ${attunedCount} attuned items (max: ${attunementSlotLimit}). Unattune an item first.`);
       return;
     }
     try {
-      const response = await fetch(
-        `http://127.0.0.1:8001/API/characters/${id}/inventory/${inventoryId}/attune`,
-        {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
-      if (!response.ok) throw new Error('Failed to attune item');
-      const updatedCharacter: Character = await response.json();
+      const updatedCharacter = await apiAttuneItem(parseInt(id!), inventoryId);
       setCharacter(updatedCharacter);
       alert(`✅ ${itemName} attuned! (${attunedCount + 1}/${attunementSlotLimit})`);
     } catch (err: any) {
@@ -794,15 +576,7 @@ const CharacterDisplay = () => {
   // ✅ NEW: Unattune item
   const unattuneItem = async (inventoryId: number, itemName: string) => {
     try {
-      const response = await fetch(
-        `http://127.0.0.1:8001/API/characters/${id}/inventory/${inventoryId}/unattune`,
-        {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
-      if (!response.ok) throw new Error('Failed to unattune item');
-      const updatedCharacter: Character = await response.json();
+      const updatedCharacter = await apiUnattuneItem(parseInt(id!), inventoryId);
       setCharacter(updatedCharacter);
       alert(`✅ ${itemName} unattuned!`);
     } catch (err: any) {
@@ -820,15 +594,9 @@ const CharacterDisplay = () => {
     if (!window.confirm(`Delete ${selectedItemsForDelete.size} item(s)?`)) return;
     try {
       for (const inventoryId of selectedItemsForDelete) {
-        const response = await fetch(`http://127.0.0.1:8001/API/characters/${id}/inventory/${inventoryId}`, {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-        });
-        if (!response.ok) throw new Error(`Failed to delete item ${inventoryId}`);
+        await apiDeleteInventoryItem(parseInt(id!), inventoryId);
       }
-      const response = await fetch(`http://127.0.0.1:8001/API/characters/${id}`);
-      if (!response.ok) throw new Error('Failed to fetch updated character');
-      const updatedCharacter: Character = await response.json();
+      const updatedCharacter = await fetchCharacter(parseInt(id!));
       setCharacter(updatedCharacter);
       setIsBulkDeleteMode(false);
       setSelectedItemsForDelete(new Set());
@@ -936,15 +704,7 @@ const CharacterDisplay = () => {
   // ✅ Equip item
   const equipItem = async (inventoryId: number, itemName: string, itemData: any) => {
     try {
-      const response = await fetch(
-        `http://127.0.0.1:8001/API/characters/${id}/inventory/${inventoryId}/equip`,
-        {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
-      if (!response.ok) throw new Error('Failed to equip item');
-      const updatedCharacter: Character = await response.json();
+      const updatedCharacter = await apiEquipItem(parseInt(id!), inventoryId);
       setCharacter(updatedCharacter);
       setSelectedItemForDetails(null);
       
@@ -961,15 +721,7 @@ const CharacterDisplay = () => {
   // ✅ Unequip item
   const unequipItem = async (inventoryId: number, itemName: string) => {
     try {
-      const response = await fetch(
-        `http://127.0.0.1:8001/API/characters/${id}/inventory/${inventoryId}/unequip`,
-        {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
-      if (!response.ok) throw new Error('Failed to unequip item');
-      const updatedCharacter: Character = await response.json();
+      const updatedCharacter = await apiUnequipItem(parseInt(id!), inventoryId);
       setCharacter(updatedCharacter);
       setSelectedItemForDetails(null);
       alert(`✅ ${itemName} unequipped!`);
@@ -983,7 +735,6 @@ const CharacterDisplay = () => {
   const getACModifiers = (): Array<{ itemName: string; value: number; type: 'bonus' | 'penalty' | 'base' }> => {
     if (!character || !character.items) return [];
     const modifiers: Array<{ itemName: string; value: number; type: 'bonus' | 'penalty' | 'base' }> = [];
-    let hasArmor = false;
 
     for (const inv of character.items) {
       if (inv.is_equipped) {
@@ -1000,7 +751,6 @@ const CharacterDisplay = () => {
             value: item.property_data.ac_base,
             type: 'base',
           });
-          hasArmor = true;
         }
       }
     }
@@ -1153,28 +903,6 @@ const CharacterDisplay = () => {
               type: item.property_data.spell_attack_bonus_modifier >= 0 ? 'bonus' : 'penalty',
             });
           }
-        }
-      }
-    }
-
-    return modifiers;
-  };
-
-  const getAbilityModifiers = (abilityKey: string): Array<{ itemName: string; value: number; type: 'bonus' | 'penalty' | 'base' }> => {
-    if (!character || !character.items) return [];
-    const modifiers: Array<{ itemName: string; value: number; type: 'bonus' | 'penalty' | 'base' }> = [];
-
-    for (const inv of character.items) {
-      // ✅ Only count modifiers from equipped AND attuned items
-      if (inv.is_equipped && (inv.is_attuned || !requiresAttunement(inv))) {
-        const item = inv.item || inv;
-        if (item.property_data?.ability_modifiers?.[abilityKey]) {
-          const value = item.property_data.ability_modifiers[abilityKey];
-          modifiers.push({
-            itemName: item.name,
-            value: Math.abs(value),
-            type: value >= 0 ? 'bonus' : 'penalty',
-          });
         }
       }
     }
@@ -1376,11 +1104,8 @@ const CharacterDisplay = () => {
   useEffect(() => {
     const loadSpells = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:8001/API/spells');
-        if (response.ok) {
-          const spells = await response.json();
-          setAvailableSpells(spells);
-        }
+        const spells = await fetchAllSpells();
+        setAvailableSpells(spells);
       } catch (err) {
         console.error('Failed to load spells:', err);
       }
@@ -1559,14 +1284,14 @@ const CharacterDisplay = () => {
     const hasFinesse = properties.some((p: string) => p.includes('finesse'));
 
     if (hasFinesse) {
-      const strMod = getAbilityModifier(character.abilityScores?.str || 10);
-      const dexMod = getAbilityModifier(character.abilityScores?.dex || 10);
+      const strMod = getAbilityModifier(character?.abilityScores?.str || 10);
+      const dexMod = getAbilityModifier(character?.abilityScores?.dex || 10);
       const bestMod = Math.max(strMod, dexMod);
       const bestAbility = strMod >= dexMod ? 'STR' : 'DEX';
       return { modifier: bestMod, ability: bestAbility };
     }
 
-    const strMod = getAbilityModifier(character.abilityScores?.str || 10);
+    const strMod = getAbilityModifier(character?.abilityScores?.str || 10);
     return { modifier: strMod, ability: 'STR' };
   };
 
@@ -1628,28 +1353,6 @@ const CharacterDisplay = () => {
     const s = ["th", "st", "nd", "rd"];
     const v = n % 100;
     return n + (s[(v - 20) % 10] || s[v] || s[0]);
-  };
-
-  // ✅ Helper: Calculate damage for spell at given slot level
-  const getDamageForLevel = (spell: any, slotLevel: number) => {
-    if (!spell.damage_dice) return null;
-    // Spell can only be cast at or above spell level
-    if (slotLevel < spell.level) {
-      return null; // Can't cast above spell level
-    }
-    if (slotLevel === spell.level) {
-      return spell.damage_dice;
-    }
-    // Add upcast damage
-    const extraDice = slotLevel - spell.level;
-    const upcastDie = spell.upcast_damage_per_level || '1d6';
-    return `${spell.damage_dice} + ${extraDice}×${upcastDie}`;
-  };
-
-  // ✅ Helper: Check if slot is available
-  const hasAvailableSlot = (level: number) => {
-    if (level === 0) return true; // Cantrips don't use slots
-    return (spellSlotsRemaining[level] ?? 0) > 0;
   };
 
   // Render
@@ -2339,8 +2042,6 @@ const CharacterDisplay = () => {
                   const isEquipped = item.is_equipped || false;
                   const needsAttunement = requiresAttunement(item);
                   const isAttuned = isItemAttuned(item);
-                  const isAttunedAndFull = needsAttunement && attunedCount >= attunementSlotLimit && !isAttuned;
-                  const isWeapon = itemData.item_type === 'Weapon' || itemData.type === 'Weapon';
                   
                   return (
                     <div

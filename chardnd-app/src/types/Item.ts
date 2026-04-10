@@ -1,12 +1,12 @@
 export interface Item {
-    id : number; 
-    name : String;
-    desc: String;
+    id: number;
+    name: string;
+    desc: string;
     weight: number;
-    cost : number;
-    item_type: String;
-    item_category: String;
-    rarity : String;
+    cost: number;
+    item_type: string;
+    item_category: string;
+    rarity: string;
     properties?: string[];
     damageDice?: string;
     damageType?: string;

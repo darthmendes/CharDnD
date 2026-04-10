@@ -288,12 +288,19 @@ class ItemService:
             return {"success": False, "error": f"Failed to unequip item: {str(e)}"}
         
     @staticmethod
-    def attune_item(inventoryID: int, charID: int) -> dict:
+    def attune_item(inventoryID: int, charID: int, attunement_limit: int = 4) -> dict:
         """
         Attune a character to a magic item.
+        Validates attunement requirements and slot limits.
         """
         try:
             from Backend.models import session
+            from Backend.models.character import Character
+            
+            # Get character for attunement bonus check
+            char = session.query(Character).filter_by(id=charID).first()
+            if not char:
+                return {"success": False, "error": "Character not found"}
             
             inventory_item = session.query(CharacterInventory).filter_by(
                 id=inventoryID,
@@ -303,13 +310,45 @@ class ItemService:
             if not inventory_item:
                 return {"success": False, "error": "Inventory item not found"}
             
-            # Set attuned status
+            # Check if item requires attunement
+            item = inventory_item.item
+            requires_attunement = (
+                (item.property_data and item.property_data.get('requires_attunement', False)) or
+                (item.rarity and item.rarity in ['Rare', 'Very Rare', 'Legendary', 'Artifact'])
+            )
+            
+            if not requires_attunement:
+                return {"success": False, "error": "This item does not require attunement"}
+            
+            # Check if already attuned
+            if inventory_item.is_attuned:
+                return {"success": False, "error": "Item is already attuned"}
+            
+            # Count current attunements
+            attuned_count = session.query(CharacterInventory).filter_by(
+                characterID=charID,
+                is_attuned=True
+            ).count()
+            
+            # Check attunement limit (default 4, can be modified by character bonus)
+            if hasattr(char, 'attunementSlotBonus') and char.attunementSlotBonus:
+                attunement_limit += char.attunementSlotBonus
+            
+            if attuned_count >= attunement_limit:
+                return {
+                    "success": False, 
+                    "error": f"Attunement slot limit reached ({attuned_count}/{attunement_limit})",
+                    "attuned_count": attuned_count,
+                    "attunement_limit": attunement_limit
+                }
+            
+            # Attune the item
             inventory_item.is_attuned = True
             session.commit()
             
             return {
                 "success": True,
-                "message": f"{inventory_item.item.name} attuned successfully",
+                "message": f"{item.name} attuned successfully",
                 "inventoryID": inventoryID
             }
             
@@ -334,7 +373,11 @@ class ItemService:
             if not inventory_item:
                 return {"success": False, "error": "Inventory item not found"}
             
-            # Unset attuned status
+            # Check if already unattuned
+            if not inventory_item.is_attuned:
+                return {"success": False, "error": "Item is not attuned"}
+            
+            # Unattune the item
             inventory_item.is_attuned = False
             session.commit()
             

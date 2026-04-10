@@ -21,9 +21,9 @@ export interface Character {
   }>;
   level: number;
   xp: number;
-  abilityScores: { 
+  abilityScores: {
     str: number;
-    dex: number; 
+    dex: number;
     con: number;
     int: number;
     wis: number;
@@ -34,6 +34,8 @@ export interface Character {
   proficientWeapons?: string[];
   proficientTools?: string[];
   knownLanguages?: string[];
+  speciesSkills?: string[];
+  backgroundSkills?: string[];
   hitPoints?: number;
   attunementSlotBonus?: number;
 
@@ -43,7 +45,7 @@ export interface Character {
   ac?: number;
   initiative?: number;
   speed?: number;
-  savingThrows?: { [key: string]: number }; 
+  savingThrows?: { [key: string]: number };
   passivePerception?: number;
   traits?: Array<{
     name: string;
