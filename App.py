@@ -20,6 +20,7 @@ from Backend.services.ClassService import ClassService as DnDClass
 from Backend.services.ItemService import ItemService as Item
 from Backend.services.LanguageService import LanguageService as Language
 from Backend.services.SpellService import SpellService as Spell
+from Backend.services.MonsterService import MonsterService as Monster
 
 from Backend.constants import PACK_DEFINITIONS
 from Backend.config import FLASK_DEBUG, FLASK_PORT, CORS_ORIGINS, SECRET_KEY
@@ -617,6 +618,50 @@ def get_class_spells(class_name):
         return jsonify([spell.to_dict() for spell in spells]), HTTPStatus.OK
     except Exception as e:
         return jsonify({"error": str(e)}), HTTPStatus.INTERNAL_SERVER_ERROR
+
+################################################################
+# Monsters
+################################################################
+@app.route('/API/monsters', methods=['GET'])
+def list_monsters():
+    monsters = Monster.get_all()
+    # Convert SQLAlchemy objects to dicts for JSON response
+    return jsonify([m.to_dict() for m in monsters]), 200
+
+@app.route('/API/monsters', methods=['POST'])
+def create_monster():
+    if not request.is_json:
+        return jsonify({"success": False, "error": "Request must be JSON"}), 415
+    
+    result = Monster.new(request.get_json())
+    status = 201 if result["success"] else 400
+    return jsonify(result), status
+
+@app.route('/API/monsters/<int:monster_id>', methods=['GET'])
+def get_monster(monster_id):
+    monster = Monster.get_byID(monster_id)
+    if not monster:
+        return jsonify({"success": False, "error": "Monster not found"}), 404
+    return jsonify(monster.to_dict()), 200
+
+@app.route('/API/monsters/<int:monster_id>', methods=['PUT', 'PATCH'])
+def update_monster(monster_id):
+    monster = Monster.get_byID(monster_id)
+    if not monster:
+        return jsonify({"success": False, "error": "Monster not found"}), 404
+        
+    if not request.is_json:
+        return jsonify({"success": False, "error": "Request must be JSON"}), 415
+        
+    result = Monster.update(monster.name, **request.get_json())
+    status = 200 if result["success"] else 400
+    return jsonify(result), status
+
+@app.route('/API/monsters/<int:monster_id>', methods=['DELETE'])
+def delete_monster(monster_id):
+    result = Monster.delete(monster_id)
+    status = 200 if result["success"] else 404
+    return jsonify(result), status
 
 ################################################################
 # Misc

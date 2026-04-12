@@ -41,6 +41,7 @@ class Item(Base):
     background_entries = relationship("BackgroundEquipment", back_populates="item")
     item_choice = relationship("ItemChoice", back_populates="item")
     item_spells = relationship("ItemSpell", back_populates="item", cascade="all, delete-orphan")
+    monster_gear = relationship("MonsterGear", back_populates="item")
    
 
     def to_dict(self):

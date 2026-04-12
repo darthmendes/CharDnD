@@ -327,3 +327,22 @@ export const createItem = async (itemData: any): Promise<any> => {
   });
   return handleResponse(response);
 };
+
+export const createMonster = async (monsterData: Record<string, any>) => {
+  const response = await fetch(`${API_BASE}/monsters`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(monsterData),
+  });
+
+  return handleResponse(response);
+};
+
+export const fetchMonster = async (id: number) => {
+  const response = await fetch(`${API_BASE}/monsters/${id}`);
+  if (!response.ok) {
+    const errData = await response.json().catch(() => ({ message: 'Unknown error' }));
+    throw new Error(errData.message || 'Failed to fetch monster');
+  }
+  return response.json();
+};

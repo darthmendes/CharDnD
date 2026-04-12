@@ -28,6 +28,7 @@ from Backend.models.languages import Language
 from Backend.models.background import Background
 from Backend.models.features import Features
 from Backend.models.spells import Spell
+from Backend.models.monster import Monster
 from sqlalchemy import text
 
 # ============================================================================
@@ -46,6 +47,7 @@ CONFIG = {
     "items": True,
     "backgrounds": True,
     "proficiencies": False,  # Optional - often included in Features
+    "monsters": True,  # Optional - often included in Features
 }
 
 # ============================================================================
@@ -90,6 +92,8 @@ def get_table_counts():
         "Spells": Spell,
         "Items": Item,
         "Backgrounds": Background,
+        #"Proficiencies": Proficiencie,
+        "Monsters": Monster,
     }
     
     print("\n📊 Database Contents:")
@@ -268,6 +272,22 @@ def seed_proficiencies():
         session.rollback()
         raise
 
+def seed_monsters():
+    """Step 11 (Optional): Populate Monsters."""
+    if not CONFIG["monsters"]:
+        print_warning("Skipping: Monsters (disabled in config)")
+        return
+    
+    print_section_header("STEP 11: Populating Monsters")
+    try:
+        from populate.populate_monsters import add_monsters
+        add_monsters()
+        print_success("Monsters populated successfully!")
+    except Exception as e:
+        print_error(f"Failed to populate Monsters: {e}")
+        session.rollback()
+        raise
+
 # ============================================================================
 # === MAIN EXECUTION ===
 # ============================================================================
@@ -303,6 +323,7 @@ def main():
             ("Items", seed_items),
             ("Backgrounds", seed_backgrounds),
             ("Proficiencies", seed_proficiencies),
+            ("Monsters", seed_monsters),
         ]
         
         for step_name, step_func in steps:

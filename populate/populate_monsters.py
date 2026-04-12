@@ -1,8 +1,8 @@
 
-from Backend.models.monsters import Monster, MonsterGear, MonsterHabitat, MonsterSpell
+from Backend.models.monster import Monster, MonsterGear, MonsterHabitat, MonsterSpell
 from Backend.models import session
 
-cr1_2 = [
+monsters = [
     Monster(
         name = "Ape", page = 348,
         size = "Medium", creature_type = "Beast",
@@ -28,3 +28,18 @@ cr1_2 = [
         ]
     ),
 ]
+
+def add_monsters():
+    """Add monsters to DB, avoiding duplicates."""
+    existing_names = {item.name for item in session.query(Monster.name).all()}
+    new_monsters = [item for item in monsters if item.name not in existing_names]
+    
+    if new_monsters:
+        session.add_all(new_monsters)
+        session.commit()
+        print(f"[SUCCESS] Added {len(new_monsters)} monsters")
+    else:
+        print("[INFO] All monsters already exist.")
+
+if __name__ == "__main__":
+    add_monsters()

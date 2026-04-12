@@ -52,12 +52,7 @@ class Monster(Base):
     # === Traits & Actions (Stored as JSON for flexibility) ===
     traits = Column(JSON, default=list)  # Array of trait objects
     actions = Column(JSON, default=list)  # Array of action objects
-    bonus_actions = Column(JSON, default=list)
-    reactions = Column(JSON, default=list)
-    legendary_actions = Column(JSON, default=list)
-    lair_actions = Column(JSON, default=list)
-    mythic_actions = Column(JSON, default=list)  # Mordenkainen's monsters
-    
+
     # === Spellcasting (if applicable) ===
     spellcasting_ability = Column(String)  # "int", "wis", "cha"
     spell_save_dc = Column(Integer)
@@ -90,57 +85,105 @@ class Monster(Base):
     
     def to_dict(self):
         """Convert monster to dictionary for API responses."""
-        return {
-            'id': self.id,
-            'name': self.name,
-            'source': self.source,
-            'page': self.page,
-            'size': self.size,
-            'type': f"{self.creature_type} ({self.subtype})" if self.subtype else self.creature_type,
-            'alignment': self.alignment,
-            'cr': self.challenge_rating,
-            'xp': self.xp_value,
-            'ac': self.armor_class,
-            'ac_desc': self.armor_desc,
-            'hp': self.hit_points,
-            'hit_dice': self.hit_dice,
-            'speed': self.speeds,
-            'abilities': self.ability_scores,
-            'saving_throws': self.saving_throws,
-            'skills': self.skills,
-            'damage_vulnerabilities': self.damage_vulnerabilities,
-            'damage_resistances': self.damage_resistances,
-            'damage_immunities': self.damage_immunities,
-            'condition_immunities': self.condition_immunities,
-            'senses': self.senses,
-            'languages': self.languages,
-            'traits': self.traits,
-            'actions': self.actions,
-            'bonus_actions': self.bonus_actions,
-            'reactions': self.reactions,
-            'legendary_actions': self.legendary_actions,
-            'lair_actions': self.lair_actions,
-            'mythic_actions': self.mythic_actions,
-            'spellcasting': {
-                'ability': self.spellcasting_ability,
-                'save_dc': self.spell_save_dc,
-                'attack_bonus': self.spell_attack_bonus,
-                'spells_known': self.spells_known,
-                'spells_prepared': self.spells_prepared
-            } if self.spellcasting_ability else None,
-            'ecology': {
-                'habitat': self.habitat,
-                'climate': self.climate,
-                'organization': self.organization,
-                'treasure': self.treasure,
-                'description': self.description,
-                'special_lairs': self.special_lairs
-            },
-            'flags': {
-                'legendary': self.is_legendary,
-                'mythic': self.is_mythic,
-                'unique': self.is_unique
+        # Safely extract JSON fields with defaults
+        ability_scores = self.ability_scores or {}
+        speeds = self.speeds or {}
+        actions_data = self.actions or []
+        
+        # Transform actions: if it's a list (legacy), wrap in frontend-expected structure
+        # If it's already a dict with action types, use as-is
+        if isinstance(actions_data, list):
+            actions_structured = {
+                "actions": actions_data,
+                "bonus_actions": [],
+                "legendary_actions": [],
+                "reactions": []
             }
+        else:
+            actions_structured = actions_data
+        
+        # Helper to format speeds dict as D&D string: "30 ft., fly 60 ft. (hover)"
+        def format_speeds(speeds_dict: dict) -> str:
+            if not speeds_dict:
+                return "30 ft."
+            parts = []
+            if speeds_dict.get("walk"):
+                parts.append(f"{speeds_dict['walk']} ft.")
+            if speeds_dict.get("fly"):
+                fly_str = f"fly {speeds_dict['fly']} ft."
+                if speeds_dict.get("hover"):
+                    fly_str += " (hover)"
+                parts.append(fly_str)
+            if speeds_dict.get("swim"):
+                parts.append(f"swim {speeds_dict['swim']} ft.")
+            if speeds_dict.get("burrow"):
+                parts.append(f"burrow {speeds_dict['burrow']} ft.")
+            if speeds_dict.get("climb"):
+                parts.append(f"climb {speeds_dict['climb']} ft.")
+            return ", ".join(parts) if parts else "30 ft."
+
+        return {
+            # === Core Identification ===
+            "id": self.id,
+            "name": self.name,
+            "source": self.source or "MM",
+            "page": self.page,
+            
+            # === Stat Block Header ===
+            "size": self.size,
+            "type": self.creature_type,  # Map to frontend's expected 'type' field
+            "subtype": self.subtype,
+            "alignment": self.alignment or "",
+            "challenge_rating": str(self.challenge_rating) if self.challenge_rating is not None else "0",
+            "xp_value": self.xp_value,
+            
+            # === Defenses ===
+            "armor_class": self.armor_class or 10,
+            "armor_desc": self.armor_desc,
+            "hit_points": self.hit_points or 1,
+            "hit_dice": self.hit_dice,
+            "damage_vulnerabilities": self.damage_vulnerabilities or [],
+            "damage_resistances": self.damage_resistances or [],
+            "damage_immunities": self.damage_immunities or [],
+            "condition_immunities": self.condition_immunities or [],
+            
+            # === Movement ===
+            "speeds": speeds,  # Raw dict for advanced editing
+            
+            # === Ability Scores (flattened for frontend convenience) ===
+            "ability_scores": ability_scores,  # Also include raw JSON for full editing
+            
+            # === Proficiencies ===
+            "saving_throws": self.saving_throws or {},
+            "skills": self.skills or {},
+            
+            # === Senses & Languages ===
+            "senses": self.senses or {},
+            "languages": self.languages or [],
+            
+            # === Traits & Actions ===
+            "traits": self.traits or [],
+            "actions": actions_structured,  # Frontend-compatible structure
+            
+            # === Spellcasting ===
+            "spellcasting_ability": self.spellcasting_ability,
+            "spell_save_dc": self.spell_save_dc,
+            "spell_attack_bonus": self.spell_attack_bonus,
+            "spells_known": self.spells_known or [],
+            "spells_prepared": self.spells_prepared or [],
+            
+            # === Ecology & Lore ===
+            "habitat": self.habitat,
+            "climate": self.climate,
+            "organization": self.organization,
+            "treasure": self.treasure,
+            "description": self.description or "",
+            "special_lairs": self.special_lairs,
+            
+            # === Metadata ===
+            "is_legendary": bool(self.is_legendary),
+            "is_mythic": bool(self.is_mythic),
+            "is_unique": bool(self.is_unique),
         }
   
     

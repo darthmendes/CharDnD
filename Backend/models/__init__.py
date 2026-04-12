@@ -26,6 +26,7 @@ from .features import Features, FeatureLevel
 from .proficiencies import Proficiency, ProficiencyChoice, ProficiencyChoiceGroup
 from .languages import Language, LanguageChoice, LanguageChoiceGroup
 from .spells import Spell
+from .monster import Monster, MonsterGear, MonsterHabitat, MonsterSpell
 
 # Create all tables
 Base.metadata.create_all(engine)

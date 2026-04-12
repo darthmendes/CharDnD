@@ -27,24 +27,13 @@ function App() {
     }
   };
 
-  const goToItemCreator = () => {
-    navigate('items/creator');
-  }
-
-  const goToCharacterCreator = () => {
-    navigate('characters/creator');
-  }
-
   return (
     <>
-      <header>
-        <button onClick={goToItemCreator}>
-          Item Creator
-        </button>
-        <button onClick={goToCharacterCreator}>
-          Character Creator
-        </button>
-      </header>
+      <nav>
+        <button onClick={() => navigate('items/creator')}>Item Creator</button>
+        <button onClick={() => navigate('characters/creator')}>Character Creator</button>
+        <button onClick={() => navigate('monsters/creator')}>Monster Creator</button>
+      </nav>
       <div className="app">
         <HomePage />
       </div>

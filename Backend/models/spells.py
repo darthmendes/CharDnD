@@ -68,6 +68,7 @@ class Spell(Base):
     character_spells = relationship("CharacterSpell", back_populates="spell")
     item_spells = relationship("ItemSpell", back_populates="spell")
     class_spells = relationship("ClassSpell", back_populates="spell")
+    monster_spells = relationship("MonsterSpell", back_populates="spell")
     
     def to_dict(self):
         """Convert spell to dictionary for API responses."""
