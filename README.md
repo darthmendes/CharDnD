@@ -1,44 +1,36 @@
-# CharDnD
+# CharDnD 🐉
+A full-stack **Dungeons & Dragons 5th Edition** character creator and manager. Built with a Flask backend and a React + TypeScript frontend.
 
-A full-stack D&D 5e Character Creator and Manager with Flask backend and React frontend.
+![Python](https://img.shields.io/badge/Python-3.8+-blue?logo=python)
+![Flask](https://img.shields.io/badge/Flask-RESTful-green?logo=flask)
+![React](https://img.shields.io/badge/React-18-blue?logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue?logo=typescript)
+![License](https://img.shields.io/badge/License-All%20Rights%20Reserved-lightgrey)
 
-## Features
+## ✨ Features
+### 🛠️ Current
+- **Character Management:** Full CRUD operations with robust input validation (Ability scores: `1–30`, Levels: `1–20`)
+- **Multiclassing Support:** Seamlessly track multiple classes per character
+- **Inventory System:** Add, manage, and organize equipment & item packs
+- **Comprehensive Data Models:** Pre-loaded support for Species, Classes, Items, Features, and Proficiencies
+- **Modern Architecture:** Service-layer pattern, consistent error handling, and full type safety
 
-### Character Management
-- **CRUD Operations**: Create, Read, Update, Delete character sheets
-- **Validation**: Input validation for ability scores (1-30), levels (1-20), and required fields
-- **Multiclassing Support**: Track multiple classes per character
-- **Inventory System**: Add items and equipment packs to characters
+### 🚀 Planned
+- 🎲 Integrated dice roller with result history
+- ✨ Spell tracking & spell slot management
+- 📈 XP tracking & automated character leveling
+- 📜 Background system integration
+- 📊 Character sheet PDF export
 
-### Data Models
-- **Species**: Races with ability bonuses, traits, proficiencies, and languages
-- **Classes**: D&D classes with features, equipment, and hit dice
-- **Items**: Weapons, armor, and equipment with properties and rarity
-- **Features**: Character abilities and traits with level-based progression
-- **Proficiencies**: Skills, tools, armor, and weapon proficiencies
+## 🛠️ Tech Stack
+| Backend | Frontend |
+|---------|----------|
+| Python 3.8+ | React 18 |
+| Flask (REST API) | TypeScript |
+| SQLAlchemy (ORM) | Vite |
+| SQLite | React Router |
 
-### Planned Features
-- Spell tracking and spell slot management
-- Dice roller with results display
-- Character leveling and XP tracking
-- Background system integration
-
-## Tech Stack
-
-### Backend
-- **Flask**: RESTful API framework
-- **SQLAlchemy**: ORM for database management
-- **SQLite**: Database storage
-- **Python 3.8+**: Core language
-
-### Frontend
-- **React 18**: UI framework
-- **TypeScript**: Type-safe development
-- **Vite**: Build tool and dev server
-- **React Router**: Navigation
-
-## Project Structure
-
+## 📁 Project Structure
 ```
 CharDnD/
 ├── Backend/
@@ -46,126 +38,107 @@ CharDnD/
 │   ├── services/        # Business logic layer
 │   ├── Databases/       # SQLite database files
 │   ├── config.py        # Configuration management
-│   └── constants.py     # Constants and enums
+│   └── constants.py     # Constants & enums
 ├── chardnd-app/         # React frontend
 │   ├── src/
-│   │   ├── components/  # Reusable components
+│   │   ├── components/  # Reusable UI components
 │   │   ├── features/    # Feature modules
 │   │   ├── services/    # API client
-│   │   └── types/       # TypeScript types
-├── populate/            # Database population scripts
-├── App.py              # Flask application entry point
-└── requirements.txt    # Python dependencies
+│   │   └── types/       # TypeScript interfaces
+├── populate/            # Database seeding scripts
+├── App.py               # Flask application entry point
+└── requirements.txt     # Python dependencies
 ```
 
-## Setup Instructions
+## 🚀 Getting Started
+### 📋 Prerequisites
+- Python `3.8+`
+- Node.js `18+` & `npm`
+- Git
 
-### Backend Setup
+### 🔙 Backend Setup
+```bash
+# 1. Clone & navigate
+git clone <your-repo-url>
+cd CharDnD
 
-1. **Clone the repository**
-   ```bash
-   cd CharDnD
-   ```
+# 2. Create & activate virtual environment
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
 
-2. **Create virtual environment**
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
+# 3. Install dependencies
+pip install -r requirements.txt
 
-3. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
+# 4. Configure environment variables
+cp .env.example .env  # Edit .env with your settings
 
-4. **Configure environment**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your settings
-   ```
+# 5. Start the Flask server
+python App.py
+```
+🔗 Backend runs on: `http://localhost:8001`
 
-5. **Run the Flask server**
-   ```bash
-   python App.py
-   ```
-   Server runs on `http://localhost:8001`
+### 🎨 Frontend Setup
+```bash
+# 1. Navigate to frontend directory
+cd chardnd-app
 
-### Frontend Setup
+# 2. Install dependencies
+npm install
 
-1. **Navigate to frontend directory**
-   ```bash
-   cd chardnd-app
-   ```
+# 3. Start development server
+npm run dev
+```
+🔗 Frontend runs on: `http://localhost:5173`
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Run development server**
-   ```bash
-   npm run dev
-   ```
-   Frontend runs on `http://localhost:5173`
-
-### Database Population
-
-Populate the database with D&D 5e data:
+### 🗄️ Database Population
+Seed the database with D&D 5e reference data:
 ```bash
 python populate/populate_speciesDB.py
 python populate/populate_classesDB.py
 python populate/populate_itemDB.py
-# ... run other populate scripts as needed
+# Run additional population scripts as needed
 ```
 
-## API Endpoints
+## 🌐 API Endpoints
+All endpoints return JSON responses following a consistent structure:  
+`{ "success": boolean, "data": ..., "error": ... }`
 
-### Characters
-- `POST /API/characters/creator` - Create character
-- `GET /API/characters` - List all characters
-- `GET /API/characters/<id>` - Get character details
-- `DELETE /API/characters/<id>` - Delete character
-- `POST /API/characters/<id>/items` - Add item to inventory
+| Resource | Method | Endpoint | Description |
+|----------|--------|----------|-------------|
+| **Characters** | `POST` | `/API/characters/creator` | Create a new character |
+| | `GET` | `/API/characters` | List all characters |
+| | `GET` | `/API/characters/<id>` | Get character details |
+| | `DELETE` | `/API/characters/<id>` | Delete a character |
+| | `POST` | `/API/characters/<id>/items` | Add item to inventory |
+| **Species** | `POST` | `/API/species/creator` | Create species entry |
+| | `GET` | `/API/species` | List all species |
+| | `GET` | `/API/species/<id>` | Get species details |
+| | `DELETE` | `/API/species/<id>` | Delete species entry |
+| **Classes** | `POST` | `/API/classes/creator` | Create class entry |
+| | `GET` | `/API/classes` | List all classes |
+| | `GET` | `/API/classes/<id>` | Get class details |
+| | `DELETE` | `/API/classes/<id>` | Delete class entry |
+| **Items** | `POST` | `/API/items/creator` | Create item entry |
+| | `GET` | `/API/items` | List all items |
+| | `GET` | `/API/items/<id>` | Get item details |
+| | `DELETE` | `/API/items/<id>` | Delete item entry |
 
-### Species
-- `POST /API/species/creator` - Create species
-- `GET /API/species` - List all species
-- `GET /API/species/<id>` - Get species details
-- `DELETE /API/species/<id>` - Delete species
+## 🏗️ Architecture & Development Notes
+- **Service Layer Pattern:** Business logic is strictly separated from route handlers for better testability and maintainability.
+- **Consistent Error Handling:** All services return standardized responses with explicit success/error states.
+- **Type Safety:** Enforced via Python type hints and TypeScript interfaces.
+- **Cross-Platform Compatibility:** File paths use `os.path.join` to ensure Windows/macOS/Linux compatibility.
+- **Best Practices Applied:**
+  - Input validation & sanitization
+  - Proper HTTP status codes
+  - Environment-based configuration
+  - Comprehensive docstrings
+  - Transaction rollback & error handling
+  - Environment-specific CORS configuration
 
-### Classes
-- `POST /API/classes/creator` - Create class
-- `GET /API/classes` - List all classes
-- `GET /API/classes/<id>` - Get class details
-- `DELETE /API/classes/<id>` - Delete class
+## 🤝 Contributing
+This is primarily a personal learning project designed to explore modern full-stack development and OOP principles. Contributions, feedback, and pull requests are welcome! Please open an issue before submitting major changes.
 
-### Items
-- `POST /API/items/creator` - Create item
-- `GET /API/items` - List all items
-- `GET /API/items/<id>` - Get item details
-- `DELETE /API/items/<id>` - Delete item
-
-## Development Notes
-
-### Architecture
-- **Service Layer Pattern**: Business logic separated from routes
-- **Consistent Error Handling**: All services return `{success: bool, data/error: ...}`
-- **Type Safety**: Python type hints and TypeScript interfaces
-- **Cross-Platform**: Uses `os.path.join` for file paths
-
-### Best Practices Applied
-- Input validation and sanitization
-- Proper HTTP status codes
-- Environment-based configuration
-- Comprehensive docstrings
-- Error handling and rollback
-- CORS configuration per environment
-
-## Contributing
-
-This is a personal learning project following OOP principles and modern web development practices.
-
-## License
-
-Personal project - All rights reserved
-
+## 📜 License
+© 2024-2026 CharDnD. All rights reserved.  
+*This project is for personal/educational use and is not affiliated with or endorsed by Wizards of the Coast or D&D Beyond.*
