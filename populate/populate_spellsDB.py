@@ -15418,10 +15418,10 @@ def add_spells(level, spells_to_add):
         session.add_all(new_spells)
         session.commit()
         print(f"[SUCCESS] Added {len(new_spells)} {level} spells")
-        print(f"✅ Properties format: Simple keywords only")
-        print(f"✅ Property data stored in property_data JSON field")
-        print(f"✅ Skill modifiers structured for frontend display")
-        print(f"✅ Attunement requirements properly flagged")
+        print(f"[NOTE] Properties format: Simple keywords only")
+        print(f"[NOTE] Property data stored in property_data JSON field")
+        print(f"[NOTE] Skill modifiers structured for frontend display")
+        print(f"[NOTE] Attunement requirements properly flagged")
     else:
         print("[INFO] All spells already exist.")
 

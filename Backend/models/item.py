@@ -18,10 +18,10 @@ class Item(Base):
     weight = Column(Integer, default=0)
     cost = Column(Integer, default=0)
     
-    # ✅ Weapon properties (simple keywords only)
+    # [NOTE] Weapon properties (simple keywords only)
     properties = Column(JSON, default=list)
     
-    # ✅ NEW: Property metadata (all extra data in one JSON field)
+    # [NEW] Property metadata (all extra data in one JSON field)
     property_data = Column(JSON, default=dict)
     
     # Weapon-specific fields
@@ -55,7 +55,7 @@ class Item(Base):
             'weight': self.weight,
             'cost': self.cost,
             'properties': self.properties or [],
-            'property_data': self.property_data or {},  # ✅ NEW
+            'property_data': self.property_data or {},  # [NEW] Added
             'damage_dice': self.damage_dice,
             'damage_type': self.damage_type,
             'special_abilities': self.special_abilities or [],

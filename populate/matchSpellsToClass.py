@@ -1174,13 +1174,13 @@ lvl9_mapping = {
 
 def seed_class_spells_manual(db: Session, SPELL_CLASS_MAPPING):
     """Manually seed class-spell relationships using verified mappings."""
-    print("🔗 Starting manual class-spell relationship seeding...")
+    print("[INFO] Starting manual class-spell relationship seeding...")
     
     # Fetch classes and spells from DB
     db_classes = {c.name: c.id for c in db.query(DnDclass).all()}
     db_spells = {s.name: s.id for s in db.query(Spell).all()}
     
-    print(f"💾 Found {len(db_classes)} classes and {len(db_spells)} spells in database")
+    print(f"[INFO] Found {len(db_classes)} classes and {len(db_spells)} spells in database")
     
     created = 0
     skipped = 0
@@ -1189,7 +1189,7 @@ def seed_class_spells_manual(db: Session, SPELL_CLASS_MAPPING):
     for spell_name, class_configs in SPELL_CLASS_MAPPING.items():
         spellID = db_spells.get(spell_name)
         if not spellID:
-            print(f"⚠️  Spell not in DB: {spell_name}")
+            print(f"[WARNING] Spell not in DB: {spell_name}")
             errors += 1
             continue
         
@@ -1198,7 +1198,7 @@ def seed_class_spells_manual(db: Session, SPELL_CLASS_MAPPING):
             classID = db_classes.get(class_name)
             
             if not classID:
-                print(f"⚠️  Class not in DB: {class_name}")
+                print(f"[WARNING] Class not in DB: {class_name}")
                 errors += 1
                 continue
             
@@ -1232,7 +1232,7 @@ def seed_class_spells_manual(db: Session, SPELL_CLASS_MAPPING):
     
     db.commit()
     
-    print(f"\n✅ Manual seeding complete!")
+    print(f"\n[SUCCESS] Manual seeding complete!")
     print(f"   Created: {created} relationships")
     print(f"   Skipped: {skipped} existing")
     print(f"   Errors: {errors} (missing spells/classes)")
@@ -1252,7 +1252,7 @@ def seed_class_spells_manual(db: Session, SPELL_CLASS_MAPPING):
 #         seed_class_spells_manual(db)
 #     except Exception as e:
 #         db.rollback()
-#         print(f"❌ Error: {e}")
+#         print(f"[ERROR] Error: {e}")
 #         raise
 #     finally:
 #         db.close()
@@ -1274,7 +1274,7 @@ def make_all_matches():
         seed_class_spells_manual(db, lvl9_mapping)
     except Exception as e:
         db.rollback()
-        print(f"❌ Error: {e}")
+        print(f"[ERROR] Error: {e}")
         raise
     finally:
         db.close()

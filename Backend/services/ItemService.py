@@ -159,7 +159,7 @@ class ItemService:
                 inv_entry.current_charges = item.max_charges
             session.add(inv_entry)
 
-    # ✅ NEW: Delete inventory item
+    # [NOTE] Delete inventory item
     @classmethod
     def delete_inventory_item(cls, inventoryID: int, charID: int) -> Dict[str, Any]:
         try:
@@ -176,7 +176,7 @@ class ItemService:
             session.rollback()
             return {"success": False, "error": f"Failed to delete item: {str(e)}"}
 
-    # ✅ NEW: Update item charges
+    # [NOTE] Update item charges
     @classmethod
     def update_item_charges(cls, inventoryID: int, charID: int, new_charges: int) -> Dict[str, Any]:
         try:
@@ -199,7 +199,7 @@ class ItemService:
             session.rollback()
             return {"success": False, "error": f"Failed to update charges: {str(e)}"}
 
-    # ✅ NEW: Remove one item from inventory
+    # [NOTE] Remove one item from inventory
     @classmethod
     def remove_one_item(cls, inventoryID: int, charID: int) -> Dict[str, Any]:
         try:
@@ -223,7 +223,7 @@ class ItemService:
             session.rollback()
             return {"success": False, "error": f"Failed to remove item: {str(e)}"}
 
-    # ✅ NEW: Equip armor/shield item
+    # [NOTE] Equip armor/shield item
     @classmethod
     def equip_item(cls, inventoryID: int, charID: int) -> Dict[str, Any]:
         try:
@@ -269,7 +269,7 @@ class ItemService:
             session.rollback()
             return {"success": False, "error": f"Failed to equip item: {str(e)}"}
 
-    # ✅ NEW: Unequip armor/shield item
+    # [NOTE] Unequip armor/shield item
     @classmethod
     def unequip_item(cls, inventoryID: int, charID: int) -> Dict[str, Any]:
         try:

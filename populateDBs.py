@@ -47,7 +47,8 @@ CONFIG = {
     "items": True,
     "backgrounds": True,
     "proficiencies": False,  # Optional - often included in Features
-    "monsters": True,  # Optional - often included in Features
+    "monsters": True,  
+    "subclass": True,  
 }
 
 # ============================================================================
@@ -62,15 +63,15 @@ def print_section_header(title: str):
 
 def print_success(message: str):
     """Print a success message."""
-    print(f"✅ {message}")
+    print(f"[SUCCESS] {message}")
 
 def print_error(message: str):
     """Print an error message."""
-    print(f"❌ {message}")
+    print(f"[ERROR] {message}")
 
 def print_warning(message: str):
     """Print a warning message."""
-    print(f"⚠️  {message}")
+    print(f"[WARNING] {message}")
 
 def verify_database_connection():
     """Test database connection before starting."""
@@ -96,7 +97,7 @@ def get_table_counts():
         "Monsters": Monster,
     }
     
-    print("\n📊 Database Contents:")
+    print("\n[INFO] Database Contents:")
     print("-" * 40)
     for name, model in tables.items():
         try:
@@ -288,6 +289,23 @@ def seed_monsters():
         session.rollback()
         raise
 
+def seed_subclasses():
+    """Step 12 (Optional): Populate Subclasses."""
+    if not CONFIG["subclass"]:
+        print_warning("Skipping: Subclasses (disabled in config)")
+        return
+    
+    print_section_header("STEP 12: Populating Subclasses")
+    try:
+        from populate.populate_subclassDB import populate_subclasses
+        populate_subclasses()
+        print_success("Subclasses populated successfully!")
+    except Exception as e:
+        print_error(f"Failed to populate Subclasses: {e}")
+        session.rollback()
+        raise
+
+
 # ============================================================================
 # === MAIN EXECUTION ===
 # ============================================================================
@@ -296,9 +314,9 @@ def main():
     """Master function to run all seeding operations."""
     
     start_time = datetime.now()
-    print("\n" + "🎲" * 40)
+    print("\n" + "=" * 40)
     print("  D&D 5e DATABASE POPULATION MASTER SCRIPT")
-    print("🎲" * 40 + "\n")
+    print("=" * 40 + "\n")
     print(f"Started at: {start_time.strftime('%Y-%m-%d %H:%M:%S')}\n")
     
     # Verify database connection
@@ -324,6 +342,7 @@ def main():
             ("Backgrounds", seed_backgrounds),
             ("Proficiencies", seed_proficiencies),
             ("Monsters", seed_monsters),
+            ("Subclass", seed_subclasses),
         ]
         
         for step_name, step_func in steps:
@@ -335,7 +354,7 @@ def main():
                 print_error(f"Step '{step_name}' failed: {e}")
                 
                 # Ask if user wants to continue
-                response = input(f"\n❌ {step_name} failed. Continue anyway? (y/n): ")
+                response = input(f"\n[ERROR] {step_name} failed. Continue anyway? (y/n): ")
                 if response.lower() != 'y':
                     print_warning("Aborting database population...")
                     break
@@ -343,16 +362,16 @@ def main():
         # Commit all successful changes
         if successful_steps:
             session.commit()
-            print_success("\n💾 All changes committed to database!")
+            print_success("\n[DATABASE] All changes committed to database!")
         
         # Final summary
         print_section_header("POPULATION SUMMARY")
-        print(f"✅ Successful: {len(successful_steps)} steps")
+        print(f"[SUCCESS] Successful: {len(successful_steps)} steps")
         for step in successful_steps:
             print(f"   • {step}")
         
         if failed_steps:
-            print(f"\n❌ Failed: {len(failed_steps)} steps")
+            print(f"\n[ERROR] Failed: {len(failed_steps)} steps")
             for step in failed_steps:
                 print(f"   • {step}")
         
@@ -362,22 +381,22 @@ def main():
         # End time
         end_time = datetime.now()
         duration = end_time - start_time
-        print(f"\n⏱️  Total execution time: {duration}")
+        print(f"\n[INFO] Total execution time: {duration}")
         print(f"Completed at: {end_time.strftime('%Y-%m-%d %H:%M:%S')}\n")
         
     except KeyboardInterrupt:
-        print_warning("\n\n⚠️  Process interrupted by user!")
+        print_warning("\n\n[WARNING] Process interrupted by user!")
         session.rollback()
         sys.exit(1)
         
     except Exception as e:
-        print_error(f"\n\n❌ CRITICAL ERROR: {e}")
+        print_error(f"\n\n[ERROR] CRITICAL ERROR: {e}")
         session.rollback()
         sys.exit(1)
         
     finally:
         session.close()
-        print("🔒 Database session closed.\n")
+        print("[INFO] Database session closed.\n")
 
 if __name__ == "__main__":
     main()

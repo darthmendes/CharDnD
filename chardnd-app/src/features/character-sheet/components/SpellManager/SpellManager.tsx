@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import styles from './SpellManager.module.css';
 import SpellCastModal from '../SpellModal/SpellModal';
-// import SpellDetailsModal from '../SpellModal/SpellDetailsModal'; // ✅ TODO: Fix path
+// import SpellDetailsModal from '../SpellModal/SpellDetailsModal'; // [NOTE] TODO: Fix path
 
 interface SpellManagerProps {
   characterSpells: any[];
@@ -34,19 +34,19 @@ const SpellManager: React.FC<SpellManagerProps> = ({
   const [activeTab, setActiveTab] = useState<'known' | 'prepared'>('known');
   const [expandedSpellId, setExpandedSpellId] = useState<number | null>(null);
   
-  // ✅ NEW: Modal states
+  // [NOTE] NEW: Modal states
   const [isSpellCastModalOpen, setIsSpellCastModalOpen] = useState(false);
   const [selectedSpellForCast, setSelectedSpellForCast] = useState<any | null>(null);
   
-  // ✅ BULK OPERATIONS: Selection state
+  // [NOTE] BULK OPERATIONS: Selection state
   const [isBulkSelectMode, setIsBulkSelectMode] = useState(false);
   const [selectedSpellIds, setSelectedSpellIds] = useState<Set<number>>(new Set());
 
-  // ✅ FILTER & SORT: State for spell filtering and sorting
+  // [NOTE] FILTER & SORT: State for spell filtering and sorting
   const [sortBy, setSortBy] = useState<'name' | 'level-asc' | 'level-desc'>('level-asc');
   const [levelFilters, setLevelFilters] = useState<Set<number>>(new Set([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]));
 
-  // ✅ FILTER & SORT: Apply filtering and sorting to spells
+  // [NOTE] FILTER & SORT: Apply filtering and sorting to spells
   const applyFilterAndSort = (spells: any[]) => {
     // First, filter by selected levels
     let filtered = spells.filter(cs => {
@@ -74,7 +74,7 @@ const SpellManager: React.FC<SpellManagerProps> = ({
     return filtered;
   };
 
-  // ✅ FILTER & SORT: Toggle level filter
+  // [NOTE] FILTER & SORT: Toggle level filter
   const toggleLevelFilter = (level: number) => {
     const newSet = new Set(levelFilters);
     if (newSet.has(level)) {
@@ -90,7 +90,7 @@ const SpellManager: React.FC<SpellManagerProps> = ({
     ? characterSpells.filter(cs => {
         // Must have id and spell object
         if (!cs || !cs.id || !cs.spell) return false;
-        // ✅ EXCLUDE CANTRIPS (level 0) from known spells
+        // [NOTE] EXCLUDE CANTRIPS (level 0) from known spells
         if (cs.spell.level === 0) return false;
         return true;
       })
@@ -101,7 +101,7 @@ const SpellManager: React.FC<SpellManagerProps> = ({
     return cs.is_prepared === true;
   });
 
-  // ✅ FILTER & SORT: Apply filters and sorting
+  // [NOTE] FILTER & SORT: Apply filters and sorting
   const knownSpells = applyFilterAndSort(allKnownSpells);
   const preparedSpells = applyFilterAndSort(allPreparedSpells);
 
@@ -127,7 +127,7 @@ const SpellManager: React.FC<SpellManagerProps> = ({
     setSelectedSpellForCast(null);
   };
 
-  // ✅ BULK OPERATIONS
+  // [NOTE] BULK OPERATIONS
   const toggleBulkSelection = (spellId: number) => {
     const newSet = new Set(selectedSpellIds);
     if (newSet.has(spellId)) {
@@ -165,7 +165,7 @@ const SpellManager: React.FC<SpellManagerProps> = ({
     return n + (s[(v - 20) % 10] || s[v] || s[0]);
   };
 
-  // ✅ Get source badge color and label
+  // [NOTE] Get source badge color and label
   const getSourceBadge = (source: string) => {
     const sourceMap: { [key: string]: { label: string; color: string } } = {
       class: { label: 'Class', color: '#4a90e2' },
@@ -189,7 +189,7 @@ const SpellManager: React.FC<SpellManagerProps> = ({
         backgroundColor: isSelected ? '#e3f2fd' : 'transparent'
       }}>
         <div className={styles.spellHeader}>
-          {/* ✅ BULK: Checkbox when in bulk mode */}
+          {/* [NOTE] BULK: Checkbox when in bulk mode */}
           {isBulkSelectMode && (
             <input
               type="checkbox"
@@ -212,8 +212,8 @@ const SpellManager: React.FC<SpellManagerProps> = ({
               <span className={styles.spellLevel}>
                 {spell.level === 0 ? 'Cantrip' : `${getOrdinal(spell.level)} Level`}
               </span>
-              {spell.concentration && <span className={styles.concentration}>⚠️ Conc.</span>}
-              {/* ✅ NEW: Source badge */}
+              {spell.concentration && <span className={styles.concentration}>Conc.</span>}
+              {/* [NOTE] NEW: Source badge */}
               <span 
                 className={styles.sourceBadge}
                 style={{ backgroundColor: sourceBadge.color }}
@@ -234,7 +234,7 @@ const SpellManager: React.FC<SpellManagerProps> = ({
                 }}
                 title="Cast this spell"
               >
-                ✨ Cast
+                Cast
               </button>
             )}
             {!charSpell.always_prepared && !isBulkSelectMode && (
@@ -247,12 +247,12 @@ const SpellManager: React.FC<SpellManagerProps> = ({
                 title={charSpell.is_prepared ? 'Unprepare spell' : 'Prepare spell'}
                 disabled={!charSpell.is_prepared && !canPrepareMore && activeTab === 'known'}
               >
-                {charSpell.is_prepared ? '★ Prepared' : '☆ Prepare'}
+                {charSpell.is_prepared ? 'Prepared' : 'Prepare'}
               </button>
             )}
             {charSpell.always_prepared && (
               <span className={styles.alwaysPrepared} title="Always prepared">
-                ⭐ Always Prepared
+                Always Prepared
               </span>
             )}
           </div>
@@ -332,16 +332,16 @@ const SpellManager: React.FC<SpellManagerProps> = ({
           className={`${styles.tab} ${activeTab === 'known' ? styles.active : ''}`}
           onClick={() => setActiveTab('known')}
         >
-          📖 Known ({knownSpells.length})
+          [BOOK] Known ({knownSpells.length})
         </button>
         <button
           className={`${styles.tab} ${activeTab === 'prepared' ? styles.active : ''}`}
           onClick={() => setActiveTab('prepared')}
         >
-          ★ Prepared ({preparedSpells.length})
+          Prepared ({preparedSpells.length})
         </button>
         
-        {/* ✅ BULK: Bulk select button */}
+        {/* [NOTE] BULK: Bulk select button */}
         <button
           className={styles.bulkSelectBtn}
           onClick={() => {
@@ -359,11 +359,11 @@ const SpellManager: React.FC<SpellManagerProps> = ({
             fontWeight: 'bold',
           }}
         >
-          {isBulkSelectMode ? '✔ Bulk Select Mode' : 'Bulk Select'}
+          {isBulkSelectMode ? '[CHECK] Bulk Select Mode' : 'Bulk Select'}
         </button>
       </div>
 
-      {/* ✅ FILTER & SORT: Controls for sorting and filtering */}
+      {/* [NOTE] FILTER & SORT: Controls for sorting and filtering */}
       <div style={{
         display: 'flex',
         gap: '1.5rem',
@@ -430,7 +430,7 @@ const SpellManager: React.FC<SpellManagerProps> = ({
         </div>
       </div>
 
-      {/* ✅ BULK: Controls when in bulk mode */}
+      {/* [NOTE] BULK: Controls when in bulk mode */}
       {isBulkSelectMode && (
         <div style={{
           padding: '1rem',
@@ -522,7 +522,7 @@ const SpellManager: React.FC<SpellManagerProps> = ({
         )}
       </div>
 
-      {/* ✅ Spell Cast Modal (existing) */}
+      {/* [NOTE] Spell Cast Modal (existing) */}
       <SpellCastModal
         isOpen={isSpellCastModalOpen}
         onClose={handleCloseSpellModal}

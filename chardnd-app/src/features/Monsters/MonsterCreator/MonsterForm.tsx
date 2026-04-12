@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import styles from '../../character-creator/CharacterCreator.module.css';
 import { createMonster } from '../../../services/api';
 
-// ✅ D&D 5e Valid Options
+// [NOTE] D&D 5e Valid Options
 const VALID_SIZES = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan'] as const;
 const VALID_TYPES = [
   'Aberration', 'Beast', 'Celestial', 'Construct', 'Dragon', 'Elemental',
@@ -26,7 +26,7 @@ type MonsterSize = typeof VALID_SIZES[number] | '';
 type MonsterType = typeof VALID_TYPES[number] | '';
 type MonsterAlignment = typeof VALID_ALIGNMENTS[number] | '';
 
-// ✅ Action Types
+// [NOTE] Action Types
 interface MonsterAction {
   name: string;
   description: string;
@@ -41,7 +41,7 @@ interface MonsterActions {
   reactions: MonsterAction[];
 }
 
-// ✅ Speed sub-structure for JSON storage
+// [NOTE] Speed sub-structure for JSON storage
 interface MonsterSpeeds {
   walk?: number;
   swim?: number;
@@ -88,7 +88,7 @@ const MonsterForm: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // ✅ Helper: Format speeds object into D&D display string
+  // [NOTE] Helper: Format speeds object into D&D display string
   const formatSpeedDisplay = useMemo(() => {
     const s = formData.speeds;
     const parts: string[] = [];
@@ -100,7 +100,7 @@ const MonsterForm: React.FC = () => {
     return parts.length > 0 ? parts.join(', ') : '0 ft.';
   }, [formData.speeds]);
 
-  // ✅ Standard Field Handlers
+  // [NOTE] Standard Field Handlers
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
@@ -112,7 +112,7 @@ const MonsterForm: React.FC = () => {
     }));
   };
 
-  // ✅ Speed Field Handler (structured JSON)
+  // [NOTE] Speed Field Handler (structured JSON)
   const handleSpeedChange = (type: keyof MonsterSpeeds, value: string | boolean) => {
     setFormData(prev => {
       const newSpeeds = { ...prev.speeds };
@@ -131,7 +131,7 @@ const MonsterForm: React.FC = () => {
     if (e.key === '-' || e.key === 'e' || e.key === 'E') e.preventDefault();
   };
 
-  // ✅ Action Array Handlers
+  // [NOTE] Action Array Handlers
   const addAction = (type: keyof MonsterActions) => {
     setFormData(prev => ({
       ...prev,
@@ -160,7 +160,7 @@ const MonsterForm: React.FC = () => {
     });
   };
 
-  // ✅ Submit Handler
+  // [NOTE] Submit Handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.size || !formData.type) {
@@ -172,7 +172,7 @@ const MonsterForm: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      // ✅ Convert CR string to float for Backend (Column(Float))
+      // [NOTE] Convert CR string to float for Backend (Column(Float))
       const crMap: Record<string, number> = { '1/8': 0.125, '1/4': 0.25, '1/2': 0.5 };
       const finalCr = formData.challenge_rating.includes('/')
         ? crMap[formData.challenge_rating]
@@ -192,7 +192,7 @@ const MonsterForm: React.FC = () => {
           navigate('/');
         }
       } else {
-        alert('✅ Monster created successfully!');
+        alert('Monster created successfully!');
         setFormData({
           name: '', size: '', type: '', alignment: '', armor_class: 10, hit_points: 1,
           speeds: { walk: 30 },
@@ -243,7 +243,7 @@ const MonsterForm: React.FC = () => {
           </div>
         </div>
 
-        {/* ✅ Alignment Dropdown */}
+        {/* [NOTE] Alignment Dropdown */}
         <div className={styles.formGroup}>
           <label htmlFor="monster-alignment">Alignment</label>
           <select id="monster-alignment" name="alignment" value={formData.alignment} onChange={handleChange} className={styles.select}>
@@ -252,7 +252,7 @@ const MonsterForm: React.FC = () => {
           </select>
         </div>
 
-        {/* ✅ Structured Speed Inputs */}
+        {/* [NOTE] Structured Speed Inputs */}
         <div className={styles.formGroup}>
           <label>Movement Speeds</label>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '0.5rem', marginBottom: '0.5rem' }}>
@@ -313,7 +313,7 @@ const MonsterForm: React.FC = () => {
           </div>
         </div>
 
-        {/* ✅ Challenge Rating Dropdown */}
+        {/* [NOTE] Challenge Rating Dropdown */}
         <div className={styles.formGroup}>
           <label htmlFor="monster-cr">Challenge Rating (CR)</label>
           <select id="monster-cr" name="challenge_rating" value={formData.challenge_rating} onChange={handleChange} className={styles.select}>
@@ -327,7 +327,7 @@ const MonsterForm: React.FC = () => {
           <textarea id="monster-desc" name="description" value={formData.description} onChange={handleChange} className={styles.input} rows={4} placeholder="Appearance, behavior, lair, tactics, etc." />
         </div>
 
-        {/* ✅ Dynamic Action Sections */}
+        {/* [NOTE] Dynamic Action Sections */}
         {(['actions', 'bonus_actions', 'legendary_actions', 'reactions'] as const).map((type) => {
           const label = type.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase());
           const list = formData.actions[type];

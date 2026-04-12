@@ -37,10 +37,10 @@ if [ ! -f .env ]; then
     echo ""
     echo "Creating .env file from template..."
     cp .env.example .env
-    echo "✅ .env file created. Please update it with your configuration."
+    echo "[SUCCESS] .env file created. Please update it with your configuration."
 else
     echo ""
-    echo "ℹ️  .env file already exists, skipping..."
+    echo "[INFO] .env file already exists, skipping..."
 fi
 
 # Create databases directory if it doesn't exist
@@ -66,9 +66,9 @@ if [ -d "chardnd-app" ]; then
         echo ""
         echo "Installing frontend dependencies..."
         npm install
-        echo "✅ Frontend dependencies installed"
+        echo "[SUCCESS] Frontend dependencies installed"
     else
-        echo "⚠️  Node.js not found. Please install Node.js to set up the frontend."
+        echo "[WARNING] Node.js not found. Please install Node.js to set up the frontend."
         echo "   Visit: https://nodejs.org/"
     fi
     
@@ -94,4 +94,4 @@ echo "4. In a new terminal, start the frontend:"
 echo "   cd chardnd-app"
 echo "   npm run dev"
 echo ""
-echo "Happy coding! 🎲"
+echo "Happy coding! (D&D)"

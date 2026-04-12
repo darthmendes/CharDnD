@@ -6,7 +6,7 @@ from typing import List
 from .CharacterService import CharacterService
 
 class SpellService:
-    # ✅ PHB Multiclass Spellcaster Table
+    # [NOTE] PHB Multiclass Spellcaster Table
     MULTICLASS_SLOT_TABLE = {
         1:  {1: 2},
         2:  {1: 3},
@@ -114,7 +114,7 @@ class SpellService:
         
         return 'int'  # Default
     
-    # ✅ Database operations
+    # [NOTE] Database operations
     @staticmethod
     def get_character_spell_slots(charID: int) -> dict:
         """Get character's spell slots with all calculations."""

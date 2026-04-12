@@ -2,7 +2,7 @@ from typing import Dict, Any, Optional, Tuple
 from ..models.character import Character, CharacterClass
 from ..models.species import Species
 from ..models.dndclass import DnDclass, ClassSpell
-from ..models.background import Background  # ✅ Add this import
+from ..models.background import Background  # [IMPORT] Add this import
 from ..models import session
 
 
@@ -47,7 +47,7 @@ class CharacterService:
             new_char.level = data['level']
             new_char.abilityScores = data['abilityScores']
             
-            # ✅ NEW FIELDS
+            # [NEW] Added new fields
             new_char.subspecies = data.get('subspecies')
             new_char.proficient_skills = data.get('proficientSkills', [])
             new_char.proficient_weapons = data.get('proficientWeapons', [])
@@ -58,7 +58,7 @@ class CharacterService:
             session.add(new_char)
             session.flush()  # Assigns ID without committing
 
-            # ✅ Handle MULTICLASS - create CharacterClass associations
+            # [NOTE] Handle multiclass - create CharacterClass associations
             classes_data = data.get('classes', [])
             if classes_data:
                 for cls_data in classes_data:
@@ -88,7 +88,7 @@ class CharacterService:
 
             session.commit()
 
-            # ✅ NEW: Add equipment items to character inventory after creation
+            # [NOTE] Add equipment items to character inventory after creation
             equipment = data.get('equipment', [])
             if equipment:
                 from .ItemService import ItemService
@@ -111,7 +111,7 @@ class CharacterService:
                                 item_data.get('quantity', 1)
                             )
 
-            # ✅ Auto-add class spells as KNOWN but UNPREPARED (user must prepare them manually)
+            # [NOTE] Auto-add class spells as known but unprepared (user must prepare them manually)
             # Only add spells that character level qualifies for, exclude cantrips
             auto_spell_classes = ['Cleric', 'Druid']
             classes_to_load = [c for c in classes_data if c['className'] in auto_spell_classes] if classes_data else []
@@ -247,7 +247,7 @@ class CharacterService:
 
         return True, ""
 
-    # ✅ Character-level utilities (used by multiple services)
+    # [NOTE] Character-level utilities (used by multiple services)
     @staticmethod
     def get_proficiency_bonus(level: int) -> int:
         """Get proficiency bonus based on total character level."""

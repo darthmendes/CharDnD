@@ -45,9 +45,9 @@ export interface CharacterData {
   species: string;
   subspecies?: string;
   speciesChoices?: Record<string, string>;
-  speciesLanguages?: string[]; // ✅ Languages selected during species choice
-  optionalLanguages?: string[]; // ✅ Track which optional languages were selected
-  backgroundLanguages?: string[]; // ✅ Languages selected from background
+  speciesLanguages?: string[]; // [NOTE] Languages selected during species choice
+  optionalLanguages?: string[]; // [NOTE] Track which optional languages were selected
+  backgroundLanguages?: string[]; // [NOTE] Languages selected from background
   classes: CharacterClassLevel[];
   abilityScores: AbilityScores;
   equipment: EquipmentItem[];

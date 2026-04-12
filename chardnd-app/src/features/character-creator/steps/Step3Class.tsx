@@ -68,7 +68,7 @@ const Step3Class: React.FC<Props> = ({ character, updateClasses, dndClasses }) =
     }
     
     updateClasses(updated);
-    // ✅ Auto-preview the class that was just modified
+    // [NOTE] Auto-preview the class that was just modified
     setPreviewIndex(index);
   };
 
@@ -97,7 +97,7 @@ const Step3Class: React.FC<Props> = ({ character, updateClasses, dndClasses }) =
     updateClassEntry(index, 'subclass', e.target.value);
   };
 
-  // ✅ Handle skill toggle and auto-preview first class
+  // [NOTE] Handle skill toggle and auto-preview first class
   const handleSkillToggle = (skill: string, isChecked: boolean) => {
     const currentFirstClass = character.classes?.[0] || {};
     const currentSkills = currentFirstClass.chosenSkills || [];
@@ -118,7 +118,7 @@ const Step3Class: React.FC<Props> = ({ character, updateClasses, dndClasses }) =
     const updated = [...character.classes || []];
     updated[0] = { ...updated[0], chosenSkills: newSkills };
     updateClasses(updated);
-    // ✅ Auto-preview the first class when skills are modified
+    // [NOTE] Auto-preview the first class when skills are modified
     setPreviewIndex(0);
   };
 

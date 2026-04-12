@@ -22,7 +22,7 @@ interface Species {
   optional_proficiencies: any[];
   traits: any[];
   languages: any[];
-  optional_languages: any[]; // ✅ Language choice groups
+  optional_languages: any[]; // [NOTE] Language choice groups
 }
 
 interface Props {
@@ -55,7 +55,7 @@ const Step2Species: React.FC<Props> = ({ character, updateField, speciesList = [
     updateField('subspecies', e.target.value);
   };
 
-  // ✅ Handle species language selection (mimics background logic)
+  // [NOTE] Handle species language selection (mimics background logic)
   const handleLanguageChange = (languageName: string, isChecked: boolean) => {
     let newLanguages: string[];
     
@@ -81,7 +81,7 @@ const Step2Species: React.FC<Props> = ({ character, updateField, speciesList = [
 
   const selectedSpecies = speciesList.find(s => s.name === character.species);
 
-  // ✅ Extract language options from traits (e.g., "Extra Language" trait)
+  // [NOTE] Extract language options from traits (e.g., "Extra Language" trait)
   const getLanguageOptionsFromTraits = () => {
     if (!selectedSpecies?.traits) return null;
     
@@ -117,7 +117,7 @@ const Step2Species: React.FC<Props> = ({ character, updateField, speciesList = [
     };
   };
 
-  // ✅ Get available languages for species
+  // [NOTE] Get available languages for species
   const getSpeciesAvailableLanguages = () => {
     const allLanguages = [
       "Dwarvish", "Elvish", "Giant", "Gnomish", "Goblin", "Halfling",

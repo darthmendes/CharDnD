@@ -98,7 +98,7 @@ class ClassFeatures(Base):
     __tablename__ = "class_features"
     id = Column(Integer, primary_key=True, autoincrement=True)
     classID = Column(Integer, ForeignKey("dndclass.id"), nullable=True)
-    subclassID = Column(Integer, ForeignKey("subclasses.id"), nullable=True)  # ✅ Added subclassID
+    subclassID = Column(Integer, ForeignKey("subclasses.id"), nullable=True)  # [ADDED] subclassID
     featureID = Column(Integer, ForeignKey("features.id"), nullable=False)
     level = Column(Integer, nullable=False)   
 

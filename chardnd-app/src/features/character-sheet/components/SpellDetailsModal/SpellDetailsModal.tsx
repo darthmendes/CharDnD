@@ -106,12 +106,12 @@ const SpellDetailsModal: React.FC<SpellDetailsModalProps> = ({
             </div>
             {spell.concentration && (
               <div className={styles.concentrationTag}>
-                ⚠️ Requires Concentration
+                Requires Concentration
               </div>
             )}
             {spell.ritual && (
               <div className={styles.ritualTag}>
-                📖 Can be cast as a ritual
+                [BOOK] Can be cast as a ritual
               </div>
             )}
           </div>
@@ -127,7 +127,7 @@ const SpellDetailsModal: React.FC<SpellDetailsModalProps> = ({
           {spell.save_ability && (
             <div className={styles.spellSection}>
               <div className={styles.abilityBox}>
-                <strong>💾 DC {spellSaveDC} {spell.save_ability.toUpperCase()} Save</strong>
+                <strong>[SAVE] DC {spellSaveDC} {spell.save_ability.toUpperCase()} Save</strong>
                 {spell.save_half_on_success && (
                   <span className={styles.saveNote}>Half damage on success</span>
                 )}
@@ -139,7 +139,7 @@ const SpellDetailsModal: React.FC<SpellDetailsModalProps> = ({
           {spell.requires_attack_roll && (
             <div className={styles.spellSection}>
               <div className={styles.attackBox}>
-                <strong>⚔️ Spell Attack</strong>
+                <strong>Spell Attack</strong>
                 <span>+{spellAttackBonus} to hit</span>
                 {spell.attack_type && <span>{spell.attack_type.replace(/_/g, ' ')}</span>}
               </div>
@@ -150,10 +150,10 @@ const SpellDetailsModal: React.FC<SpellDetailsModalProps> = ({
           {spell.damage_dice && (
             <div className={styles.spellSection}>
               <div className={styles.damageBox}>
-                <strong>🎲 Damage: {spell.damage_dice}</strong>
+                <strong>Damage: {spell.damage_dice}</strong>
                 <span>{spell.damage_type || 'damage'}</span>
                 {spell.upcast_damage_per_slot && (
-                  <span>⬆️ Upcast: +{spell.upcast_damage_per_slot} per slot level</span>
+                  <span>[UP] Upcast: +{spell.upcast_damage_per_slot} per slot level</span>
                 )}
               </div>
             </div>
@@ -163,7 +163,7 @@ const SpellDetailsModal: React.FC<SpellDetailsModalProps> = ({
           {spell.healing_dice && (
             <div className={styles.spellSection}>
               <div className={styles.healingBox}>
-                <strong>💚 Healing: {spell.healing_dice}</strong>
+                <strong>Healing: {spell.healing_dice}</strong>
                 <span>{spell.healing_type?.replace(/_/g, ' ') || 'hit points'}</span>
               </div>
             </div>
@@ -173,7 +173,7 @@ const SpellDetailsModal: React.FC<SpellDetailsModalProps> = ({
           {spell.aoe_type && (
             <div className={styles.spellSection}>
               <div className={styles.aoeBox}>
-                <strong>📍 Area of Effect:</strong>
+                <strong>[LOCATION] Area of Effect:</strong>
                 <span>
                   {spell.aoe_size ? `${spell.aoe_size}-foot ` : ''}{spell.aoe_type}
                 </span>
@@ -184,7 +184,7 @@ const SpellDetailsModal: React.FC<SpellDetailsModalProps> = ({
           {/* Higher Levels */}
           {spell.higher_levels && (
             <div className={styles.spellSection}>
-              <strong style={{ marginBottom: '8px' }}>⬆️ At Higher Levels:</strong>
+              <strong style={{ marginBottom: '8px' }}>[UPCAST] At Higher Levels:</strong>
               <p className={styles.higherLevels}>{spell.higher_levels}</p>
             </div>
           )}

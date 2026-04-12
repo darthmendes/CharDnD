@@ -69,7 +69,7 @@ class Character(Base):
             'id': self.id,
             'name': self.name,
             'species': self.species.name if self.species else None,
-            'subspecies': self.subspecies,  # ✅ NEW
+            'subspecies': self.subspecies,  # [NEW] Added
             'background': self.background.to_dict() if self.background else None,
             'classes': [{
                 'className': c.dndclass.name,
@@ -80,11 +80,11 @@ class Character(Base):
             'level': self.level,
             'xp': self.xp,
             'abilityScores': self.abilityScores,
-            'proficientSkills': self.proficient_skills or [],      # ✅ NEW
-            'proficientWeapons': self.proficient_weapons or [],    # ✅ NEW
-            'proficientTools': self.proficient_tools or [],        # ✅ NEW  
-            'knownLanguages': self.known_languages or [],          # ✅ NEW
-            'hitPoints': self.hit_points,                         # ✅ NEW
+            'proficientSkills': self.proficient_skills or [],      # [NEW] Added
+            'proficientWeapons': self.proficient_weapons or [],    # [NEW] Added
+            'proficientTools': self.proficient_tools or [],        # [NEW] Added
+            'knownLanguages': self.known_languages or [],          # [NEW] Added
+            'hitPoints': self.hit_points,                         # [NEW] Added
             'hpMax': self.max_hp,
             'hpCurrent': self.curr_hp,
             'hpTmp': self.tmp_hp,
@@ -106,17 +106,17 @@ class Character(Base):
                 'item_category': inv_entry.item.item_category,
                 'rarity': inv_entry.item.rarity,
                 'properties': inv_entry.item.properties or [],
-                'property_data': inv_entry.item.property_data or {},  # ✅ NEW: Include property metadata
+                'property_data': inv_entry.item.property_data or {},  # [NEW] Include property metadata
                 'specialAbilities': inv_entry.item.special_abilities or [],
                 'quantity': inv_entry.quantity,
                 'maxCharges': inv_entry.item.max_charges,
-                'currentCharges': inv_entry.current_charges,  # ✅ NEW: Include current charges
+                'currentCharges': inv_entry.current_charges,  # [NEW] Include current charges
                 'chargeRecharge': inv_entry.item.charge_recharge,
                 'onHitEffect': inv_entry.item.on_hit_effect,
-                'inventoryId': inv_entry.id,  # ✅ NEW: Include inventory entry ID for updates
-                'is_equipped': inv_entry.is_equipped,  # ✅ NEW: Include equipped status,
+                'inventoryId': inv_entry.id,  # [NEW] Include inventory entry ID for updates
+                'is_equipped': inv_entry.is_equipped,  # [NEW] Include equipped status,
                 'is_attuned': inv_entry.is_attuned
-            } for inv_entry in self.inventory]  # ✅ NEW: Include inventory items
+            } for inv_entry in self.inventory]  # [NEW] Include inventory items
         }
 
 class CharacterClass(Base):
@@ -137,7 +137,7 @@ class CharacterClass(Base):
     characterID = Column(Integer, ForeignKey("characters.id"), nullable=False)
     classID = Column(Integer, ForeignKey("dndclass.id"), nullable=False)
     level = Column(Integer, default=1)
-    subclass = Column(String)  # ✅ NEW: Store subclass per class
+    subclass = Column(String)  # [NEW] Store subclass per class
 
     character = relationship("Character", back_populates="classes_assoc")
     dndclass = relationship("DnDclass", back_populates="character_assoc")
@@ -198,8 +198,8 @@ class CharacterInventory(Base):
     characterID = Column(Integer, ForeignKey("characters.id"), nullable=False)
     itemID = Column(Integer, ForeignKey("items.id"), nullable=False)
     quantity = Column(Integer, default=1)
-    current_charges = Column(Integer, default=0)  # ✅ NEW: Track current charges
-    is_equipped = Column(Boolean, default=False)  # ✅ NEW: Track if armor/shield is equipped
+    current_charges = Column(Integer, default=0)  # [NEW] Track current charges
+    is_equipped = Column(Boolean, default=False)  # [NEW] Track if armor/shield is equipped
     is_attuned = Column(Boolean, default=False)
 
     character = relationship("Character", back_populates="inventory")

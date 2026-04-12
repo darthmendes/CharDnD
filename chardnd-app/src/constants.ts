@@ -34,7 +34,7 @@ export const VIRTUAL_PACKS = [
   },
 ] as const;
 
-// ✅ Pack contents (matches BACKEND PACK_DEFINITIONS exactly)
+// [NOTE] Pack contents (matches BACKEND PACK_DEFINITIONS exactly)
 export const PACK_CONTENTS: Record<string, Array<{ name: string; quantity: number }>> = {
   "Explorer's Pack": [
     { name: "Backpack", quantity: 1 },

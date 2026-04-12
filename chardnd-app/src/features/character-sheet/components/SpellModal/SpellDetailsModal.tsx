@@ -73,7 +73,7 @@ const SpellDetailsModal: React.FC<SpellDetailsModalProps> = ({
               <span className={styles.spellTag}>Ritual</span>
             )}
             {spell.concentration && (
-              <span className={styles.spellConcentration}>⚠️ Concentration</span>
+              <span className={styles.spellConcentration}>Concentration</span>
             )}
           </div>
         </div>
@@ -111,7 +111,7 @@ const SpellDetailsModal: React.FC<SpellDetailsModalProps> = ({
           {/* Saving Throw Info */}
           {spell.save_ability && (
             <div className={styles.spellInfoSection}>
-              <h4 className={styles.sectionTitle}>Saving Throw ⚔️</h4>
+              <h4 className={styles.sectionTitle}>Saving Throw</h4>
               <div className={styles.saveInfo}>
                 <div className={styles.saveDetail}>
                   <strong>DC {spellSaveDC}</strong> {spell.save_ability.toUpperCase()} save
@@ -128,7 +128,7 @@ const SpellDetailsModal: React.FC<SpellDetailsModalProps> = ({
           {/* Spell Attack Info */}
           {spell.attack_type && (
             <div className={styles.spellInfoSection}>
-              <h4 className={styles.sectionTitle}>Spell Attack ⚔️</h4>
+              <h4 className={styles.sectionTitle}>Spell Attack</h4>
               <div className={styles.attackInfo}>
                 <strong>+{spellAttackBonus}</strong> to hit (
                 {spellcastingAbility.toUpperCase()})
@@ -139,7 +139,7 @@ const SpellDetailsModal: React.FC<SpellDetailsModalProps> = ({
           {/* Damage Info */}
           {spell.damage_dice && (
             <div className={styles.spellInfoSection}>
-              <h4 className={styles.sectionTitle}>Damage 💥</h4>
+              <h4 className={styles.sectionTitle}>Damage [BOOM]</h4>
               <div className={styles.damageInfo}>
                 <div className={styles.damageDice}>
                   <strong>{spell.damage_dice}</strong>
@@ -160,7 +160,7 @@ const SpellDetailsModal: React.FC<SpellDetailsModalProps> = ({
           {/* Healing Info */}
           {spell.healing_dice && (
             <div className={styles.spellInfoSection}>
-              <h4 className={styles.sectionTitle}>Healing 💚</h4>
+              <h4 className={styles.sectionTitle}>Healing</h4>
               <div className={styles.healingInfo}>
                 <strong>{spell.healing_dice}</strong> hit points
               </div>
@@ -170,7 +170,7 @@ const SpellDetailsModal: React.FC<SpellDetailsModalProps> = ({
           {/* Area of Effect */}
           {spell.aoe_type && (
             <div className={styles.spellInfoSection}>
-              <h4 className={styles.sectionTitle}>Area of Effect 📍</h4>
+              <h4 className={styles.sectionTitle}>Area of Effect [LOCATION]</h4>
               <div className={styles.aoeInfo}>
                 {spell.aoe_size}-foot {spell.aoe_type}
               </div>
@@ -180,7 +180,7 @@ const SpellDetailsModal: React.FC<SpellDetailsModalProps> = ({
           {/* Cantrip Scaling */}
           {spell.level === 0 && spell.cantrip_scaling_levels && spell.cantrip_scaling_dice && (
             <div className={styles.spellInfoSection}>
-              <h4 className={styles.sectionTitle}>Cantrip Scaling 📈</h4>
+              <h4 className={styles.sectionTitle}>Cantrip Scaling [CHART]</h4>
               <div className={styles.scalingInfo}>
                 <p>
                   Damage increases as you level up:
@@ -199,7 +199,7 @@ const SpellDetailsModal: React.FC<SpellDetailsModalProps> = ({
           {/* Description */}
           {spell.description && (
             <div className={styles.spellInfoSection}>
-              <h4 className={styles.sectionTitle}>Description 📖</h4>
+              <h4 className={styles.sectionTitle}>Description [BOOK]</h4>
               <div className={styles.description}>
                 {spell.description}
               </div>
@@ -209,7 +209,7 @@ const SpellDetailsModal: React.FC<SpellDetailsModalProps> = ({
           {/* Higher Levels */}
           {spell.higher_levels && (
             <div className={styles.spellInfoSection}>
-              <h4 className={styles.sectionTitle}>At Higher Levels ⬆️</h4>
+              <h4 className={styles.sectionTitle}>At Higher Levels [UPCAST]</h4>
               <div className={styles.higherLevels}>
                 {spell.higher_levels}
               </div>

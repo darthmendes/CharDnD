@@ -183,12 +183,12 @@ const SpellSelectionModal: React.FC<SpellSelectionModalProps> = ({
                   )}
                   {selectedSpell.concentration && (
                     <div>
-                      <span className={styles.spellConcentrationBadge}>⚠️ Concentration</span>
+                      <span className={styles.spellConcentrationBadge}>[REQUIRES] Concentration</span>
                     </div>
                   )}
                   {selectedSpell.ritual && (
                     <div>
-                      <span className={styles.spellRitualBadge}>✨ Ritual</span>
+                      <span className={styles.spellRitualBadge}>[RITUAL]</span>
                     </div>
                   )}
                 </div>

@@ -185,7 +185,7 @@ const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
           <div className={styles.actionButtons}>
             {canEquip && onEquip && !isEquipped && (
               <button onClick={onEquip} className={styles.equipBtn}>
-                ⚔️ Equip
+                Equip
               </button>
             )}
             {canEquip && onUnequip && isEquipped && (
@@ -195,7 +195,7 @@ const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
             )}
             {requiresAttunement && !isAttuned && onAttune && canAttuneMore && (
               <button onClick={onAttune} className={styles.equipBtn}>
-                ✨ Attune ({attunedCount}/{attunementLimit})
+                Attune ({attunedCount}/{attunementLimit})
               </button>
             )}
             {requiresAttunement && isAttuned && onUnattune && (
@@ -215,7 +215,7 @@ const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({
             )}
             {onDelete && (
               <button onClick={onDelete} className={styles.deleteBtn}>
-                🗑️ Delete
+                Delete
               </button>
             )}
           </div>

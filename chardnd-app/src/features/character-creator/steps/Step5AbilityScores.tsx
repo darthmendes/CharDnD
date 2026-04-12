@@ -21,7 +21,7 @@ const Step5AbilityScores: React.FC<Props> = ({ character, updateField, speciesLi
     { key: 'cha', label: 'Charisma (CHA)' },
   ];
 
-  // ✅ Get species and subspecies bonuses
+  // [NOTE] Get species and subspecies bonuses
   const selectedSpecies = speciesList.find(s => s.name === character.species);
   const selectedSubspecies = selectedSpecies?.subspecies?.find(
     (sub: any) => sub.name === character.subspecies
@@ -37,7 +37,7 @@ const Step5AbilityScores: React.FC<Props> = ({ character, updateField, speciesLi
     });
   }
 
-  // ✅ Add subspecies bonuses
+  // [NOTE] Add subspecies bonuses
   if (selectedSubspecies?.ability_bonuses) {
     Object.entries(selectedSubspecies.ability_bonuses).forEach(([ability, bonus]) => {
       const key = ability.toLowerCase();
@@ -175,7 +175,7 @@ const Step5AbilityScores: React.FC<Props> = ({ character, updateField, speciesLi
     updateField('hitPoints', absoluteMaxHitPoints);
   };
 
-  // ✅ CORRECTED: Only first class grants proficiencies (skills, weapons, tools)
+  // [NOTE] CORRECTED: Only first class grants proficiencies (skills, weapons, tools)
   const getAllProficiencies = () => {
     const skills: Set<string> = new Set();
     const weapons: Set<string> = new Set();
@@ -285,7 +285,7 @@ const Step5AbilityScores: React.FC<Props> = ({ character, updateField, speciesLi
 
   const { skills: proficientSkills, weapons: proficientWeapons, tools: proficientTools, languages: knownLanguages } = getAllProficiencies();
 
-  // ✅ CORRECTED: Only first class grants saving throw proficiencies
+  // [NOTE] CORRECTED: Only first class grants saving throw proficiencies
   const getSavingThrowProficiencies = () => {
     const saves: Set<string> = new Set();
     
@@ -378,7 +378,7 @@ const Step5AbilityScores: React.FC<Props> = ({ character, updateField, speciesLi
             const modifier = Math.floor((score - 10) / 2);
             const displayMod = modifier >= 0 ? `+${modifier}` : `${modifier}`;
             
-            // ✅ Calculate bonuses breakdown
+            // [NOTE] Calculate bonuses breakdown
             const speciesBonus = selectedSpecies?.ability_bonuses?.[ability.key.toUpperCase()] || 0;
             const subspeciesBonus = selectedSubspecies?.ability_bonuses?.[ability.key.toUpperCase()] || 0;
             const choiceBonus = (character.speciesChoices?.[ability.key] || 0);
@@ -506,7 +506,7 @@ const Step5AbilityScores: React.FC<Props> = ({ character, updateField, speciesLi
           </p>
         </div>
 
-        {/* ✅ SAVING THROWS: Only from first class */}
+        {/* [NOTE] SAVING THROWS: Only from first class */}
         <div className={styles.formGroup} style={{ marginTop: '2rem' }}>
           <h3 style={{ margin: '0 0 1rem 0', color: '#5a3921' }}>Saving Throws</h3>
           <div style={{ 

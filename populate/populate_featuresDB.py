@@ -246,7 +246,7 @@ def add_features():
             print(f"\n[INFO] All features already exist in database.")
         
         # Print feature breakdown
-        print(f"\n📊 Feature Summary:")
+        print(f"\n[INFO] Feature Summary:")
         print(f"  - Dwarf: {len(dwarf_features)} features")
         print(f"  - Elf: {len(elf_features)} features")
         print(f"  - Drow: {len(drow_features)} features")

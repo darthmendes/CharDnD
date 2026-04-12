@@ -1,10 +1,10 @@
 """
 Populate D&D 5e item database with all equipment needed for character creation.
-- ✅ Properties stored as simple keywords only (Thrown, Versatile, Finesse, Light)
-- ✅ Property metadata stored in property_data JSON field
-- ✅ Skill modifiers structured for frontend display
-- ✅ Attunement requirements properly flagged
-- ✅ Scalable for any future weapon properties
+[NOTE] Properties stored as simple keywords only (Thrown, Versatile, Finesse, Light)
+[NOTE] Property metadata stored in property_data JSON field
+[NOTE] Skill modifiers structured for frontend display
+[NOTE] Attunement requirements properly flagged
+[NOTE] Scalable for any future weapon properties
 """
 from Backend.models.item import Item
 from Backend.models import session
@@ -110,7 +110,7 @@ items_to_add = [
          properties=["Light"], property_data={},
          damage_dice="1d4", damage_type="bludgeoning", special_abilities=[]),
     
-    # ✅ Dagger: Finesse + Light + Thrown
+    # [NOTE] Dagger: Finesse + Light + Thrown
     Item(name="Dagger", item_type="Weapon", item_category="Simple Melee", rarity="common",
          desc="A small, sharp blade.", weight=1, cost=gp(2),
          properties=["Finesse", "Light", "Thrown"],
@@ -119,7 +119,7 @@ items_to_add = [
          },
          damage_dice="1d4", damage_type="piercing", special_abilities=[]),
     
-    # ✅ Dart: Finesse + Thrown
+    # [NOTE] Dart: Finesse + Thrown
     Item(name="Dart", item_type="Weapon", item_category="Simple Ranged", rarity="common",
          desc="A small, pointed missile.", weight=1, cost=cp(5),
          properties=["Finesse", "Thrown"],
@@ -128,7 +128,7 @@ items_to_add = [
          },
          damage_dice="1d4", damage_type="piercing", special_abilities=[]),
     
-    # ✅ Javelin: Thrown
+    # [NOTE] Javelin: Thrown
     Item(name="Javelin", item_type="Weapon", item_category="Simple Melee", rarity="common",
          desc="A light spear for throwing.", weight=2, cost=sp(5),
          properties=["Thrown"],
@@ -142,7 +142,7 @@ items_to_add = [
          properties=[], property_data={},
          damage_dice="1d6", damage_type="bludgeoning", special_abilities=[]),
     
-    # ✅ Quarterstaff: Versatile
+    # [NOTE] Quarterstaff: Versatile
     Item(name="Quarterstaff", item_type="Weapon", item_category="Simple Melee", rarity="common",
          desc="A simple, sturdy staff.", weight=4, cost=sp(2),
          properties=["Versatile"],
@@ -162,7 +162,7 @@ items_to_add = [
          properties=["Light"], property_data={},
          damage_dice="1d4", damage_type="slashing", special_abilities=[]),
     
-    # ✅ Sling: Ammunition
+    # [NOTE] Sling: Ammunition
     Item(name="Sling", item_type="Weapon", item_category="Simple Ranged", rarity="common",
          desc="A leather cradle for stones.", weight=0, cost=sp(1),
          properties=["Ammunition"],
@@ -171,7 +171,7 @@ items_to_add = [
          },
          damage_dice="1d4", damage_type="bludgeoning", special_abilities=[]),
     
-    # ✅ Spear: Thrown + Versatile (3 variants!)
+    # [NOTE] Spear: Thrown + Versatile (3 variants!)
     Item(name="Spear", item_type="Weapon", item_category="Simple Melee", rarity="common",
          desc="A melee weapon with a long shaft and metal head. Can be thrown or used two-handed.",
          weight=3, cost=gp(1),
@@ -183,7 +183,7 @@ items_to_add = [
          damage_dice="1d6", damage_type="piercing",
          special_abilities=["Can be used one-handed (1d6) or two-handed (1d8)", "Can be thrown as a ranged attack (20/60)"]),
     
-    # ✅ Light Crossbow: Ammunition + Loading + Two-Handed
+    # [NOTE] Light Crossbow: Ammunition + Loading + Two-Handed
     Item(name="Light Crossbow", item_type="Weapon", item_category="Simple Ranged", rarity="common",
          desc="A lightweight crossbow.", weight=5, cost=gp(25),
          properties=["Ammunition", "Loading", "Two-Handed"],
@@ -193,7 +193,7 @@ items_to_add = [
          damage_dice="1d8", damage_type="piercing", special_abilities=[]),
 
     # === WEAPONS - Martial Melee ===
-    # ✅ Battleaxe: Versatile
+    # [NOTE] Battleaxe: Versatile
     Item(name="Battleaxe", item_type="Weapon", item_category="Martial Melee", rarity="common",
          desc="A heavy axe designed for combat.", weight=4, cost=gp(10),
          properties=["Versatile"],
@@ -232,7 +232,7 @@ items_to_add = [
          properties=["Heavy", "Reach", "Two-Handed"], property_data={},
          damage_dice="1d10", damage_type="slashing", special_abilities=[]),
     
-    # ✅ Handaxe: Light + Thrown
+    # [NOTE] Handaxe: Light + Thrown
     Item(name="Handaxe", item_type="Weapon", item_category="Martial Melee", rarity="common",
          desc="A small axe designed for throwing.", weight=2, cost=gp(5),
          properties=["Light", "Thrown"],
@@ -246,7 +246,7 @@ items_to_add = [
          properties=["Reach", "Special"], property_data={},
          damage_dice="1d12", damage_type="piercing", special_abilities=[]),
     
-    # ✅ Longsword: Versatile
+    # [NOTE] Longsword: Versatile
     Item(name="Longsword", item_type="Weapon", item_category="Martial Melee", rarity="common",
          desc="A straight, double-edged sword.", weight=3, cost=gp(15),
          properties=["Versatile"],
@@ -280,7 +280,7 @@ items_to_add = [
          properties=["Finesse", "Light"], property_data={},
          damage_dice="1d6", damage_type="piercing", special_abilities=[]),
     
-    # ✅ Trident: Thrown + Versatile
+    # [NOTE] Trident: Thrown + Versatile
     Item(name="Trident", item_type="Weapon", item_category="Martial Melee", rarity="common",
          desc="A three-pronged spear.", weight=4, cost=gp(5),
          properties=["Thrown", "Versatile"],
@@ -295,7 +295,7 @@ items_to_add = [
          properties=[], property_data={},
          damage_dice="1d8", damage_type="piercing", special_abilities=[]),
     
-    # ✅ Warhammer: Versatile
+    # [NOTE] Warhammer: Versatile
     Item(name="Warhammer", item_type="Weapon", item_category="Martial Melee", rarity="common",
          desc="A heavy hammer designed for combat.", weight=2, cost=gp(15),
          properties=["Versatile"],
@@ -318,7 +318,7 @@ items_to_add = [
          },
          damage_dice="1", damage_type="piercing", special_abilities=[]),
     
-    # ✅ Hand Crossbow: Ammunition + Light + Loading
+    # [NOTE] Hand Crossbow: Ammunition + Light + Loading
     Item(name="Hand Crossbow", item_type="Weapon", item_category="Martial Ranged", rarity="common",
          desc="A small crossbow designed for one-handed use.", weight=3, cost=gp(75),
          properties=["Ammunition", "Light", "Loading"],
@@ -327,7 +327,7 @@ items_to_add = [
          },
          damage_dice="1d6", damage_type="piercing", special_abilities=[]),
     
-    # ✅ Heavy Crossbow: Ammunition + Heavy + Loading + Two-Handed
+    # [NOTE] Heavy Crossbow: Ammunition + Heavy + Loading + Two-Handed
     Item(name="Heavy Crossbow", item_type="Weapon", item_category="Martial Ranged", rarity="common",
          desc="A powerful crossbow requiring two hands.", weight=18, cost=gp(50),
          properties=["Ammunition", "Heavy", "Loading", "Two-Handed"],
@@ -336,7 +336,7 @@ items_to_add = [
          },
          damage_dice="1d10", damage_type="piercing", special_abilities=[]),
     
-    # ✅ Longbow: Ammunition + Heavy + Two-Handed
+    # [NOTE] Longbow: Ammunition + Heavy + Two-Handed
     Item(name="Longbow", item_type="Weapon", item_category="Martial Ranged", rarity="common",
          desc="A large bow requiring two hands.", weight=2, cost=gp(50),
          properties=["Ammunition", "Heavy", "Two-Handed"],
@@ -345,7 +345,7 @@ items_to_add = [
          },
          damage_dice="1d8", damage_type="piercing", special_abilities=[]),
     
-    # ✅ Net: Thrown + Special
+    # [NOTE] Net: Thrown + Special
     Item(name="Net", item_type="Weapon", item_category="Martial Ranged", rarity="common",
          desc="A net for restraining creatures.", weight=3, cost=gp(1),
          properties=["Thrown", "Special"],
@@ -356,7 +356,7 @@ items_to_add = [
          special_abilities=["On hit, target is restrained"]),
 
     # === MAGICAL ITEMS ===
-    # ✅ Staff of Withering: Versatile + Magical Focus + Attunement
+    # [NOTE] Staff of Withering: Versatile + Magical Focus + Attunement
     Item(name="Staff of Withering", item_type="Weapon", item_category="Staff", rarity="rare",
          desc="Staff (arcane or druidic focus), rare (requires attunement by a cleric, druid or warlock). This staff has 3 charges and regains 1d3 expended charges daily at dawn.",
          weight=4, cost=gp(0),
@@ -372,7 +372,7 @@ items_to_add = [
          on_hit_effect="Expend 1 charge: +2d10 necrotic damage. Target must make DC 15 CON save or have disadvantage on STR/CON checks for 1 hour.",
          special_abilities=["Requires attunement by cleric, druid, or warlock", "3 charges (regain 1d3 at dawn)", "Can be used one-handed (1d6) or two-handed (1d8)"]),
 
-    # ✅ Cloak of Tongues - Grants languages + Attunement
+    # [NOTE] Cloak of Tongues - Grants languages + Attunement
     Item(name="Cloak of Tongues", item_type="Wondrous Item", item_category="Wondrous Item", rarity="uncommon",
          desc="While wearing this cloak, you understand any spoken language that you hear. Moreover, creatures understand any spoken language you speak.",
          weight=1, cost=gp(0),
@@ -383,7 +383,7 @@ items_to_add = [
          }, 
          special_abilities=["Grants understanding of all languages"]),
 
-    # ✅ Goggles of Night - Grants Darkvision trait
+    # [NOTE] Goggles of Night - Grants Darkvision trait
     Item(name="Goggles of Night", item_type="Wondrous Item", item_category="Wondrous Item", rarity="uncommon",
          desc="While wearing these dark lenses, you have darkvision out to 60 feet. If you already have darkvision, the range increases by 60 feet.",
          weight=0, cost=gp(0),
@@ -396,14 +396,14 @@ items_to_add = [
          }, 
          special_abilities=["Grants darkvision 60 ft"]),
 
-    # ✅ Gloves of Thievery - Grants tool proficiency + SKILL MODIFIER
+    # [NOTE] Gloves of Thievery - Grants tool proficiency + SKILL MODIFIER
     Item(name="Gloves of Thievery", item_type="Wondrous Item", item_category="Wondrous Item", rarity="uncommon",
          desc="These gloves are invisible while worn. You gain a +5 bonus to Dexterity (Sleight of Hand) checks.",
          weight=0, cost=gp(0),
          properties=[], 
          property_data={
              "tool_proficiencies": ["Thieves' Tools"],
-             # ✅ STRUCTURED SKILL MODIFIER (frontend will read this)
+             # [NOTE] STRUCTURED SKILL MODIFIER (frontend will read this)
              "skill_modifiers": [{
                  "skill": "Sleight of Hand",
                  "modifier": 5
@@ -411,7 +411,7 @@ items_to_add = [
          }, 
          special_abilities=["+5 bonus to Sleight of Hand checks"]),
 
-    # ✅ Sentinel Shield - Grants weapon proficiency + Attunement
+    # [NOTE] Sentinel Shield - Grants weapon proficiency + Attunement
      Item(name="Sentinel Shield", item_type="Armor", item_category="Shield", rarity="uncommon",
           desc="While holding this shield, you have advantage on Wisdom (Perception) checks while awake. The shield grants weapon proficiency with martial weapons.",
           weight=6, cost=gp(0),
@@ -427,7 +427,7 @@ items_to_add = [
           }, 
           special_abilities=["Advantage on Perception checks", "Grants martial weapon proficiency"]),
           
-    # ✅ Tome of Understanding - Grants language + Attunement
+    # [NOTE] Tome of Understanding - Grants language + Attunement
     Item(name="Tome of Understanding", item_type="Wondrous Item", item_category="Wondrous Item", rarity="very_rare",
          desc="This book contains knowledge of one language. An attuned creature can understand any spoken language.",
          weight=5, cost=gp(0),
@@ -448,10 +448,10 @@ def add_items():
         session.add_all(new_items)
         session.commit()
         print(f"[SUCCESS] Added {len(new_items)} items")
-        print(f"✅ Properties format: Simple keywords only")
-        print(f"✅ Property data stored in property_data JSON field")
-        print(f"✅ Skill modifiers structured for frontend display")
-        print(f"✅ Attunement requirements properly flagged")
+        print(f"[NOTE] Properties format: Simple keywords only")
+        print(f"[NOTE] Property data stored in property_data JSON field")
+        print(f"[NOTE] Skill modifiers structured for frontend display")
+        print(f"[NOTE] Attunement requirements properly flagged")
     else:
         print("[INFO] All items already exist.")
 

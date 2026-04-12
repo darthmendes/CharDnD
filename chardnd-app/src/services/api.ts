@@ -346,3 +346,20 @@ export const fetchMonster = async (id: number) => {
   }
   return response.json();
 };
+
+// src/services/api.ts (append this)
+export const fetchFeatures = async (): Promise<{ id: number; name: string; description: string }[]> => {
+  const response = await fetch(`${API_BASE}/features`);
+  if (!response.ok) return [];
+  return response.json();
+};
+
+export const performRest = async (characterId: number, restData: { type: string; hitDiceSpent?: number }) => {
+  const res = await fetch(`/api/characters/${characterId}/rest`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(restData)
+  });
+  if (!res.ok) throw new Error('Failed to perform rest');
+  return res.json();
+};

@@ -43,15 +43,15 @@ const ProficiencyModal: React.FC<ProficiencyModalProps> = ({
   const getIcon = (): string => {
     switch (modalType) {
       case 'skills':
-        return '🎯';
+        return '[TARGET]';
       case 'weapons':
-        return '⚔️';
+        return '';
       case 'tools':
-        return '🔧';
+        return '[WRENCH]';
       case 'languages':
-        return '💬';
+        return '[SPEECH]';
       default:
-        return '📋';
+        return '[CLIPBOARD]';
     }
   };
 
@@ -88,7 +88,7 @@ const ProficiencyModal: React.FC<ProficiencyModalProps> = ({
               {Object.entries(groupedByItem).map(([itemName, profs]) => (
                 <div key={itemName} className={styles.itemGroup}>
                   <div className={styles.itemName}>
-                    <span className={styles.itemIcon}>📦</span>
+                    <span className={styles.itemIcon}>[PACKAGE]</span>
                     {itemName}
                   </div>
                   <div className={styles.proficienciesInItem}>

@@ -679,6 +679,13 @@ def get_fighting_styles():
     ]
     return jsonify(fighting_styles), 200
 
+@app.route('/API/features', methods=['GET'])
+def list_features():
+    from Backend.models import session
+    from Backend.models.features import Features
+    features = session.query(Features).all()
+    return jsonify([{"id": f.id, "name": f.name, "description": f.desc} for f in features]), 200
+
 ################################################################
 # App Entry
 ################################################################

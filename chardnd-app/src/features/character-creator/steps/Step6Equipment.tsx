@@ -41,7 +41,7 @@ const Step6Equipment: React.FC<Props> = ({ character, updateField }) => {
     setIsItemModalOpen(false);
   };
 
-  // ✅ Handle pack: manually add all items with proper IDs
+  // [NOTE] Handle pack: manually add all items with proper IDs
   const handleAddPack = (packName: string) => {
     const itemsToAdd = PACK_CONTENTS[packName] || [];
     const newEquipment = itemsToAdd
@@ -58,7 +58,7 @@ const Step6Equipment: React.FC<Props> = ({ character, updateField }) => {
       .filter(item => item.id !== undefined); // Only include items that were found in DB
     
     if (newEquipment.length < itemsToAdd.length) {
-      console.warn(`⚠️ Not all pack items found in database. Found ${newEquipment.length}/${itemsToAdd.length}`);
+      console.warn(`Not all pack items found in database. Found ${newEquipment.length}/${itemsToAdd.length}`);
     }
     
     updateField('equipment', [...character.equipment, ...newEquipment]);
@@ -123,7 +123,7 @@ const Step6Equipment: React.FC<Props> = ({ character, updateField }) => {
         isOpen={isItemModalOpen}
         onClose={() => setIsItemModalOpen(false)}
         onAddItem={handleAddItem}
-        onAddPack={handleAddPack} // ✅ NEW PROP
+        onAddPack={handleAddPack} // [NOTE] NEW PROP
         availableItems={availableItems}
         characterId={0}
       />

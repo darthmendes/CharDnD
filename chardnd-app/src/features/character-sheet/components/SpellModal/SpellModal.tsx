@@ -72,13 +72,13 @@ const SpellCastModal: React.FC<SpellCastModalProps> = ({
           <div><strong>Range:</strong> {spell.range}</div>
           <div><strong>Components:</strong> {spell.components}</div>
           <div><strong>Duration:</strong> {spell.duration}</div>
-          {spell.concentration && <div className={styles.concentration}>⚠️ Concentration</div>}
+          {spell.concentration && <div className={styles.concentration}>Concentration</div>}
         </div>
         
         {/* Saving Throw Info */}
         {spell.save_ability && (
           <div className={styles.saveInfo}>
-            <h4>💾 Saving Throw</h4>
+            <h4>[SAVE] Saving Throw</h4>
             <div className={styles.saveBox}>
               <div className={styles.saveDC}>
                 <strong>DC {spellSaveDC}</strong> {spell.save_ability.toUpperCase()} save
@@ -93,7 +93,7 @@ const SpellCastModal: React.FC<SpellCastModalProps> = ({
         {/* Spell Attack Info */}
         {spell.attack_type === 'spell_attack' && (
           <div className={styles.attackInfo}>
-            <h4>⚔️ Spell Attack</h4>
+            <h4>Spell Attack</h4>
             <div className={styles.attackBox}>
               <div className={styles.attackBonus}>
                 <strong>+{spellAttackBonus}</strong> to hit
@@ -105,7 +105,7 @@ const SpellCastModal: React.FC<SpellCastModalProps> = ({
         {/* Damage Info */}
         {spell.damage_dice && (
           <div className={styles.damageInfo}>
-            <h4>⚔️ Damage</h4>
+            <h4>Damage</h4>
             <div className={styles.damageBox}>
               <div className={styles.damageDice}>
                 <strong>{getDamageForLevel(selectedSlotLevel)}</strong> 
@@ -141,7 +141,7 @@ const SpellCastModal: React.FC<SpellCastModalProps> = ({
         {/* Area of Effect */}
         {spell.area_of_effect_type && (
           <div className={styles.areaInfo}>
-            <h4>📍 Area of Effect</h4>
+            <h4>[LOCATION] Area of Effect</h4>
             <div className={styles.areaBox}>
               {spell.area_of_effect_size}-foot {spell.area_of_effect_type}
             </div>
@@ -165,7 +165,7 @@ const SpellCastModal: React.FC<SpellCastModalProps> = ({
             onClick={() => onCast(spell.level === 0 ? 0 : selectedSlotLevel)}
             disabled={spell.level > 0 && !hasAvailableSlot(selectedSlotLevel)}
           >
-            ✨ Cast Spell
+            Cast Spell
           </button>
           <button className={styles.cancelBtn} onClick={onClose}>Cancel</button>
         </div>

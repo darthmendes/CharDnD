@@ -187,7 +187,7 @@ def create_barbarian():
     session.add(ClassFeatures(classID=barbarian.id, subclassID=totem_warrior.id, featureID=totem_features[3].id, level=14))
     session.commit()
     
-    print(f"✅ Created Barbarian class with {barbarian.id}")
+    print(f"[SUCCESS] Created Barbarian class with {barbarian.id}")
 
 def create_druid():
     druid = DnDclass(
@@ -447,7 +447,7 @@ def create_druid():
         session.add_all(class_equipment)
         session.commit()
     
-    print(f"✅ Created Druid class with {druid.id}")
+    print(f"[SUCCESS] Created Druid class with {druid.id}")
 
 def create_artificer():
     artificer = DnDclass(
@@ -549,7 +549,7 @@ def create_artificer():
     session.add_all([ClassFeatures(classID=artificer.id, subclassID=artillerist.id, featureID=f.id, level=l) for f, l in zip(artillerist_features, [3, 3, 5, 9, 15])])
     session.commit()
 
-    print(f"✅ Created Artificer class with {artificer.id}")
+    print(f"[SUCCESS] Created Artificer class with {artificer.id}")
 
 
 def create_bard():
@@ -628,7 +628,7 @@ def create_bard():
     session.add_all([ClassFeatures(classID=bard.id, subclassID=valor.id, featureID=f.id, level=l) for f, l in zip(valor_features, [3, 3, 6, 14])])
     session.commit()
 
-    print(f"✅ Created Bard class with {bard.id}")
+    print(f"[SUCCESS] Created Bard class with {bard.id}")
 
 
 def create_cleric():
@@ -640,7 +640,8 @@ def create_cleric():
         armor_proficiencies=["Light", "Medium", "Shields"],
         weapon_proficiencies=["Simple"],
         tool_proficiencies=[],
-        skill_choices={"n_choices": 2, "options": ["History", "Insight", "Medicine", "Persuasion", "Religion"]}
+        skill_choices={"n_choices": 2, "options": ["History", "Insight", "Medicine", "Persuasion", "Religion"]},
+        subclass_level=1
     )
     session.add(cleric)
     session.commit()
@@ -711,7 +712,7 @@ def create_cleric():
     session.add_all([ClassFeatures(classID=cleric.id, subclassID=light.id, featureID=f.id, level=l) for f, l in zip(light_features, [1, 1, 1, 2, 6, 8, 17])])
     session.commit()
 
-    print(f"✅ Created Cleric class with {cleric.id}")
+    print(f"[SUCCESS] Created Cleric class with {cleric.id}")
 
 
 def create_fighter():
@@ -796,7 +797,7 @@ def create_fighter():
     session.add_all([ClassFeatures(classID=fighter.id, subclassID=battlemaster.id, featureID=f.id, level=l) for f, l in zip(battlemaster_features, [3, 3, 7, 10, 15])])
     session.commit()
 
-    print(f"✅ Created Fighter class with {fighter.id}")
+    print(f"[SUCCESS] Created Fighter class with {fighter.id}")
 
 
 def create_paladin():
@@ -887,7 +888,7 @@ def create_paladin():
     session.add_all([ClassFeatures(classID=paladin.id, subclassID=vengeance.id, featureID=f.id, level=l) for f, l in zip(vengeance_features, [3, 3, 3, 7, 15, 20])])
     session.commit()
 
-    print(f"✅ Created Paladin class with {paladin.id}")
+    print(f"[SUCCESS] Created Paladin class with {paladin.id}")
 
 
 def create_ranger():
@@ -978,7 +979,7 @@ def create_ranger():
     session.add_all([ClassFeatures(classID=ranger.id, subclassID=beastmaster.id, featureID=f.id, level=l) for f, l in zip(beastmaster_features, [3, 7, 11, 15])])
     session.commit()
 
-    print(f"✅ Created Ranger class with {ranger.id}")
+    print(f"[SUCCESS] Created Ranger class with {ranger.id}")
 
 
 def create_rogue():
@@ -1188,7 +1189,7 @@ def create_rogue():
     session.add_all([ClassFeatures(classID=rogue.id, subclassID=assassin.id, featureID=f.id, level=l) for f, l in zip(assassin_features, [3, 3, 9, 13, 17])])
     session.commit()
 
-    print(f"✅ Created Rogue class with {rogue.id}")
+    print(f"[SUCCESS] Created Rogue class with {rogue.id}")
 
 
 def create_sorcerer():
@@ -1356,7 +1357,7 @@ def create_sorcerer():
     session.add_all([ClassFeatures(classID=sorcerer.id, subclassID=wild_magic.id, featureID=f.id, level=l) for f, l in zip(wild_magic_features, [1, 1, 6, 14, 18])])
     session.commit()
 
-    print(f"✅ Created Sorcerer class with {sorcerer.id}")
+    print(f"[SUCCESS] Created Sorcerer class with {sorcerer.id}")
 
 
 def create_warlock():
@@ -1541,7 +1542,7 @@ def create_warlock():
     session.add_all([ClassFeatures(classID=warlock.id, subclassID=great_old_one.id, featureID=f.id, level=l) for f, l in zip(great_old_one_features, [1, 1, 6, 10, 14])])
     session.commit()
 
-    print(f"✅ Created Warlock class with {warlock.id}")
+    print(f"[SUCCESS] Created Warlock class with {warlock.id}")
 
 
 def create_wizard():
@@ -1684,7 +1685,7 @@ def create_wizard():
     session.add_all([ClassFeatures(classID=wizard.id, subclassID=abjuration.id, featureID=f.id, level=l) for f, l in zip(abjuration_features, [2, 2, 6, 10, 14])])
     session.commit()
 
-    print(f"✅ Created Wizard class with {wizard.id}")
+    print(f"[SUCCESS] Created Wizard class with {wizard.id}")
 
 
 def populate_all_classes():

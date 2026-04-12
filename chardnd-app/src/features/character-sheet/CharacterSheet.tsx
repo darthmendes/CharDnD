@@ -34,19 +34,19 @@ import {
   expendSpellSlot as apiExpendSpellSlot,
 } from '../../services/api';
 
-// 🔽 D&D 5e XP Thresholds
+// [NOTE] D&D 5e XP Thresholds
 const LEVEL_XP_TABLE = [
   0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000,
   85000, 100000, 120000, 140000, 165000, 195000, 225000, 265000, 305000, 355000
 ];
 
-// ✅ Default attunement slot limit
+// [NOTE] Default attunement slot limit
 const DEFAULT_ATTUNEMENT_SLOTS = 4;
 
-// ✅ Type for proficiency tabs
+// [NOTE] Type for proficiency tabs
 type ProficiencyTab = 'skills' | 'weapons' | 'tools';
 
-// ✅ Type for collapsible sections
+// [NOTE] Type for collapsible sections
 type CollapsibleSection = 'speciesLevel' | 'traits' | 'spellcasting' | 'inventory' | 'combat';
 
 const CharacterDisplay = () => {
@@ -56,11 +56,11 @@ const CharacterDisplay = () => {
   const [character, setCharacter] = useState<Character | null>(null);
   const [localAbilityScores, setLocalAbilityScores] = useState<{ [key: string]: number } | null>(null);
   
-  // ✅ Level & XP
+  // [NOTE] Level & XP
   const [localLevel, setLocalLevel] = useState<number>(1);
   const [localXp, setLocalXp] = useState<number>(0);
   
-  // ✅ HP Controls
+  // [NOTE] HP Controls
   const [hpCurrent, setHpCurrent] = useState<number>(0);
   const [hpMax, setHpMax] = useState<number>(0);
   const [hpTmp, setHpTmp] = useState<number>(0);
@@ -73,34 +73,34 @@ const CharacterDisplay = () => {
   const [isSpellDetailsModalOpen, setIsSpellDetailsModalOpen] = useState(false);
   const [selectedSpellForDetails] = useState<any | null>(null);
   
-  // ✅ State for items
+  // [NOTE] State for items
   const [availableItems, setAvailableItems] = useState<any[]>([]);
   const [itemsLoading, setItemsLoading] = useState(true);
   const [_selectedAttackItem, _setSelectedAttackItem] = useState<any | null>(null);
   const [attackModalData, setAttackModalData] = useState<any | null>(null);
   const [selectedItemForDetails, setSelectedItemForDetails] = useState<any | null>(null);
   
-  // ✅ State for bulk delete
+  // [NOTE] State for bulk delete
   const [isBulkDeleteMode, setIsBulkDeleteMode] = useState(false);
   const [selectedItemsForDelete, setSelectedItemsForDelete] = useState<Set<number>>(new Set());
   
-  // ✅ State for attack details modal
+  // [NOTE] State for attack details modal
   const [selectedAttackForModal, setSelectedAttackForModal] = useState<any | null>(null);
   const [selectedAttackData, setSelectedAttackData] = useState<any | null>(null);
   
-  // ✅ State for weapon variant selector
+  // [NOTE] State for weapon variant selector
   const [weaponVariantSelectorOpen, setWeaponVariantSelectorOpen] = useState(false);
   const [weaponToVariantSelect, setWeaponToVariantSelect] = useState<any | null>(null);
   const [selectedWeaponVariant, setSelectedWeaponVariant] = useState<string | null>(null);
   
-  // ✅ HP Modal State
+  // [NOTE] HP Modal State
   const [hpModalType, setHpModalType] = useState<'heal' | 'damage' | 'temp' | null>(null);
   const [hpModalInput, setHpModalInput] = useState<string>('');
   
-  // ✅ Charge expend checkbox state
+  // [NOTE] Charge expend checkbox state
   const [expendCharge, setExpendCharge] = useState(false);
   
-  // ✅ State for stat modifiers modal
+  // [NOTE] State for stat modifiers modal
   const [statModifiersModal, setStatModifiersModal] = useState<{
     isOpen: boolean;
     stat: 'AC' | 'Speed' | 'Initiative' | 'AbilityScore' | 'SpellDC' | 'SpellAttack';
@@ -110,7 +110,7 @@ const CharacterDisplay = () => {
     stat: 'AC',
   });
   
-  // ✅ State for proficiency modals
+  // [NOTE] State for proficiency modals
   const [proficiencyModal, setProficiencyModal] = useState<{
     isOpen: boolean;
     type: 'skills' | 'weapons' | 'tools' | 'languages';
@@ -119,25 +119,25 @@ const CharacterDisplay = () => {
     type: 'skills',
   });
   
-  // ✅ NEW: State for proficiency tabs
+  // [NOTE] NEW: State for proficiency tabs
   const [activeProficiencyTab, setActiveProficiencyTab] = useState<ProficiencyTab>('skills');
   
-  // ✅ State for equipped items filter
+  // [NOTE] State for equipped items filter
   const [showEquippedOnly, setShowEquippedOnly] = useState(false);
   
-  // ✅ State for attuned items filter
+  // [NOTE] State for attuned items filter
   const [showAttunedOnly, setShowAttunedOnly] = useState(false);
   
-  // ✅ Attunement slot limit
+  // [NOTE] Attunement slot limit
   const [attunementSlotLimit, setAttunementSlotLimit] = useState<number>(DEFAULT_ATTUNEMENT_SLOTS);
   
-  // ✅ State for expanded trait (for collapsible display)
+  // [NOTE] State for expanded trait (for collapsible display)
   const [expandedTrait, setExpandedTrait] = useState<string | null>(null);
   
-  // ✅ State for expanded skill advantage (for collapsible display)
+  // [NOTE] State for expanded skill advantage (for collapsible display)
   const [expandedAdvantage, setExpandedAdvantage] = useState<string | null>(null);
   
-  // ✅ NEW: State for collapsible sections
+  // [NOTE] NEW: State for collapsible sections
   const [collapsedSections, setCollapsedSections] = useState<Record<CollapsibleSection, boolean>>({
     speciesLevel: false,
     traits: false,
@@ -146,7 +146,7 @@ const CharacterDisplay = () => {
     combat: false,
   });
   
-  // ✅ NEW: Spell casting state
+  // [NOTE] NEW: Spell casting state
   const [spellSlots, setSpellSlots] = useState<{[key: string]: number}>({});
   const [spellSlotsExpended, setSpellSlotsExpended] = useState<{[key: string]: number}>({});
   const [, setSpellSlotsRemaining] = useState<{[key: string]: number}>({});
@@ -156,24 +156,24 @@ const CharacterDisplay = () => {
   const [spellAttackBonus, setSpellAttackBonus] = useState<number>(0);
   const [characterSpells, setCharacterSpells] = useState<any[]>([]);
   
-  // ✅ NEW: Spell preparation state
+  // [NOTE] NEW: Spell preparation state
   const [spellPrepareLimit, setSpellPrepareLimit] = useState<number | null>(null);
   const [spellPreparedCount, setSpellPreparedCount] = useState<number>(0);
   const [spellPrepareUnlimited, setSpellPrepareUnlimited] = useState<boolean>(false);
 
-  // ✅ NEW: Class-based spell lists state
+  // [NOTE] NEW: Class-based spell lists state
   const [, setClassSpellsByClass] = useState<{[className: string]: {[level: number]: any[]}}>({});
   const [, setActiveSpellLevels] = useState<{[className: string]: number}>({});
   const [, setActiveClassSpellTab] = useState<{[className: string]: 'available' | 'prepared'}>({});
   const [, setClassSpellLoading] = useState<{[className: string]: boolean}>({});
 
-  // ✅ Spell bulk preparation state (unused - for future feature)
+  // [NOTE] Spell bulk preparation state (unused - for future feature)
 
   // Navigation
   const goToMain = () => navigate('/');
   const goToItemCreator = () => navigate('/items/creator');
 
-  // ✅ Toggle section collapse
+  // [NOTE] Toggle section collapse
   const toggleSection = (section: CollapsibleSection) => {
     setCollapsedSections(prev => ({
       ...prev,
@@ -181,7 +181,7 @@ const CharacterDisplay = () => {
     }));
   };
 
-  // 🔁 XP ⇄ Level Helpers
+  // [NOTE] XP ⇄ Level Helpers
   const levelToXp = (level: number): number => {
     if (level < 1) return 0;
     if (level > 20) return LEVEL_XP_TABLE[19];
@@ -195,7 +195,7 @@ const CharacterDisplay = () => {
     return 1;
   };
 
-  // 🔄 Level & XP Handlers
+  // [NOTE] Level & XP Handlers
   const handleLevelChange = (delta: number) => {
     const newLevel = Math.max(1, Math.min(20, localLevel + delta));
     setLocalLevel(newLevel);
@@ -214,23 +214,23 @@ const CharacterDisplay = () => {
     setLocalLevel(xpToLevel(value));
   };
 
-  // 💾 Save Level & XP
+  // [NOTE] Save Level & XP
   const saveLevelAndXp = async () => {
     if (!id || saving) return;
     setSaving(true);
     try {
       const updated = await updateCharacter(parseInt(id), { level: localLevel, xp: localXp });
       setCharacter(updated);
-      alert('✅ Level & XP saved!');
+      alert('Level & XP saved!');
     } catch (err: any) {
       console.error(err);
-      alert('❌ Failed to save Level & XP: ' + err.message);
+      alert('Failed to save Level & XP: ' + err.message);
     } finally {
       setSaving(false);
     }
   };
 
-  // 🩸 HP Logic
+  // [NOTE] HP Logic
   const heal = (amount: number) => {
     setHpCurrent(prev => Math.min(hpMax, prev + amount));
     setHpModalInput('');
@@ -269,30 +269,30 @@ const CharacterDisplay = () => {
     else if (hpModalType === 'temp') addTempHp(amount);
   };
 
-  // 💾 Save HP
+  // [NOTE] Save HP
   const saveHp = async () => {
     if (!id || saving) return;
     setSaving(true);
     try {
       const updated = await updateCharacter(parseInt(id), { hpCurrent, hpTmp });
       setCharacter(updated);
-      alert('✅ HP saved!');
+      alert('HP saved!');
     } catch (err: any) {
       console.error(err);
-      alert('❌ Failed to save HP');
+      alert('Failed to save HP');
     } finally {
       setSaving(false);
     }
   };
 
-  // 📥 Load character (✅ FIXED: Fetch species traits)
+  // [NOTE] Load character (FIXED: Fetch species traits)
   useEffect(() => {
     const loadCharacter = async () => {
       if (!id) return;
       try {
         const data = await fetchCharacter(parseInt(id));
         
-        // ✅ Fetch species traits if species exists
+        // [NOTE] Fetch species traits if species exists
         if (data.species) {
           try {
             const speciesTraits = await fetchSpeciesTraits(data.species, data.subspecies);
@@ -321,7 +321,7 @@ const CharacterDisplay = () => {
         setHpCurrent(data.hpCurrent !== undefined ? data.hpCurrent : (data.hpMax || data.hitPoints || 10));
         setHpTmp(data.hpTmp || 0);
         
-        // ✅ Check for attunement slot modifiers
+        // [NOTE] Check for attunement slot modifiers
         const attunementBonus = data.attunementSlotBonus || 0;
         setAttunementSlotLimit(DEFAULT_ATTUNEMENT_SLOTS + attunementBonus);
       } catch (err: any) {
@@ -333,7 +333,7 @@ const CharacterDisplay = () => {
     loadCharacter();
   }, [id]);
 
-  // 📥 Load items for modal
+  // [NOTE] Load items for modal
   useEffect(() => {
     const loadItems = async () => {
       try {
@@ -349,7 +349,7 @@ const CharacterDisplay = () => {
     loadItems();
   }, []);
 
-  // ✅ Load spell slots and character spells
+  // [NOTE] Load spell slots and character spells
   useEffect(() => {
     const loadSpellData = async () => {
       if (!id || !character) return;
@@ -368,7 +368,7 @@ const CharacterDisplay = () => {
         const spellsData = await fetchCharacterSpells(parseInt(id));
         setCharacterSpells(spellsData);
         
-        // ✅ NEW: Load prepare limit
+        // [NOTE] NEW: Load prepare limit
         const prepareData = await fetchPrepareLimit(parseInt(id));
         setSpellPrepareLimit(prepareData.prepare_limit);
         setSpellPreparedCount(prepareData.prepared_count);
@@ -380,7 +380,7 @@ const CharacterDisplay = () => {
     loadSpellData();
   }, [id, character]);
 
-  // ✅ NEW: Load class-available spells for each of character's classes
+  // [NOTE] NEW: Load class-available spells for each of character's classes
   useEffect(() => {
     const loadClassSpells = async () => {
       if (!id || !character?.classes) return;
@@ -403,7 +403,7 @@ const CharacterDisplay = () => {
           }
           spellsByClass[className] = byLevel;
           initialActiveLevels[className] = 0; // Default to cantrips tab
-          // ✅ FIX #2: Default to 'prepared' tab for prepared casters
+          // [NOTE] FIX #2: Default to 'prepared' tab for prepared casters
           const isPreparedCaster = ['Cleric', 'Druid', 'Paladin', 'Wizard'].includes(className);
           initialActiveTabs[className] = isPreparedCaster ? 'prepared' : 'available';
         } catch (err) {
@@ -430,10 +430,10 @@ const CharacterDisplay = () => {
     try {
       const updatedCharacter = await updateCharacter(parseInt(id), { abilityScores: localAbilityScores });
       setCharacter(updatedCharacter);
-      alert('✅ Ability scores saved!');
+      alert('Ability scores saved!');
     } catch (err: any) {
       console.error(err);
-      alert('❌ Failed to save scores: ' + err.message);
+      alert('Failed to save scores: ' + err.message);
     } finally {
       setSaving(false);
     }
@@ -444,10 +444,10 @@ const CharacterDisplay = () => {
     try {
       const updatedCharacter = await addItemToCharacter(parseInt(id!), item.id!, quantity);
       setCharacter(updatedCharacter);
-      alert(`✅ Added ${quantity} × ${item.name} to inventory`);
+      alert(`Added ${quantity} × ${item.name} to inventory`);
     } catch (err: any) {
       console.error(err);
-      alert('❌ Could not add item');
+      alert('Could not add item');
     }
   };
 
@@ -457,20 +457,20 @@ const CharacterDisplay = () => {
       // Extract spellID from spell object
       const spellId = spell.id;
       if (!spellId) {
-        alert('❌ Spell ID not found');
+        alert('Spell ID not found');
         return;
       }
 
       await addSpellToCharacter(parseInt(id!), spellId);
       setIsSpellModalOpen(false);
-      alert(`✅ Added ${spell.name} to spells`);
+      alert(`Added ${spell.name} to spells`);
       
       // Refresh spell list
       const spellsData = await fetchCharacterSpells(parseInt(id!));
       setCharacterSpells(spellsData);
     } catch (err: any) {
       console.error(err);
-      alert('❌ Could not add spell: ' + err.message);
+      alert('Could not add spell: ' + err.message);
     }
   };
 
@@ -479,10 +479,10 @@ const CharacterDisplay = () => {
     try {
       const updatedCharacter = await addItemToCharacter(parseInt(id!), item.id, 1);
       setCharacter(updatedCharacter);
-      alert(`✅ Added 1 more × ${item.name}`);
+      alert(`Added 1 more × ${item.name}`);
     } catch (err: any) {
       console.error(err);
-      alert('❌ Could not add item');
+      alert('Could not add item');
     }
   };
 
@@ -492,10 +492,10 @@ const CharacterDisplay = () => {
     try {
       const updatedCharacter = await apiDeleteInventoryItem(parseInt(id!), inventoryId);
       setCharacter(updatedCharacter);
-      alert(`✅ Deleted ${itemName}`);
+      alert(`Deleted ${itemName}`);
     } catch (err: any) {
       console.error(err);
-      alert('❌ Could not delete item');
+      alert('Could not delete item');
     }
   };
 
@@ -505,12 +505,12 @@ const CharacterDisplay = () => {
       const updatedCharacter = await apiRemoveOneItem(parseInt(id!), inventoryId);
       setCharacter(updatedCharacter);
       const message = quantity > 1
-        ? `✅ Removed 1 × ${itemName} (${quantity - 1} remaining)`
-        : `✅ Deleted last × ${itemName}`;
+        ? `Removed 1 × ${itemName} (${quantity - 1} remaining)`
+        : `Deleted last × ${itemName}`;
       alert(message);
     } catch (err: any) {
       console.error(err);
-      alert('❌ Could not remove item');
+      alert('Could not remove item');
     }
   };
 
@@ -521,11 +521,11 @@ const CharacterDisplay = () => {
       setCharacter(updatedCharacter);
     } catch (err: any) {
       console.error(err);
-      alert('❌ Could not update charges');
+      alert('Could not update charges');
     }
   };
 
-  // ✅ NEW: Expend spell slot
+  // [NOTE] NEW: Expend spell slot
   const expendSpellSlot = async (level: number) => {
     try {
       await apiExpendSpellSlot(parseInt(id!), level, 1);
@@ -538,7 +538,7 @@ const CharacterDisplay = () => {
     }
   };
 
-  // ✅ NEW: Toggle spell prepared status
+  // [NOTE] NEW: Toggle spell prepared status
   const toggleSpellPrepared = async (spellId: number) => {
     try {
       await apiToggleSpellPrepared(parseInt(id!), spellId);
@@ -556,39 +556,39 @@ const CharacterDisplay = () => {
     }
   };
 
-  // ✅ NEW: Attune item (does NOT require equipment)
+  // [NOTE] NEW: Attune item (does NOT require equipment)
   const attuneItem = async (inventoryId: number, itemName: string, _itemData: any) => {
     const attunedCount = getAttunedCount();
     if (attunedCount >= attunementSlotLimit) {
-      alert(`❌ Cannot attune: You already have ${attunedCount} attuned items (max: ${attunementSlotLimit}). Unattune an item first.`);
+      alert(`Cannot attune: You already have ${attunedCount} attuned items (max: ${attunementSlotLimit}). Unattune an item first.`);
       return;
     }
     try {
       const updatedCharacter = await apiAttuneItem(parseInt(id!), inventoryId);
       setCharacter(updatedCharacter);
-      alert(`✅ ${itemName} attuned! (${attunedCount + 1}/${attunementSlotLimit})`);
+      alert(`${itemName} attuned! (${attunedCount + 1}/${attunementSlotLimit})`);
     } catch (err: any) {
       console.error(err);
-      alert('❌ Could not attune item: ' + err.message);
+      alert('Could not attune item: ' + err.message);
     }
   };
 
-  // ✅ NEW: Unattune item
+  // [NOTE] NEW: Unattune item
   const unattuneItem = async (inventoryId: number, itemName: string) => {
     try {
       const updatedCharacter = await apiUnattuneItem(parseInt(id!), inventoryId);
       setCharacter(updatedCharacter);
-      alert(`✅ ${itemName} unattuned!`);
+      alert(`${itemName} unattuned!`);
     } catch (err: any) {
       console.error(err);
-      alert('❌ Could not unattune item');
+      alert('Could not unattune item');
     }
   };
 
   // Bulk delete items
   const bulkDeleteItems = async () => {
     if (selectedItemsForDelete.size === 0) {
-      alert('❌ Select at least one item to delete');
+      alert('Select at least one item to delete');
       return;
     }
     if (!window.confirm(`Delete ${selectedItemsForDelete.size} item(s)?`)) return;
@@ -600,10 +600,10 @@ const CharacterDisplay = () => {
       setCharacter(updatedCharacter);
       setIsBulkDeleteMode(false);
       setSelectedItemsForDelete(new Set());
-      alert(`✅ Deleted ${selectedItemsForDelete.size} item(s)`);
+      alert(`Deleted ${selectedItemsForDelete.size} item(s)`);
     } catch (err: any) {
       console.error(err);
-      alert('❌ Could not delete items');
+      alert('Could not delete items');
     }
   };
 
@@ -618,7 +618,7 @@ const CharacterDisplay = () => {
     setSelectedItemsForDelete(newSelection);
   };
 
-  // ✅ Check if item requires attunement
+  // [NOTE] Check if item requires attunement
   const requiresAttunement = (item: any): boolean => {
     if (!item) return false;
     const itemData = item.item || item;
@@ -627,13 +627,13 @@ const CharacterDisplay = () => {
            (itemData.rarity && ['Rare', 'Very Rare', 'Legendary', 'Artifact'].includes(itemData.rarity));
   };
 
-  // ✅ Check if item is currently attuned
+  // [NOTE] Check if item is currently attuned
   const isItemAttuned = (item: any): boolean => {
     if (!item) return false;
     return item.is_attuned === true;
   };
 
-  // ✅ Check if item can be equipped (Wondrous Item, Ring, Armor, Shield)
+  // [NOTE] Check if item can be equipped (Wondrous Item, Ring, Armor, Shield)
   const canEquip = (item: any): boolean => {
     if (!item) return false;
     const itemData = item.item || item;
@@ -649,7 +649,7 @@ const CharacterDisplay = () => {
     );
   };
 
-  // ✅ Count currently attuned items (NOT just equipped)
+  // [NOTE] Count currently attuned items (NOT just equipped)
   const getAttunedCount = (): number => {
     if (!character || !character.items) return 0;
     return character.items.filter((inv: any) => 
@@ -657,12 +657,12 @@ const CharacterDisplay = () => {
     ).length;
   };
 
-  // ✅ Check if character can attune to more items
+  // [NOTE] Check if character can attune to more items
   const canAttuneMore = (): boolean => {
     return getAttunedCount() < attunementSlotLimit;
   };
 
-  // ✅ Calculate AC based on equipped armor
+  // [NOTE] Calculate AC based on equipped armor
   const calculateAC = (): number => {
     if (!character || !character.items) return 10;
     let baseAC = 10;
@@ -701,7 +701,7 @@ const CharacterDisplay = () => {
     return Math.max(10, baseAC + shieldBonus);
   };
 
-  // ✅ Equip item
+  // [NOTE] Equip item
   const equipItem = async (inventoryId: number, itemName: string, itemData: any) => {
     try {
       const updatedCharacter = await apiEquipItem(parseInt(id!), inventoryId);
@@ -709,29 +709,29 @@ const CharacterDisplay = () => {
       setSelectedItemForDetails(null);
       
       const attunementNote = requiresAttunement(itemData) 
-        ? ' (Click ⚡ to attune for special abilities)' 
+        ? ' (Click to attune for special abilities)' 
         : '';
-      alert(`✅ ${itemName} equipped!${attunementNote}`);
+      alert(`${itemName} equipped!${attunementNote}`);
     } catch (err: any) {
       console.error(err);
-      alert('❌ Could not equip item');
+      alert('Could not equip item');
     }
   };
 
-  // ✅ Unequip item
+  // [NOTE] Unequip item
   const unequipItem = async (inventoryId: number, itemName: string) => {
     try {
       const updatedCharacter = await apiUnequipItem(parseInt(id!), inventoryId);
       setCharacter(updatedCharacter);
       setSelectedItemForDetails(null);
-      alert(`✅ ${itemName} unequipped!`);
+      alert(`${itemName} unequipped!`);
     } catch (err: any) {
       console.error(err);
-      alert('❌ Could not unequip item');
+      alert('Could not unequip item');
     }
   };
 
-  // ✅ Get AC modifiers (only from equipped items)
+  // [NOTE] Get AC modifiers (only from equipped items)
   const getACModifiers = (): Array<{ itemName: string; value: number; type: 'bonus' | 'penalty' | 'base' }> => {
     if (!character || !character.items) return [];
     const modifiers: Array<{ itemName: string; value: number; type: 'bonus' | 'penalty' | 'base' }> = [];
@@ -769,7 +769,7 @@ const CharacterDisplay = () => {
     return modifiers;
   };
 
-  // ✅ Get Speed modifiers (only from equipped items)
+  // [NOTE] Get Speed modifiers (only from equipped items)
   const getSpeedModifiers = (): Array<{ itemName: string; value: number; type: 'bonus' | 'penalty' | 'base' }> => {
     if (!character || !character.items) return [];
     const modifiers: Array<{ itemName: string; value: number; type: 'bonus' | 'penalty' | 'base' }> = [];
@@ -790,7 +790,7 @@ const CharacterDisplay = () => {
     return modifiers;
   };
 
-  // ✅ Get Initiative modifiers (only from equipped items)
+  // [NOTE] Get Initiative modifiers (only from equipped items)
   const getInitiativeModifiers = (): Array<{ itemName: string; value: number; type: 'bonus' | 'penalty' | 'base' }> => {
     if (!character || !character.items) return [];
     const modifiers: Array<{ itemName: string; value: number; type: 'bonus' | 'penalty' | 'base' }> = [];
@@ -820,7 +820,7 @@ const CharacterDisplay = () => {
     return modifiers;
   };
 
-  // ✅ Get Spell Save DC modifiers
+  // [NOTE] Get Spell Save DC modifiers
   const getSpellDCModifiers = (): Array<{ itemName: string; value: number; type: 'bonus' | 'penalty' | 'base' }> => {
     if (!character || !character.abilityScores) return [];
     const modifiers: Array<{ itemName: string; value: number; type: 'bonus' | 'penalty' | 'base' }> = [];
@@ -865,7 +865,7 @@ const CharacterDisplay = () => {
     return modifiers;
   };
 
-  // ✅ Get Spell Attack Bonus modifiers
+  // [NOTE] Get Spell Attack Bonus modifiers
   const getSpellAttackModifiers = (): Array<{ itemName: string; value: number; type: 'bonus' | 'penalty' | 'base' }> => {
     if (!character || !character.abilityScores) return [];
     const modifiers: Array<{ itemName: string; value: number; type: 'bonus' | 'penalty' | 'base' }> = [];
@@ -910,7 +910,7 @@ const CharacterDisplay = () => {
     return modifiers;
   };
 
-  // ✅ Get skill proficiencies from equipped items only
+  // [NOTE] Get skill proficiencies from equipped items only
   const getSkillProficiencies = (): Array<{ itemName: string; proficiency: string }> => {
     if (!character || !character.items) return [];
     const proficiencies: Array<{ itemName: string; proficiency: string }> = [];
@@ -932,13 +932,13 @@ const CharacterDisplay = () => {
     return proficiencies;
   };
 
-  // ✅ Get skill modifiers from equipped AND attuned items
+  // [NOTE] Get skill modifiers from equipped AND attuned items
   const getSkillModifiers = (): Array<{ skillName: string; modifier: number; itemName: string }> => {
     if (!character || !character.items) return [];
     const modifiers: Array<{ skillName: string; modifier: number; itemName: string }> = [];
 
     for (const inv of character.items) {
-      // ✅ Only count modifiers from equipped AND attuned items
+      // [NOTE] Only count modifiers from equipped AND attuned items
       if (inv.is_equipped && (inv.is_attuned || !requiresAttunement(inv))) {
         const item = inv.item || inv;
         if (item.property_data?.skill_modifiers && Array.isArray(item.property_data.skill_modifiers)) {
@@ -956,13 +956,13 @@ const CharacterDisplay = () => {
     return modifiers;
   };
 
-  // ✅ Get skill advantages from equipped AND attuned items
+  // [NOTE] Get skill advantages from equipped AND attuned items
   const getSkillAdvantages = (): Array<{ skillName: string; itemName: string; description?: string }> => {
     if (!character || !character.items) return [];
     const advantages: Array<{ skillName: string; itemName: string; description?: string }> = [];
 
     for (const inv of character.items) {
-      // ✅ Only count advantages from equipped AND attuned items
+      // [NOTE] Only count advantages from equipped AND attuned items
       if (inv.is_equipped && (inv.is_attuned || !requiresAttunement(inv))) {
         const item = inv.item || inv;
         if (item.property_data?.skill_advantages && Array.isArray(item.property_data.skill_advantages)) {
@@ -980,7 +980,7 @@ const CharacterDisplay = () => {
     return advantages;
   };
 
-  // ✅ Get weapon proficiencies from equipped items only
+  // [NOTE] Get weapon proficiencies from equipped items only
   const getWeaponProficiencies = (): Array<{ itemName: string; proficiency: string }> => {
     if (!character || !character.items) return [];
     const proficiencies: Array<{ itemName: string; proficiency: string }> = [];
@@ -1002,7 +1002,7 @@ const CharacterDisplay = () => {
     return proficiencies;
   };
 
-  // ✅ Get tool proficiencies from equipped items only
+  // [NOTE] Get tool proficiencies from equipped items only
   const getToolProficiencies = (): Array<{ itemName: string; proficiency: string }> => {
     if (!character || !character.items) return [];
     const proficiencies: Array<{ itemName: string; proficiency: string }> = [];
@@ -1024,13 +1024,13 @@ const CharacterDisplay = () => {
     return proficiencies;
   };
 
-  // ✅ Get languages from equipped AND attuned items only
+  // [NOTE] Get languages from equipped AND attuned items only
   const getLanguages = (): Array<{ itemName: string; proficiency: string }> => {
     if (!character || !character.items) return [];
     const languages: Array<{ itemName: string; proficiency: string }> = [];
 
     for (const inv of character.items) {
-      // ✅ Only count languages from equipped AND attuned items
+      // [NOTE] Only count languages from equipped AND attuned items
       if (inv.is_equipped && (inv.is_attuned || !requiresAttunement(inv))) {
         const item = inv.item || inv;
         if (item.property_data?.languages && Array.isArray(item.property_data.languages)) {
@@ -1047,7 +1047,7 @@ const CharacterDisplay = () => {
     return languages;
   };
 
-  // ✅ Get all traits (from character + species + equipped AND attuned items)
+  // [NOTE] Get all traits (from character + species + equipped AND attuned items)
   const getAllTraits = (): Array<{ name: string; description: string; source: string }> => {
     const traits: Array<{ name: string; description: string; source: string }> = [];
     const traitNames = new Set<string>();
@@ -1067,7 +1067,7 @@ const CharacterDisplay = () => {
 
     if (character?.items) {
       for (const inv of character.items) {
-        // ✅ Only count traits from equipped AND attuned items
+        // [NOTE] Only count traits from equipped AND attuned items
         if (inv.is_equipped && (inv.is_attuned || !requiresAttunement(inv))) {
           const item = inv.item || inv;
           if (item.property_data?.traits && Array.isArray(item.property_data.traits)) {
@@ -1089,12 +1089,12 @@ const CharacterDisplay = () => {
     return traits;
   };
 
-  // ✅ Toggle trait expansion
+  // [NOTE] Toggle trait expansion
   const toggleTraitExpand = (traitName: string) => {
     setExpandedTrait(expandedTrait === traitName ? null : traitName);
   };
 
-  // ✅ Toggle skill advantage expansion
+  // [NOTE] Toggle skill advantage expansion
   const toggleAdvantageExpand = (skillName: string) => {
     setExpandedAdvantage(expandedAdvantage === skillName ? null : skillName);
   };
@@ -1129,7 +1129,7 @@ const CharacterDisplay = () => {
     }
   }, [location.search, addItem, id, navigate]);
 
-  // ✅ Calculate proficiency bonus based on level
+  // [NOTE] Calculate proficiency bonus based on level
   const getProficiencyBonus = () => {
     if (localLevel <= 4) return 2;
     if (localLevel <= 8) return 3;
@@ -1140,7 +1140,7 @@ const CharacterDisplay = () => {
 
   const proficiencyBonus = getProficiencyBonus();
 
-  // ✅ Helper: Get weapon attack variants based on properties
+  // [NOTE] Helper: Get weapon attack variants based on properties
   const getWeaponVariants = (weapon: any): Array<{
     id: string;
     name: string;
@@ -1197,7 +1197,7 @@ const CharacterDisplay = () => {
     return variants;
   };
 
-  // ✅ Helper: Map skills to abilities
+  // [NOTE] Helper: Map skills to abilities
   const getSkillAbility = (skillName: string): string => {
     const skillMap: Record<string, string> = {
       'Acrobatics': 'dex',
@@ -1222,7 +1222,7 @@ const CharacterDisplay = () => {
     return skillMap[skillName] || 'varies';
   };
 
-  // ✅ Get all proficiencies from character data (includes species, background, class)
+  // [NOTE] Get all proficiencies from character data (includes species, background, class)
   const getAllProficiencies = () => {
     const skills: string[] = [];
     const weapons: string[] = [];
@@ -1267,7 +1267,7 @@ const CharacterDisplay = () => {
   const proficiencies = character ? getAllProficiencies() : { skills: [], weapons: [], tools: [], languages: [] };
   const { skills: proficientSkills, weapons: proficientWeapons, tools: proficientTools, languages: knownLanguages } = proficiencies;
 
-  // ✅ Calculate final ability scores
+  // [NOTE] Calculate final ability scores
   const getFinalAbilityScore = (baseKey: string) => {
     return localAbilityScores?.[baseKey] || 10;
   };
@@ -1276,7 +1276,7 @@ const CharacterDisplay = () => {
     return Math.floor((score - 10) / 2);
   };
 
-  // ✅ Helper for Finesse weapons
+  // [NOTE] Helper for Finesse weapons
   const getBestAbilityForWeapon = (weapon: any) => {
     const properties = (weapon.properties || []).map((p: any) =>
       typeof p === 'string' ? p.toLowerCase() : (p.name || '').toLowerCase()
@@ -1295,7 +1295,7 @@ const CharacterDisplay = () => {
     return { modifier: strMod, ability: 'STR' };
   };
 
-  // ✅ FIXED: Get all displayed skills (character + item-granted + skill modifiers)
+  // [NOTE] FIXED: Get all displayed skills (character + item-granted + skill modifiers)
   const getAllDisplayedSkills = () => {
     const skillSet = new Set<string>();
     const skillSources: Record<string, string[]> = {};
@@ -1321,7 +1321,7 @@ const CharacterDisplay = () => {
       }
     }
     
-    // ✅ ADD SKILLS FROM SKILL MODIFIERS (THIS WAS MISSING!)
+    // [NOTE] ADD SKILLS FROM SKILL MODIFIERS (THIS WAS MISSING!)
     const itemSkillModifiers = getSkillModifiers();
     if (itemSkillModifiers.length > 0) {
       for (const mod of itemSkillModifiers) {
@@ -1347,7 +1347,7 @@ const CharacterDisplay = () => {
   const skillModifiers = getSkillModifiers();
   const skillAdvantages = getSkillAdvantages();
 
-  // ✅ FIXED: Helper: Get ordinal suffix for spell levels (returns full ordinal like "1st")
+  // [NOTE] FIXED: Helper: Get ordinal suffix for spell levels (returns full ordinal like "1st")
   const getOrdinal = (n: number): string => {
     if (n === 0) return 'Cantrip';
     const s = ["th", "st", "nd", "rd"];
@@ -1372,7 +1372,7 @@ const CharacterDisplay = () => {
 
       <h1>{character.name}</h1>
 
-      {/* ✅ COLLAPSIBLE: Species & Level Section */}
+      {/* [NOTE] COLLAPSIBLE: Species & Level Section */}
       <section className={styles.section}>
         <div 
           className={styles.sectionHeader}
@@ -1488,11 +1488,11 @@ const CharacterDisplay = () => {
             <strong>Proficiency Bonus:</strong> +{proficiencyBonus}
           </div>
 
-          {/* ✅ NEW: Proficiency Display with Tabs */}
+          {/* [NOTE] NEW: Proficiency Display with Tabs */}
           <div>
             <strong>Proficiencies:</strong>
             
-            {/* ✅ Tab Buttons */}
+            {/* [NOTE] Tab Buttons */}
             <div className={styles.proficiencyTabs} style={{ 
               display: 'flex', 
               gap: '0.5rem', 
@@ -1549,7 +1549,7 @@ const CharacterDisplay = () => {
               </button>
             </div>
 
-            {/* ✅ Tab Content - Skills */}
+            {/* [NOTE] Tab Content - Skills */}
             {activeProficiencyTab === 'skills' && displayedSkills.skills.length > 0 && (
               <div>
                 <strong
@@ -1561,7 +1561,7 @@ const CharacterDisplay = () => {
                   {skillModifiers.length > 0 && ` | Item Bonuses: ${skillModifiers.length}`}
                 </strong>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '0.5rem', marginTop: '0.5rem' }}>
-                  {/* ✅ Filter to only show skills with proficiency OR item bonuses */}
+                  {/* [NOTE] Filter to only show skills with proficiency OR item bonuses */}
                   {displayedSkills.skills
                     .map(skill => {
                       const ability = getSkillAbility(skill);
@@ -1591,7 +1591,7 @@ const CharacterDisplay = () => {
                       };
                     })
                     .filter(skillData =>
-                      // ✅ Only show if proficient OR has item bonus OR has advantage
+                      // [NOTE] Only show if proficient OR has item bonus OR has advantage
                       skillData.isProficient || skillData.hasItemBonus || skillData.hasAdvantage
                     )
                     .map(skillData => (
@@ -1619,16 +1619,16 @@ const CharacterDisplay = () => {
                         )}
                         {skillData.isFromItems && !skillData.hasItemBonus && (
                           <span className={styles.itemSourceBadge}>
-                            📦 {skillData.itemSources.join(', ')}
+                            [ITEMS] {skillData.itemSources.join(', ')}
                           </span>
                         )}
-                        {skillData.hasAdvantage && <span className={styles.advantageBadge}>🎲 ADV</span>}
+                        {skillData.hasAdvantage && <span className={styles.advantageBadge}>ADV</span>}
                       </div>
                     ))}
                 </div>
                 {getSkillProficiencies().length > 0 && (
                   <div style={{ marginTop: '0.5rem', padding: '0.5rem', backgroundColor: '#e3f2fd', borderRadius: '4px', border: '1px solid #2196f3' }}>
-                    <strong>📜 Item-Granted Proficiencies:</strong>
+                    <strong>[SCROLL] Item-Granted Proficiencies:</strong>
                     <ul style={{ margin: '0.25rem 0 0 1rem', padding: 0 }}>
                       {getSkillProficiencies().map((prof, idx) => (
                         <li key={idx} style={{ fontSize: '0.9em', color: '#1565c0' }}>
@@ -1641,7 +1641,7 @@ const CharacterDisplay = () => {
                 {/* Skill Advantages - Always visible */}
                 {skillAdvantages.length > 0 && (
                   <div style={{ marginBottom: '1rem' }}>
-                    <strong style={{ color: '#ff9800' }}>🎲 Skill Advantages:</strong>
+                    <strong style={{ color: '#ff9800' }}>Skill Advantages:</strong>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
                       {skillAdvantages.map((adv, idx) => (
                         <div
@@ -1678,7 +1678,7 @@ const CharacterDisplay = () => {
               </div>            
             )}
 
-            {/* ✅ Tab Content - Weapons */}
+            {/* [NOTE] Tab Content - Weapons */}
             {activeProficiencyTab === 'weapons' && proficientWeapons.length > 0 && (
               <div>
                 <strong
@@ -1698,7 +1698,7 @@ const CharacterDisplay = () => {
               </div>
             )}
 
-            {/* ✅ Tab Content - Tools */}
+            {/* [NOTE] Tab Content - Tools */}
             {activeProficiencyTab === 'tools' && proficientTools.length > 0 && (
               <div>
                 <strong
@@ -1718,7 +1718,7 @@ const CharacterDisplay = () => {
               </div>
             )}
 
-            {/* ✅ Show message if no proficiencies in active tab */}
+            {/* [NOTE] Show message if no proficiencies in active tab */}
             {((activeProficiencyTab === 'skills' && displayedSkills.skills.length === 0) ||
               (activeProficiencyTab === 'weapons' && proficientWeapons.length === 0) ||
               (activeProficiencyTab === 'tools' && proficientTools.length === 0)) && (
@@ -1757,13 +1757,13 @@ const CharacterDisplay = () => {
               {attunedCount} / {attunementSlotLimit}
             </span>
             {attunedCount >= attunementSlotLimit && (
-              <span className={styles.attunementWarning}> ⚠️ Max attuned items reached!</span>
+              <span className={styles.attunementWarning}> Max attuned items reached!</span>
             )}
           </div>
         </div>
       </section>
 
-      {/* ✅ COLLAPSIBLE: Traits Section */}
+      {/* [NOTE] COLLAPSIBLE: Traits Section */}
       <section className={styles.section}>
         <div 
           className={styles.sectionHeader}
@@ -1812,7 +1812,7 @@ const CharacterDisplay = () => {
         </div>
       </section>
 
-      {/* ✅ COLLAPSIBLE: Spellcasting Section */}
+      {/* [NOTE] COLLAPSIBLE: Spellcasting Section */}
       <section className={styles.section}>
         <div 
           className={styles.sectionHeader}
@@ -1912,7 +1912,7 @@ const CharacterDisplay = () => {
             </div>
           )}
           
-          {/* ✅ Spell Manager - Known & Prepared Spells with Source Badges */}
+          {/* [NOTE] Spell Manager - Known & Prepared Spells with Source Badges */}
           {characterSpells.length > 0 && (
             <SpellManager
               characterSpells={characterSpells}
@@ -1943,11 +1943,11 @@ const CharacterDisplay = () => {
             spellAttackBonus={spellAttackBonus}
           />
           
-          {/* ✅ REMOVED: Spell Cast Modal is now handled by SpellManager component */}
+          {/* [NOTE] REMOVED: Spell Cast Modal is now handled by SpellManager component */}
         </div>
       </section>
 
-      {/* ✅ COLLAPSIBLE: Inventory Section */}
+      {/* [NOTE] COLLAPSIBLE: Inventory Section */}
       <section className={styles.section}>
         <div 
           className={styles.sectionHeader}
@@ -2075,13 +2075,13 @@ const CharacterDisplay = () => {
                           <span className={styles.inventoryItemName}>
                             {item.name} {item.quantity > 1 && `(x${item.quantity})`}
                             {isEquipped && <span className={styles.equippedBadge}>Equipped</span>}
-                            {isAttuned && <span className={styles.attunedBadge}>✨ Attuned</span>}
-                            {needsAttunement && !isAttuned && <span className={styles.attunementBadge}>⚡ Requires Attunement</span>}
+                            {isAttuned && <span className={styles.attunedBadge}>[ATTUNED]</span>}
+                            {needsAttunement && !isAttuned && <span className={styles.attunementBadge}>[REQUIRES ATTUNEMENT]</span>}
                           </span>
                           <div className={styles.inventoryItemQuickInfo}>
                             {item.item_type && <span className={styles.itemType}>{item.item_type}</span>}
                             
-                            {/* ✅ EQUIP/UNEQUIP BUTTON for equippable items */}
+                            {/* [NOTE] EQUIP/UNEQUIP BUTTON for equippable items */}
                             {isEquippable && !isBulkDeleteMode && (
                               isEquipped ? (
                                 <button
@@ -2092,7 +2092,7 @@ const CharacterDisplay = () => {
                                   }}
                                   title="Unequip this item"
                                 >
-                                  🔓 Unequip
+                                  Unequip
                                 </button>
                               ) : (
                                 <button
@@ -2103,12 +2103,12 @@ const CharacterDisplay = () => {
                                   }}
                                   title="Equip this item"
                                 >
-                                  🔒 Equip
+                                  Equip
                                 </button>
                               )
                             )}
                             
-                            {/* ✅ ATTUNE/UNATTUNE BUTTONS for ALL items that require attunement */}
+                            {/* [NOTE] ATTUNE/UNATTUNE BUTTONS for ALL items that require attunement */}
                             {needsAttunement && !isBulkDeleteMode && (
                               isAttuned ? (
                                 <button
@@ -2119,7 +2119,7 @@ const CharacterDisplay = () => {
                                   }}
                                   title="Unattune this item"
                                 >
-                                  ✨ Unattune
+                                  Unattune
                                 </button>
                               ) : (
                                 <button
@@ -2129,13 +2129,13 @@ const CharacterDisplay = () => {
                                     if (canAttuneMore()) {
                                       attuneItem(item.inventoryId, item.name, itemData);
                                     } else {
-                                      alert(`❌ Cannot attune: You already have ${attunedCount} attuned items (max: ${attunementSlotLimit}). Unattune an item first.`);
+                                      alert(`Cannot attune: You already have ${attunedCount} attuned items (max: ${attunementSlotLimit}). Unattune an item first.`);
                                     }
                                   }}
                                   disabled={!canAttuneMore()}
                                   title={!canAttuneMore() ? 'Attunement slots full' : 'Attune this item for special abilities'}
                                 >
-                                  ⚡ Attune
+                                  Attune
                                 </button>
                               )
                             )}
@@ -2143,7 +2143,7 @@ const CharacterDisplay = () => {
                             {item.maxCharges && (
                               <span className={styles.chargesIndicator}>
                                 Charges: {item.currentCharges}/{item.maxCharges}
-                                {needsAttunement && !isAttuned && <span className={styles.lockedBadge}> 🔒</span>}
+                                {needsAttunement && !isAttuned && <span className={styles.lockedBadge}> [LOCKED]</span>}
                               </span>
                             )}
                           </div>
@@ -2165,7 +2165,7 @@ const CharacterDisplay = () => {
         </div>
       </section>
 
-      {/* ✅ COLLAPSIBLE: Combat Section */}
+      {/* [NOTE] COLLAPSIBLE: Combat Section */}
       <section className={styles.section}>
         <div 
           className={styles.sectionHeader}
@@ -2198,9 +2198,9 @@ const CharacterDisplay = () => {
                   </div>
                 </div>
                 <div className={styles.hpControls}>
-                  <button type="button" onClick={() => setHpModalType('heal')} disabled={saving} className={styles.hpButton}>💚 Heal</button>
-                  <button type="button" onClick={() => setHpModalType('damage')} disabled={saving} className={styles.hpButton}>💔 Damage</button>
-                  <button type="button" onClick={() => setHpModalType('temp')} disabled={saving} className={styles.hpButton}>🛡️ Temp HP</button>
+                  <button type="button" onClick={() => setHpModalType('heal')} disabled={saving} className={styles.hpButton}>Heal</button>
+                  <button type="button" onClick={() => setHpModalType('damage')} disabled={saving} className={styles.hpButton}>Damage</button>
+                  <button type="button" onClick={() => setHpModalType('temp')} disabled={saving} className={styles.hpButton}>Temp HP</button>
                 </div>
               </div>
 
@@ -2330,11 +2330,11 @@ const CharacterDisplay = () => {
                           <div className={styles.attackRowSpecial}>
                             {needsAttunement && (
                               <span className={isAttuned ? styles.specialAvailable : styles.specialLocked}>
-                                {isAttuned ? '⚡ Ready' : '🔒 Attune'}
+                                {isAttuned ? 'Ready' : 'Attune'}
                               </span>
                             )}
                             {hasChargeAbilities && !needsAttunement && (
-                              <span className={styles.specialAvailable}>⚡ Charge</span>
+                              <span className={styles.specialAvailable}>Charge</span>
                             )}
                           </div>
                         </div>
@@ -2354,10 +2354,10 @@ const CharacterDisplay = () => {
                 <button className={styles.attackModalClose} onClick={() => setAttackModalData(null)}>×</button>
                 <h3>Make Attack: {attackModalData.weapon.name}</h3>
                 
-                {/* ✅ Show attunement warning if weapon requires attunement but not attuned */}
+                {/* [NOTE] Show attunement warning if weapon requires attunement but not attuned */}
                 {attackModalData.needsAttunement && !attackModalData.isAttuned && (
                   <div className={styles.attunementWarningBox}>
-                    ⚠️ This weapon requires attunement to use special abilities. Current: {attunedCount}/{attunementSlotLimit} attuned.
+                    This weapon requires attunement to use special abilities. Current: {attunedCount}/{attunementSlotLimit} attuned.
                   </div>
                 )}
                 
@@ -2379,7 +2379,7 @@ const CharacterDisplay = () => {
                       typeof p === 'string' ? p.toLowerCase().includes('finesse') : false
                     ) && (
                       <p className={styles.finesseNote} style={{ color: '#2d5016', fontSize: '0.85em' }}>
-                        ⚡ Finesse: Using {attackModalData.abilityUsed || 'STR'} (higher of STR/DEX)
+                        [FINESSE] Using {attackModalData.abilityUsed || 'STR'} (higher of STR/DEX)
                       </p>
                     )}
                   </div>
@@ -2390,7 +2390,7 @@ const CharacterDisplay = () => {
                     <h4>Special Effect</h4>
                     <p>{attackModalData.weapon.onHitEffect}</p>
                     {attackModalData.needsAttunement && !attackModalData.isAttuned && (
-                      <p className={styles.lockedNote}>🔒 Requires attunement to use</p>
+                      <p className={styles.lockedNote}>Requires attunement to use</p>
                     )}
                   </div>
                 )}
@@ -2406,7 +2406,7 @@ const CharacterDisplay = () => {
                       />
                       Expend 1 charge? ({attackModalData.weapon.currentCharges} remaining)
                       {attackModalData.needsAttunement && !attackModalData.isAttuned && (
-                        <span className={styles.lockedNote}> 🔒 Attune to use charges</span>
+                        <span className={styles.lockedNote}> Attune to use charges</span>
                       )}
                     </label>
                   </div>
@@ -2418,7 +2418,7 @@ const CharacterDisplay = () => {
                     onClick={() => {
                       if (expendCharge && attackModalData.weapon.currentCharges > 0) {
                         if (attackModalData.needsAttunement && !attackModalData.isAttuned) {
-                          alert('❌ Must attune to this weapon first to expend charges!');
+                          alert('Must attune to this weapon first to expend charges!');
                           return;
                         }
                         updateItemCharges(attackModalData.weapon.inventoryId, attackModalData.weapon.currentCharges - 1);
@@ -2536,7 +2536,7 @@ const CharacterDisplay = () => {
                         typeof p === 'string' ? p.toLowerCase().includes('finesse') : false
                       ) && (
                         <div className={styles.calcRow} style={{ backgroundColor: '#fff3cd', padding: '0.25rem', borderRadius: '4px' }}>
-                          <strong>⚡ Finesse:</strong>
+                          <strong>Finesse</strong>
                           <span>Using {selectedAttackData.abilityUsed || 'STR'} (higher of STR/DEX)</span>
                         </div>
                       )}
@@ -2559,7 +2559,7 @@ const CharacterDisplay = () => {
                       <h3>On-Hit Effect</h3>
                       <p>{selectedAttackForModal.onHitEffect}</p>
                       {selectedAttackData.needsAttunement && !selectedAttackData.isAttuned && (
-                        <p className={styles.lockedNote}>🔒 Requires attunement to use this effect</p>
+                        <p className={styles.lockedNote}>Requires attunement to use this effect</p>
                       )}
                     </div>
                   )}
@@ -2573,7 +2573,7 @@ const CharacterDisplay = () => {
                           <span><strong>Recharge</strong> {selectedAttackForModal.chargeRecharge}</span>
                         )}
                         {selectedAttackData.needsAttunement && !selectedAttackData.isAttuned && (
-                          <span className={styles.lockedNote}>🔒 Attune to expend charges</span>
+                          <span className={styles.lockedNote}>Attune to expend charges</span>
                         )}
                       </div>
                     </div>
@@ -2587,7 +2587,7 @@ const CharacterDisplay = () => {
                           <li key={idx} className={selectedAttackData.needsAttunement && !selectedAttackData.isAttuned ? styles.abilityLocked : ''}>
                             {ability}
                             {selectedAttackData.needsAttunement && !selectedAttackData.isAttuned && (
-                              <span className={styles.lockedBadge}> 🔒</span>
+                              <span></span>
                             )}
                           </li>
                         ))}
@@ -2624,7 +2624,7 @@ const CharacterDisplay = () => {
                         setWeaponVariantSelectorOpen(true);
                       }}
                     >
-                      🔄 Change Attack Type
+                      Change Attack Type
                     </button>
                   )}
                   <button
@@ -2635,7 +2635,7 @@ const CharacterDisplay = () => {
                       setSelectedAttackForModal(null);
                     }}
                   >
-                    ⚔️ Make Attack
+                    Make Attack
                   </button>
                   <button className={styles.closeActionBtn} onClick={() => setSelectedAttackForModal(null)}>Close</button>
                 </div>

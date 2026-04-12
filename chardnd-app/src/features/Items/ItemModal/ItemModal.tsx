@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './ItemModal.module.css';
-import { VIRTUAL_PACKS, PACK_NAMES } from '../../../constants'; // ✅ Adjust path as needed
+import { VIRTUAL_PACKS, PACK_NAMES } from '../../../constants'; // [IMPORT] Adjust path as needed
 
 interface ItemModalProps {
   isOpen: boolean;
@@ -118,7 +118,7 @@ const ItemModal: React.FC<ItemModalProps> = ({
                 }}
                 className={styles.newBtn}
               >
-                ➕ New Item
+                + New Item
               </button>
             </div>
 

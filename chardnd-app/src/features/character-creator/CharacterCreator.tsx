@@ -26,7 +26,7 @@ interface ClassOption {
   [key: string]: any;
 }
 
-// ✅ Add Background type
+// [NOTE] Add Background type
 interface BackgroundOption {
   [key: string]: any;
 }
@@ -88,7 +88,7 @@ const CharacterCreator: React.FC = () => {
     setCharacter(prev => ({ ...prev, classes }));
   };
 
-  // ✅ Helper function to get all proficiencies
+  // [NOTE] Helper function to get all proficiencies
   const getAllProficiencies = () => {
     const skills: string[] = [];
     const weapons: string[] = [];
@@ -101,7 +101,7 @@ const CharacterCreator: React.FC = () => {
       const classData = classList.find(c => c.name === classEntry.className);
 
       if (classData) {
-        // ✅ Add chosen skills from skill_choices (stored in chosenSkills array)
+        // [NOTE] Add chosen skills from skill_choices (stored in chosenSkills array)
         if (classEntry.chosenSkills && Array.isArray(classEntry.chosenSkills)) {
           for (const skill of classEntry.chosenSkills) {
             if (!skills.includes(skill)) {
@@ -110,7 +110,7 @@ const CharacterCreator: React.FC = () => {
           }
         }
 
-        // ✅ Add weapon proficiencies from class
+        // [NOTE] Add weapon proficiencies from class
         if (classData.weapon_proficiencies && Array.isArray(classData.weapon_proficiencies)) {
           for (const weapon of classData.weapon_proficiencies) {
             if (!weapons.includes(weapon)) {
@@ -119,7 +119,7 @@ const CharacterCreator: React.FC = () => {
           }
         }
 
-        // ✅ Add tool proficiencies from class
+        // [NOTE] Add tool proficiencies from class
         if (classData.tool_proficiencies && Array.isArray(classData.tool_proficiencies)) {
           for (const tool of classData.tool_proficiencies) {
             if (!tools.includes(tool)) {
@@ -128,7 +128,7 @@ const CharacterCreator: React.FC = () => {
           }
         }
 
-        // ✅ Add armor proficiencies as weapons (for display consistency)
+        // [NOTE] Add armor proficiencies as weapons (for display consistency)
         if (classData.armor_proficiencies && Array.isArray(classData.armor_proficiencies)) {
           for (const armor of classData.armor_proficiencies) {
             if (!weapons.includes(armor)) {
@@ -152,7 +152,7 @@ const CharacterCreator: React.FC = () => {
       }
     }
 
-    // ✅ Collect all languages from all sources
+    // [NOTE] Collect all languages from all sources
     // Background languages
     if (character.backgroundLanguages && Array.isArray(character.backgroundLanguages)) {
       character.backgroundLanguages.forEach((lang: string) => {
@@ -180,7 +180,7 @@ const CharacterCreator: React.FC = () => {
 
   const submitCharacter = async () => {
     try {
-      // ✅ Simple validation
+      // [NOTE] Simple validation
       if (!character.name) {
         alert('Please enter a character name');
         return;
@@ -198,7 +198,7 @@ const CharacterCreator: React.FC = () => {
         return;
       }
 
-      // ✅ Get all proficiencies for submission
+      // [NOTE] Get all proficiencies for submission
       const { skills, weapons, tools } = getAllProficiencies();
 
       const payload = {

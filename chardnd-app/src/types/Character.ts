@@ -3,7 +3,7 @@ export interface Character {
   id: number;
   name: string;
   species: string;
-  subspecies?: string; // ✅ NEW
+  subspecies?: string; // [NEW] Added
   background?: {
     description?: string;
     id?: number;
@@ -13,7 +13,7 @@ export interface Character {
     starting_gold_bonus?: number;
     tool_proficiencies?: string[];
   };
-  classes: Array<{ // ✅ NEW (multiclass)
+  classes: Array<{ // [NEW] Added - multiclass support
     className: string;
     level: number;
     subclass: string;
@@ -29,7 +29,7 @@ export interface Character {
     wis: number;
     cha: number;
   };
-  // ✅ NEW detailed proficiencies
+  // [NEW] Detailed proficiencies
   proficientSkills?: string[];
   proficientWeapons?: string[];
   proficientTools?: string[];
