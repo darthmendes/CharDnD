@@ -33,11 +33,11 @@ const SpellManager: React.FC<SpellManagerProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'known' | 'prepared'>('known');
   const [expandedSpellId, setExpandedSpellId] = useState<number | null>(null);
-  
+
   // [NOTE] NEW: Modal states
   const [isSpellCastModalOpen, setIsSpellCastModalOpen] = useState(false);
   const [selectedSpellForCast, setSelectedSpellForCast] = useState<any | null>(null);
-  
+
   // [NOTE] BULK OPERATIONS: Selection state
   const [isBulkSelectMode, setIsBulkSelectMode] = useState(false);
   const [selectedSpellIds, setSelectedSpellIds] = useState<Set<number>>(new Set());
@@ -86,16 +86,16 @@ const SpellManager: React.FC<SpellManagerProps> = ({
   };
 
   // Separate spells into known and prepared - ensure proper filtering
-  const allKnownSpells = Array.isArray(characterSpells) 
+  const allKnownSpells = Array.isArray(characterSpells)
     ? characterSpells.filter(cs => {
-        // Must have id and spell object
-        if (!cs || !cs.id || !cs.spell) return false;
-        // [NOTE] EXCLUDE CANTRIPS (level 0) from known spells
-        if (cs.spell.level === 0) return false;
-        return true;
-      })
+      // Must have id and spell object
+      if (!cs || !cs.id || !cs.spell) return false;
+      // [NOTE] EXCLUDE CANTRIPS (level 0) from known spells
+      if (cs.spell.level === 0) return false;
+      return true;
+    })
     : [];
-  
+
   const allPreparedSpells = allKnownSpells.filter(cs => {
     // Only include if explicitly marked as prepared AND not always_prepared counts separately
     return cs.is_prepared === true;
@@ -185,7 +185,7 @@ const SpellManager: React.FC<SpellManagerProps> = ({
     const isSelected = selectedSpellIds.has(charSpell.id);
 
     return (
-      <div key={charSpell.id} className={styles.spellRow} style={{ 
+      <div key={charSpell.id} className={styles.spellRow} style={{
         backgroundColor: isSelected ? '#e3f2fd' : 'transparent'
       }}>
         <div className={styles.spellHeader}>
@@ -198,7 +198,7 @@ const SpellManager: React.FC<SpellManagerProps> = ({
               style={{ marginRight: '0.5rem', cursor: 'pointer' }}
             />
           )}
-          
+
           <div className={styles.spellInfo}>
             <button
               className={styles.expandBtn}
@@ -207,14 +207,18 @@ const SpellManager: React.FC<SpellManagerProps> = ({
             >
               {isExpanded ? '▼' : '▶'}
             </button>
-            <div className={styles.spellName}>
+            <div
+              className={styles.spellName}
+              onClick={() => handleExpandSpell(charSpell.id)}
+              style={{ cursor: 'pointer' }}
+            >
               <strong>{spell.name}</strong>
               <span className={styles.spellLevel}>
                 {spell.level === 0 ? 'Cantrip' : `${getOrdinal(spell.level)} Level`}
               </span>
               {spell.concentration && <span className={styles.concentration}>Conc.</span>}
               {/* [NOTE] NEW: Source badge */}
-              <span 
+              <span
                 className={styles.sourceBadge}
                 style={{ backgroundColor: sourceBadge.color }}
                 title={`Source: ${sourceBadge.label}`}
@@ -340,7 +344,7 @@ const SpellManager: React.FC<SpellManagerProps> = ({
         >
           Prepared ({preparedSpells.length})
         </button>
-        
+
         {/* [NOTE] BULK: Bulk select button */}
         <button
           className={styles.bulkSelectBtn}
@@ -470,7 +474,7 @@ const SpellManager: React.FC<SpellManagerProps> = ({
           >
             Deselect All
           </button>
-          
+
           {selectedSpellIds.size > 0 && (
             <>
               <span style={{ color: '#666', fontWeight: 'bold', marginLeft: '0.5rem' }}>

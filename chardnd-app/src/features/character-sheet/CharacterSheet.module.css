@@ -2416,3 +2416,119 @@ label {
     max-height: 0;
   }
 }
+
+/* Class Resources Grid */
+.resourcesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.resourceCard {
+  background: #fffef9;
+  border: 2px solid #d6c38a;
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.resourceCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgba(90, 57, 33, 0.15);
+}
+
+.resourceHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.rechargeBadge {
+  font-size: 0.75em;
+  background: #e8d9c3;
+  color: #5a3921;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.resourceCount {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #4a90e2;
+  margin: 8px 0;
+}
+
+.resourceControls {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.resourceControls button {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #c9b47e;
+  background: #f8f4e9;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.resourceControls button:hover:not(:disabled) {
+  background: #d6c38a;
+  transform: scale(1.05);
+}
+
+.resourceControls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Rest Buttons */
+.restButtons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed #d6c38a;
+}
+
+.restBtnShort,
+.restBtnLong {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+}
+
+.restBtnShort {
+  background: #27ae60;
+  color: white;
+}
+.restBtnShort:hover:not(:disabled) { background: #219a52; }
+
+.restBtnLong {
+  background: #8e44ad;
+  color: white;
+}
+.restBtnLong:hover:not(:disabled) { background: #7d3c98; }
+
+.emptyStateMessage {
+  color: #7a684f;
+  font-style: italic;
+  text-align: center;
+  padding: 1rem;
+  background: #f0e6d2;
+  border-radius: 6px;
+}

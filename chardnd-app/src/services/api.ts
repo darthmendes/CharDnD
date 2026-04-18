@@ -1,11 +1,35 @@
 // src/services/api.ts
+// Centralized API service with proper TypeScript types
 
-const API_BASE = 'http://127.0.0.1:8001/API';
+import { API_BASE_URL } from '../constants';
+import type {
+  Character,
+  CharacterListItem,
+  Species,
+  SpeciesTrait,
+  DnDClass,
+  Background,
+  Language,
+  Item,
+  InventoryItem,
+  Spell,
+  FightingStyle,
+  Feature,
+  Monster,
+  SpellSlotResponse,
+  CharacterSpell,
+  PrepareLimit,
+  CreateCharacterRequest,
+  UpdateCharacterRequest,
+  CreateItemRequest,
+  CreateMonsterRequest,
+  RestRequest,
+} from '../types/api';
 
-/**
- * Generic API error handler
- */
-const handleResponse = async (response: Response) => {
+// ============ API Utilities ============
+
+/** Generic API error handler */
+const handleResponse = async <T>(response: Response): Promise<T> => {
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({
       error: `HTTP ${response.status}: ${response.statusText}`
@@ -15,351 +39,302 @@ const handleResponse = async (response: Response) => {
   return response.json();
 };
 
-/**
- * Create a new character
- */
-export const createCharacter = async (data: any): Promise<any> => {
-  const response = await fetch(`${API_BASE}/characters/creator`, {
+/** JSON headers for POST/PATCH requests */
+const jsonHeaders = { 'Content-Type': 'application/json' };
+
+// ============ Species Endpoints ============
+
+export const fetchSpecies = async (): Promise<Species[]> => {
+  const response = await fetch(`${API_BASE_URL}/species`);
+  return handleResponse(response);
+};
+
+export const fetchSpeciesTraits = async (
+  speciesName: string,
+  subspeciesName?: string
+): Promise<SpeciesTrait[]> => {
+  const url = new URL(`${API_BASE_URL}/species/${encodeURIComponent(speciesName)}/traits`);
+  if (subspeciesName) {
+    url.searchParams.append('subspecies', subspeciesName);
+  }
+  const response = await fetch(url.toString());
+  if (!response.ok) return [];
+  return response.json();
+};
+
+// ============ Class Endpoints ============
+
+export const fetchClasses = async (): Promise<DnDClass[]> => {
+  const response = await fetch(`${API_BASE_URL}/classes`);
+  return handleResponse(response);
+};
+
+export const fetchClassSpells = async (
+  className: string,
+  options?: { level?: number }
+): Promise<Spell[]> => {
+  const url = new URL(`${API_BASE_URL}/classes/${encodeURIComponent(className)}/spells`);
+  if (options?.level !== undefined) {
+    url.searchParams.append('level', String(options.level));
+  }
+  const response = await fetch(url.toString());
+  return handleResponse(response);
+};
+
+export const fetchFightingStyles = async (): Promise<FightingStyle[]> => {
+  const response = await fetch(`${API_BASE_URL}/fighting-styles`);
+  return handleResponse(response);
+};
+
+// ============ Background & Language Endpoints ============
+
+export const fetchBackgrounds = async (): Promise<Background[]> => {
+  const response = await fetch(`${API_BASE_URL}/backgrounds`);
+  return handleResponse(response);
+};
+
+export const fetchLanguages = async (): Promise<Language[]> => {
+  const response = await fetch(`${API_BASE_URL}/languages`);
+  return handleResponse(response);
+};
+
+// ============ Character Endpoints ============
+
+export const createCharacter = async (data: CreateCharacterRequest): Promise<Character> => {
+  const response = await fetch(`${API_BASE_URL}/characters/creator`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: jsonHeaders,
     body: JSON.stringify(data),
   });
   return handleResponse(response);
 };
 
-/**
- * Fetch all species
- */
-export const fetchSpecies = async (): Promise<any[]> => {
-  const response = await fetch(`${API_BASE}/species`);
+export const fetchCharacter = async (id: number): Promise<Character> => {
+  const response = await fetch(`${API_BASE_URL}/characters/${id}`);
   return handleResponse(response);
 };
 
-/**
- * Fetch all classes
- */
-export const fetchClasses = async (): Promise<any[]> => {
-  const response = await fetch(`${API_BASE}/classes`);
+export const fetchAllCharacters = async (): Promise<CharacterListItem[]> => {
+  const response = await fetch(`${API_BASE_URL}/characters`);
   return handleResponse(response);
 };
 
-/**
- * Fetch all items
- */
-export const fetchItems = async (): Promise<any[]> => {
-  const response = await fetch(`${API_BASE}/items`);
+export const updateCharacter = async (
+  id: number,
+  data: UpdateCharacterRequest
+): Promise<Character> => {
+  const response = await fetch(`${API_BASE_URL}/characters/${id}`, {
+    method: 'PATCH',
+    headers: jsonHeaders,
+    body: JSON.stringify(data),
+  });
   return handleResponse(response);
 };
 
-/**
- * Fetch all backgrounds
- */
-export const fetchBackgrounds = async (): Promise<any[]> => {
-  const response = await fetch(`${API_BASE}/backgrounds`);
-  return handleResponse(response);
-};
-
-/**
- * Fetch all languages
- */
-export const fetchLanguages = async (): Promise<any[]> => {
-  const response = await fetch(`${API_BASE}/languages`);
-  return handleResponse(response);
-};
-
-/**
- * Fetch species traits
- */
-export const fetchSpeciesTraits = async (speciesName: string, subspeciesName?: string): Promise<any[]> => {
-  try {
-    const url = new URL(`${API_BASE}/species/${encodeURIComponent(speciesName)}/traits`);
-    if (subspeciesName) {
-      url.searchParams.append('subspecies', subspeciesName);
-    }
-    const response = await fetch(url.toString());
-    if (!response.ok) {
-      console.error(`Failed to fetch traits for species: ${speciesName}`);
-      return [];
-    }
-    return response.json();
-  } catch (err) {
-    console.error('Error fetching species traits:', err);
-    return [];
-  }
-};
-
-/**
- * Fetch a specific character by ID
- */
-export const fetchCharacter = async (id: number): Promise<any> => {
-  const response = await fetch(`${API_BASE}/characters/${id}`);
-  return handleResponse(response);
-};
-
-/**
- * Delete a character by ID
- */
-export const deleteCharacter = async (id: number): Promise<any> => {
-  const response = await fetch(`${API_BASE}/characters/${id}`, {
+export const deleteCharacter = async (id: number): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}/characters/${id}`, {
     method: 'DELETE',
   });
   return handleResponse(response);
 };
 
-/**
- * Fetch all characters
- */
-export const fetchAllCharacters = async (): Promise<{ id: number; name: string }[]> => {
-  const response = await fetch(`${API_BASE}/characters`);
-  return handleResponse(response);
-};
+// ============ Inventory Endpoints ============
 
-/**
- * Update a character by ID
- */
-export const updateCharacter = async (id: number, data: Record<string, any>): Promise<any> => {
-  const response = await fetch(`${API_BASE}/characters/${id}`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  return handleResponse(response);
-};
-
-/**
- * Add item to character inventory
- */
-export const addItemToCharacter = async (charId: number, itemId: number, quantity: number = 1): Promise<any> => {
-  const response = await fetch(`${API_BASE}/characters/${charId}/items`, {
+export const addItemToCharacter = async (
+  charId: number,
+  itemId: number,
+  quantity = 1
+): Promise<InventoryItem> => {
+  const response = await fetch(`${API_BASE_URL}/characters/${charId}/items`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: jsonHeaders,
     body: JSON.stringify({ itemID: itemId, quantity }),
   });
   return handleResponse(response);
 };
 
-/**
- * Delete inventory item
- */
-export const deleteInventoryItem = async (charId: number, inventoryId: number): Promise<any> => {
-  const response = await fetch(`${API_BASE}/characters/${charId}/inventory/${inventoryId}`, {
+export const deleteInventoryItem = async (
+  charId: number,
+  inventoryId: number
+): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}/characters/${charId}/inventory/${inventoryId}`, {
     method: 'DELETE',
   });
   return handleResponse(response);
 };
 
-/**
- * Update item charges
- */
-export const updateItemCharges = async (charId: number, inventoryId: number, currentCharges: number): Promise<any> => {
-  const response = await fetch(`${API_BASE}/characters/${charId}/inventory/${inventoryId}/charges`, {
+export const updateItemCharges = async (
+  charId: number,
+  inventoryId: number,
+  currentCharges: number
+): Promise<InventoryItem> => {
+  const response = await fetch(`${API_BASE_URL}/characters/${charId}/inventory/${inventoryId}/charges`, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
+    headers: jsonHeaders,
     body: JSON.stringify({ currentCharges }),
   });
   return handleResponse(response);
 };
 
-/**
- * Equip item
- */
-export const equipItem = async (charId: number, inventoryId: number): Promise<any> => {
-  const response = await fetch(`${API_BASE}/characters/${charId}/inventory/${inventoryId}/equip`, {
+export const equipItem = async (charId: number, inventoryId: number): Promise<InventoryItem> => {
+  const response = await fetch(`${API_BASE_URL}/characters/${charId}/inventory/${inventoryId}/equip`, {
     method: 'PATCH',
   });
   return handleResponse(response);
 };
 
-/**
- * Unequip item
- */
-export const unequipItem = async (charId: number, inventoryId: number): Promise<any> => {
-  const response = await fetch(`${API_BASE}/characters/${charId}/inventory/${inventoryId}/unequip`, {
+export const unequipItem = async (charId: number, inventoryId: number): Promise<InventoryItem> => {
+  const response = await fetch(`${API_BASE_URL}/characters/${charId}/inventory/${inventoryId}/unequip`, {
     method: 'PATCH',
   });
   return handleResponse(response);
 };
 
-/**
- * Attune item
- */
-export const attuneItem = async (charId: number, inventoryId: number): Promise<any> => {
-  const response = await fetch(`${API_BASE}/characters/${charId}/inventory/${inventoryId}/attune`, {
+export const attuneItem = async (charId: number, inventoryId: number): Promise<InventoryItem> => {
+  const response = await fetch(`${API_BASE_URL}/characters/${charId}/inventory/${inventoryId}/attune`, {
     method: 'PATCH',
   });
   return handleResponse(response);
 };
 
-/**
- * Unattune item
- */
-export const unattuneItem = async (charId: number, inventoryId: number): Promise<any> => {
-  const response = await fetch(`${API_BASE}/characters/${charId}/inventory/${inventoryId}/unattune`, {
+export const unattuneItem = async (charId: number, inventoryId: number): Promise<InventoryItem> => {
+  const response = await fetch(`${API_BASE_URL}/characters/${charId}/inventory/${inventoryId}/unattune`, {
     method: 'PATCH',
   });
   return handleResponse(response);
 };
 
-/**
- * Remove one item from inventory
- */
-export const removeOneItem = async (charId: number, inventoryId: number): Promise<any> => {
-  const response = await fetch(`${API_BASE}/characters/${charId}/inventory/${inventoryId}/remove-one`, {
+export const removeOneItem = async (charId: number, inventoryId: number): Promise<InventoryItem> => {
+  const response = await fetch(`${API_BASE_URL}/characters/${charId}/inventory/${inventoryId}/remove-one`, {
     method: 'PATCH',
   });
   return handleResponse(response);
 };
 
-/**
- * Fetch spell slots for a character
- */
-export const fetchSpellSlots = async (charId: number): Promise<any> => {
-  const response = await fetch(`${API_BASE}/characters/${charId}/spell-slots`);
+// ============ Spell Endpoints ============
+
+export const fetchSpellSlots = async (charId: number): Promise<SpellSlotResponse> => {
+  const response = await fetch(`${API_BASE_URL}/characters/${charId}/spell-slots`);
   return handleResponse(response);
 };
 
-/**
- * Expend spell slot
- */
-export const expendSpellSlot = async (charId: number, level: number, amount: number = 1): Promise<any> => {
-  const response = await fetch(`${API_BASE}/characters/${charId}/spell-slots/expended`, {
+export const expendSpellSlot = async (
+  charId: number,
+  level: number,
+  amount = 1
+): Promise<SpellSlotResponse> => {
+  const response = await fetch(`${API_BASE_URL}/characters/${charId}/spell-slots/expended`, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
+    headers: jsonHeaders,
     body: JSON.stringify({ level, amount }),
   });
   return handleResponse(response);
 };
 
-/**
- * Fetch character spells
- */
-export const fetchCharacterSpells = async (charId: number): Promise<any[]> => {
-  const response = await fetch(`${API_BASE}/characters/${charId}/spells`);
+export const fetchCharacterSpells = async (charId: number): Promise<CharacterSpell[]> => {
+  const response = await fetch(`${API_BASE_URL}/characters/${charId}/spells`);
   return handleResponse(response);
 };
 
-/**
- * Add spell to character
- */
-export const addSpellToCharacter = async (charId: number, spellId: number): Promise<any> => {
-  const response = await fetch(`${API_BASE}/characters/${charId}/spells`, {
+export const addSpellToCharacter = async (charId: number, spellId: number): Promise<CharacterSpell> => {
+  const response = await fetch(`${API_BASE_URL}/characters/${charId}/spells`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: jsonHeaders,
     body: JSON.stringify({ spellID: spellId }),
   });
   return handleResponse(response);
 };
 
-/**
- * Toggle spell prepared status
- */
-export const toggleSpellPrepared = async (charId: number, spellId: number): Promise<any> => {
-  const response = await fetch(`${API_BASE}/characters/${charId}/spells/${spellId}/prepare`, {
+export const toggleSpellPrepared = async (charId: number, spellId: number): Promise<CharacterSpell> => {
+  const response = await fetch(`${API_BASE_URL}/characters/${charId}/spells/${spellId}/prepare`, {
     method: 'PATCH',
   });
   return handleResponse(response);
 };
 
-/**
- * Fetch prepare limit for character
- */
-export const fetchPrepareLimit = async (charId: number): Promise<any> => {
-  const response = await fetch(`${API_BASE}/characters/${charId}/prepare-limit`);
+export const fetchPrepareLimit = async (charId: number): Promise<PrepareLimit> => {
+  const response = await fetch(`${API_BASE_URL}/characters/${charId}/prepare-limit`);
   return handleResponse(response);
 };
 
-/**
- * Bulk prepare spells
- */
-export const bulkPrepareSpells = async (charId: number, spellIds: number[]): Promise<any> => {
-  const response = await fetch(`${API_BASE}/characters/${charId}/spells/bulk-prepare`, {
+export const bulkPrepareSpells = async (charId: number, spellIds: number[]): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}/characters/${charId}/spells/bulk-prepare`, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
+    headers: jsonHeaders,
     body: JSON.stringify({ spellIDs: spellIds }),
   });
   return handleResponse(response);
 };
 
-/**
- * Bulk unprepare spells
- */
-export const bulkUnprepareSpells = async (charId: number, spellIds: number[]): Promise<any> => {
-  const response = await fetch(`${API_BASE}/characters/${charId}/spells/bulk-unprepare`, {
+export const bulkUnprepareSpells = async (charId: number, spellIds: number[]): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}/characters/${charId}/spells/bulk-unprepare`, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
+    headers: jsonHeaders,
     body: JSON.stringify({ spellIDs: spellIds }),
   });
   return handleResponse(response);
 };
 
-/**
- * Fetch class spells
- */
-export const fetchClassSpells = async (className: string): Promise<any[]> => {
-  const response = await fetch(`${API_BASE}/classes/${encodeURIComponent(className)}/spells`);
+export const fetchAllSpells = async (): Promise<Spell[]> => {
+  const response = await fetch(`${API_BASE_URL}/spells`);
   return handleResponse(response);
 };
 
-/**
- * Fetch all spells
- */
-export const fetchAllSpells = async (): Promise<any[]> => {
-  const response = await fetch(`${API_BASE}/spells`);
+// ============ Item Endpoints ============
+
+export const fetchItems = async (): Promise<Item[]> => {
+  const response = await fetch(`${API_BASE_URL}/items`);
   return handleResponse(response);
 };
 
-/**
- * Fetch a single item by ID
- */
-export const fetchItem = async (itemId: number | string): Promise<any> => {
-  const response = await fetch(`${API_BASE}/items/${itemId}`);
+export const fetchItem = async (itemId: number | string): Promise<Item> => {
+  const response = await fetch(`${API_BASE_URL}/items/${itemId}`);
   return handleResponse(response);
 };
 
-/**
- * Create a new item
- */
-export const createItem = async (itemData: any): Promise<any> => {
-  const response = await fetch(`${API_BASE}/items/creator`, {
+export const createItem = async (itemData: CreateItemRequest): Promise<Item> => {
+  const response = await fetch(`${API_BASE_URL}/items/creator`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: jsonHeaders,
     body: JSON.stringify(itemData),
   });
   return handleResponse(response);
 };
 
-export const createMonster = async (monsterData: Record<string, any>) => {
-  const response = await fetch(`${API_BASE}/monsters`, {
+// ============ Monster Endpoints ============
+
+export const createMonster = async (monsterData: CreateMonsterRequest): Promise<Monster> => {
+  const response = await fetch(`${API_BASE_URL}/monsters`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: jsonHeaders,
     body: JSON.stringify(monsterData),
   });
-
   return handleResponse(response);
 };
 
-export const fetchMonster = async (id: number) => {
-  const response = await fetch(`${API_BASE}/monsters/${id}`);
-  if (!response.ok) {
-    const errData = await response.json().catch(() => ({ message: 'Unknown error' }));
-    throw new Error(errData.message || 'Failed to fetch monster');
-  }
-  return response.json();
+export const fetchMonster = async (id: number): Promise<Monster> => {
+  const response = await fetch(`${API_BASE_URL}/monsters/${id}`);
+  return handleResponse(response);
 };
 
-// src/services/api.ts (append this)
-export const fetchFeatures = async (): Promise<{ id: number; name: string; description: string }[]> => {
-  const response = await fetch(`${API_BASE}/features`);
+// ============ Feature Endpoints ============
+
+export const fetchFeatures = async (): Promise<Feature[]> => {
+  const response = await fetch(`${API_BASE_URL}/features`);
   if (!response.ok) return [];
   return response.json();
 };
 
-export const performRest = async (characterId: number, restData: { type: string; hitDiceSpent?: number }) => {
-  const res = await fetch(`/api/characters/${characterId}/rest`, {
+// ============ Rest Endpoints ============
+
+export const performRest = async (
+  characterId: number,
+  restData: RestRequest
+): Promise<Character> => {
+  const response = await fetch(`${API_BASE_URL}/characters/${characterId}/rest`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(restData)
+    headers: jsonHeaders,
+    body: JSON.stringify(restData),
   });
-  if (!res.ok) throw new Error('Failed to perform rest');
-  return res.json();
+  return handleResponse(response);
 };

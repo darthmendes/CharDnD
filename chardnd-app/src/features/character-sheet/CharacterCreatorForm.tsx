@@ -1,12 +1,13 @@
-// src/components/CharacterForm.tsx
+// src/features/character-sheet/CharacterCreatorForm.tsx
 import React, { useState, useEffect } from 'react';
+import { fetchSpecies, fetchClasses, createCharacter } from '../../services/api';
+import type { Species, DnDClass } from '../../types/api';
 
 interface CharacterFormData {
     name: string;
-    species: string; // Selected species
-    char_class: string; // Selected class
+    species: string;
+    char_class: string;
     level: number;
-
     STR: number;
     DEX: number;
     CON: number;
@@ -15,19 +16,14 @@ interface CharacterFormData {
     CHA: number;
 }
 
-interface Aux {
-    id?: number; // Optional ID if your backend provides it
-    name: string;
-}
-
 const CharacterForm: React.FC = () => {
-    const [speciesList, setSpeciesList] = useState<Aux[]>([]);
-    const [classesList, setClassesList] = useState<Aux[]>([]);
+    const [speciesList, setSpeciesList] = useState<Species[]>([]);
+    const [classesList, setClassesList] = useState<DnDClass[]>([]);
 
     const [formData, setFormData] = useState<CharacterFormData>({
         name: '',
-        species: '', // Default value for species
-        char_class: '', // Default value for class
+        species: '',
+        char_class: '',
         level: 1,
         STR: 10,
         DEX: 10,
@@ -37,42 +33,25 @@ const CharacterForm: React.FC = () => {
         CHA: 10,
     });
 
-    const [loading, setLoading] = useState(false); // Track loading state
-    const [error, setError] = useState<string | null>(null); // Track errors
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
-    // Fetch species list
     useEffect(() => {
-        fetchSpecies();
-        fetchClasses();
+        const loadData = async () => {
+            try {
+                const [species, classes] = await Promise.all([
+                    fetchSpecies(),
+                    fetchClasses(),
+                ]);
+                setSpeciesList(species);
+                setClassesList(classes);
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Failed to load data');
+            }
+        };
+        loadData();
     }, []);
 
-    const fetchSpecies = async () => {
-        try {
-            const response = await fetch("http://127.0.0.1:8001/API/species");
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            const data = await response.json();
-            setSpeciesList(data);
-        } catch (err: any) {
-            setError(err.message || 'Failed to load species.');
-        }
-    };
-
-    const fetchClasses = async () => {
-        try {
-            const response = await fetch("http://127.0.0.1:8001/API/classes");
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            const data = await response.json();
-            setClassesList(data);
-        } catch (err: any) {
-            setError(err.message || 'Failed to load classes.');
-        }
-    };
-
-    // Handle input changes
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData((prevData) => ({
@@ -81,31 +60,30 @@ const CharacterForm: React.FC = () => {
         }));
     };
 
-    // Handle form submission
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setLoading(true);
+        setError(null);
 
         try {
-            setLoading(true);
-            setError(null);
-
-            // Prepare the data to send
-            const response = await fetch('http://127.0.0.1:8001/API/characters/creator', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
+            await createCharacter({
+                name: formData.name,
+                species: formData.species,
+                background: '',
+                classes: [{
+                    className: formData.char_class,
+                    level: formData.level,
+                }],
+                abilityScores: {
+                    str: formData.STR,
+                    dex: formData.DEX,
+                    con: formData.CON,
+                    int: formData.INT,
+                    wis: formData.WIS,
+                    cha: formData.CHA,
                 },
-                body: JSON.stringify(formData),
             });
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-
-            const result = await response.json();
-            console.log('Character created successfully:', result);
-
-            // Reset the form after successful submission
             setFormData({
                 name: '',
                 species: '',
@@ -119,9 +97,8 @@ const CharacterForm: React.FC = () => {
                 CHA: 10,
             });
             alert('Character created successfully!');
-        } catch (err: any) {
-            setError(err.message || 'An error occurred while creating the character.');
-            console.error('Error creating character:', err);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to create character');
         } finally {
             setLoading(false);
         }

@@ -1,26 +1,16 @@
 // src/features/character-creator/steps/Step3_5ClassChoices.tsx
 import React, { useState, useEffect } from 'react';
 import styles from '../CharacterCreator.module.css';
-
-interface Spell {
-  id: number;
-  name: string;
-  level: number;
-  school: string;
-}
-
-interface FightingStyle {
-  id: number;
-  name: string;
-  description: string;
-}
-
-interface Subclass {
-  id: number;
-  name: string;
-  subclass_flavor?: string;
-  description?: string;
-}
+import { fetchClassSpells, fetchFightingStyles } from '../../../services/api';
+import type { Spell, FightingStyle, Subclass, DnDClass } from '../../../types/api';
+import {
+  getASILevels,
+  CANTRIP_CASTERS,
+  FIGHTING_STYLE_CLASSES,
+  CANTRIP_COUNTS,
+  SUBCLASS_LABELS,
+  ABILITIES
+} from '../../../constants';
 
 interface ClassChoice {
   type: 'cantrips' | 'fighting_style' | 'subclass' | 'asi';
@@ -29,20 +19,18 @@ interface ClassChoice {
 }
 
 interface Props {
-  character: any;
-  updateField: (field: string, value: any) => void;
-  dndClasses: any[];
+  character: {
+    classes?: Array<{ className: string; level: number }>;
+    classChoices?: {
+      cantrips?: string[];
+      fightingStyle?: string;
+      subclass?: string;
+    };
+    abilityScores: Record<string, number>;
+  };
+  updateField: (field: string, value: unknown) => void;
+  dndClasses: DnDClass[];
 }
-
-// [NOTE] Standard 5e ASI levels per class
-const getASILevels = (className: string): number[] => {
-  switch (className) {
-    case 'Fighter': return [4, 6, 8, 12, 14, 16, 19];
-    case 'Rogue': return [4, 8, 10, 12, 16, 19];
-    case 'Bard': return [4, 8, 12, 16, 19];
-    default: return [4, 8, 12, 16, 19];
-  }
-};
 
 const Step3_5ClassChoices: React.FC<Props> = ({ character, updateField, dndClasses }) => {
   const [loading, setLoading] = useState(true);
@@ -52,24 +40,11 @@ const Step3_5ClassChoices: React.FC<Props> = ({ character, updateField, dndClass
     str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0
   });
 
-  // [DEBUG] Log critical data on mount/change
-  useEffect(() => {
-    console.log('[DEBUG] dndClasses:', dndClasses);
-    console.log('[DEBUG] character.classes:', character.classes);
-  }, [dndClasses, character.classes]);
-
   const currentClass = character.classes?.[0];
   const className = currentClass?.className;
   const classLevel = currentClass?.level || 1;
-  
-  // [NOTE] Find matching class data from API response
-  const classData = dndClasses.find(c => c.name?.toLowerCase() === className?.toLowerCase());
 
-  // [DEBUG] Log resolved class data
-  useEffect(() => {
-    console.log('[DEBUG] Resolved classData:', classData);
-    console.log('[DEBUG] classLevel:', classLevel);
-  }, [classData, classLevel]);
+  const classData = dndClasses.find(c => c.name?.toLowerCase() === className?.toLowerCase());
 
   const calculateAvailableASIs = (): number => {
     if (!className || !classLevel) return 0;
@@ -80,45 +55,31 @@ const Step3_5ClassChoices: React.FC<Props> = ({ character, updateField, dndClass
   const asiPointsUsed = Object.values(asiPendingChanges).reduce((a, b) => a + b, 0);
   const asiPointsRemaining = (availableASIs * 2) - asiPointsUsed;
 
-  // [NOTE] Determine required choices
   const getClassChoices = (): ClassChoice[] => {
     const choices: ClassChoice[] = [];
     if (!className || !classData) return choices;
 
     // Cantrips
-    if (['Sorcerer', 'Warlock', 'Wizard', 'Druid', 'Cleric', 'Bard'].includes(className)) {
-      const counts: Record<string, number> = { Wizard: 3, Sorcerer: 4, Warlock: 2, Druid: 2, Cleric: 3, Bard: 2 };
-      const count = counts[className] || 2;
+    if ((CANTRIP_CASTERS as readonly string[]).includes(className)) {
+      const count = CANTRIP_COUNTS[className] || 2;
       choices.push({ type: 'cantrips', count, label: `Choose ${count} Cantrip${count > 1 ? 's' : ''}` });
     }
 
     // Fighting Style
-    if (['Fighter', 'Paladin', 'Ranger'].includes(className)) {
+    if ((FIGHTING_STYLE_CLASSES as readonly string[]).includes(className)) {
       choices.push({ type: 'fighting_style', count: 1, label: 'Choose a Fighting Style' });
     }
 
-    // [NOTE] SUBCLASS
-    const subclassLevel = classData?.subclass_level ?? 3; // Default to 3 if missing
+    // Subclass
+    const subclassLevel = classData?.subclass_level ?? 3;
     const hasSubclasses = Array.isArray(classData?.subclasses) && classData.subclasses.length > 0;
 
-    console.log('[DEBUG] Subclass Check:', { className, classLevel, subclassLevel, hasSubclasses, subclasses: classData?.subclasses });
-
     if (classLevel >= subclassLevel && hasSubclasses) {
-      const labelMap: Record<string, string> = {
-        Cleric: 'Choose Divine Domain',
-        Wizard: 'Choose Arcane Tradition',
-        Fighter: 'Choose Martial Archetype',
-        Paladin: 'Choose Sacred Oath',
-        Ranger: 'Choose Hunter Archetype',
-        Barbarian: 'Choose Primal Path',
-        Druid: 'Choose Druid Circle',
-        Monk: 'Choose Monastic Tradition',
-        Rogue: 'Choose Roguish Archetype',
-        Sorcerer: 'Choose Sorcerous Origin',
-        Warlock: 'Choose Otherworldly Patron',
-        Bard: 'Choose Bard College'
-      };
-      choices.push({ type: 'subclass', count: 1, label: labelMap[className] || 'Choose Subclass' });
+      choices.push({
+        type: 'subclass',
+        count: 1,
+        label: SUBCLASS_LABELS[className] || 'Choose Subclass'
+      });
     }
 
     // ASIs
@@ -131,19 +92,22 @@ const Step3_5ClassChoices: React.FC<Props> = ({ character, updateField, dndClass
 
   const classChoices = getClassChoices();
 
-  // Fetch class-specific data
   useEffect(() => {
     const loadData = async () => {
-      try {
-        if (!className) { setLoading(false); return; }
-        
-        const cantripsRes = await fetch(`http://127.0.0.1:8001/API/classes/${encodeURIComponent(className)}/spells?level=0`);
-        if (cantripsRes.ok) setAvailableCantrips(await cantripsRes.json());
+      if (!className) {
+        setLoading(false);
+        return;
+      }
 
-        const stylesRes = await fetch('http://127.0.0.1:8001/API/fighting-styles');
-        if (stylesRes.ok) setAvailableFightingStyles(await stylesRes.json());
-      } catch (err) {
-        console.error('Failed to load class choices:', err);
+      try {
+        const [cantrips, styles] = await Promise.all([
+          fetchClassSpells(className, { level: 0 }),
+          fetchFightingStyles(),
+        ]);
+        setAvailableCantrips(cantrips);
+        setAvailableFightingStyles(styles);
+      } catch {
+        // Silently handle error - data will be empty
       } finally {
         setLoading(false);
       }
@@ -156,7 +120,7 @@ const Step3_5ClassChoices: React.FC<Props> = ({ character, updateField, dndClass
     const current = character.classChoices?.cantrips || [];
     const choice = classChoices.find(c => c.type === 'cantrips');
     if (isChecked && current.length >= (choice?.count || 0)) return;
-    
+
     const updated = isChecked ? [...current, spellName] : current.filter(s => s !== spellName);
     updateField('classChoices', { ...character.classChoices, cantrips: updated });
   };
@@ -195,10 +159,10 @@ const Step3_5ClassChoices: React.FC<Props> = ({ character, updateField, dndClass
           <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #d9c8a9', borderRadius: '4px', padding: '0.5rem' }}>
             {availableCantrips.map(spell => (
               <label key={spell.id} style={{ display: 'block', margin: '0.25rem 0' }}>
-                <input 
-                  type="checkbox" 
-                  checked={(character.classChoices?.cantrips || []).includes(spell.name)} 
-                  onChange={(e) => handleCantripChange(spell.name, e.target.checked)} 
+                <input
+                  type="checkbox"
+                  checked={(character.classChoices?.cantrips || []).includes(spell.name)}
+                  onChange={(e) => handleCantripChange(spell.name, e.target.checked)}
                 />
                 {' '}{spell.name} ({spell.school})
               </label>
@@ -213,10 +177,10 @@ const Step3_5ClassChoices: React.FC<Props> = ({ character, updateField, dndClass
           <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
             {classChoices.find(c => c.type === 'fighting_style')?.label}
           </label>
-          <select 
-            className={styles.select} 
-            value={character.classChoices?.fightingStyle || ''} 
-            onChange={(e) => handleFightingStyleChange(e.target.value)} 
+          <select
+            className={styles.select}
+            value={character.classChoices?.fightingStyle || ''}
+            onChange={(e) => handleFightingStyleChange(e.target.value)}
           >
             <option value="">-- Choose a Fighting Style --</option>
             {availableFightingStyles.map(style => (
@@ -232,10 +196,10 @@ const Step3_5ClassChoices: React.FC<Props> = ({ character, updateField, dndClass
           <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
             {classChoices.find(c => c.type === 'subclass')?.label}
           </label>
-          <select 
-            className={styles.select} 
-            value={character.classChoices?.subclass || ''} 
-            onChange={handleSubclassChange} 
+          <select
+            className={styles.select}
+            value={character.classChoices?.subclass || ''}
+            onChange={handleSubclassChange}
           >
             <option value="">-- Choose --</option>
             {classData.subclasses.map((sub: Subclass) => (
