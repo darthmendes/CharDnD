@@ -528,7 +528,20 @@ const CharacterDisplay = () => {
             <div className={`${styles.statBox} ${styles.clickable}`} onClick={() => setStatModifiersModal({ isOpen: true, stat: 'Initiative' })}><strong>Initiative:</strong><span>{(() => { const d = getAbilityModifier(character.abilityScores?.dex || 10); return (d >= 0 ? '+' : '') + d; })()}</span></div>
             <div className={`${styles.statBox} ${styles.clickable}`} onClick={() => setStatModifiersModal({ isOpen: true, stat: 'Speed' })}><strong>Speed:</strong><span>{character.speed || 30} ft</span></div>
           </div>
-          <div className={styles.attacksSection}><h3>Possible Attacks</h3>{character.items && Array.isArray(character.items) && character.items.length > 0 ? <><div className={styles.attackRowHeader}><div className={styles.attackRowName}>Name</div><div className={styles.attackRowBonus}>Attack Bonus</div><div className={styles.attackRowDamage}>Damage</div><div className={styles.attackRowType}>Damage Type</div><div className={styles.attackRowSpecial}>Special</div></div><div className={styles.attacksList}>{character.items.filter((i: any) => i.item_type === 'Weapon' || i.type === 'Weapon').map((w: any, i: number) => { const ba = getBestAbilityForWeapon(w), ab = ba.modifier + proficiencyBonus, dd = w.damageDice || '1d4', dt = w.damageType || 'bludgeoning', ia = isItemAttuned(w), na = requiresAttunement(w), hc = w.maxCharges && w.onHitEffect; return (<div key={i} className={styles.attackRow} onClick={() => { const vs = getWeaponVariants(w); if (vs.length > 1) { setWeaponToVariantSelect(w); setSelectedWeaponVariant(vs[0].id); setWeaponVariantSelectorOpen(true); } else { setSelectedAttackForModal(w); setSelectedAttackData({ weapon: w, attackBonus: ab, damageDice: dd, damageType: dt, abilityUsed: ba.ability, abilityModifier: ba.modifier, isAttuned: ia, needsAttunement: na }); } }} style={{ cursor: 'pointer' }}><div className={styles.attackRowName}>{w.name}</div><div className={styles.attackRowBonus}>+{ab}</div><div className={styles.attackRowDamage}>{dd}</div><div className={styles.attackRowType}>{dt}</div><div className={styles.attackRowSpecial}>{na && <span className={ia ? styles.specialAvailable : styles.specialLocked}>{ia ? 'Ready' : 'Attune'}</span>}{hc && !na && <span className={styles.specialAvailable}>Charge</span>}</div></div>); })}</div></> : <p className={styles.noAttacks}>No weapons in inventory.</p>}</div>
+          <div className={styles.attacksSection}><h3>Possible Attacks</h3>{character.items && Array.isArray(character.items) && character.items.length > 0 ? <>
+            <div className={styles.attackRowHeader}>
+              <div className={styles.attackRowName}>Name</div>
+              <div className={styles.attackRowBonus}>Attack Bonus</div>
+              <div className={styles.attackRowDamage}>Damage</div>
+              <div className={styles.attackRowType}>Damage Type</div>
+              <div className={styles.attackRowSpecial}>Special</div>
+            </div>
+            <div className={styles.attacksList}>{character.items.filter((i: any) => i.item_type === 'Weapon' || i.type === 'Weapon').map((w: any, i: number) => { const ba = getBestAbilityForWeapon(w), ab = ba.modifier + proficiencyBonus, dd = w.damageDice || '1d4', dt = w.damageType || 'bludgeoning', ia = isItemAttuned(w), na = requiresAttunement(w), hc = w.maxCharges && w.onHitEffect; return (<div key={i} className={styles.attackRow} onClick={() => { console.log('Clicked weapon:', w.name); const vs = getWeaponVariants(w); console.log('Weapon variants:', vs); if (vs.length > 1) { console.log('Multiple variants, opening selector'); setWeaponToVariantSelect(w); setSelectedWeaponVariant(vs[0].id); setWeaponVariantSelectorOpen(true); } else { console.log('Single attack, opening attack modal'); setSelectedAttackForModal(w); setSelectedAttackData({ weapon: w, attackBonus: ab, damageDice: dd, damageType: dt, abilityUsed: ba.ability, abilityModifier: ba.modifier, isAttuned: ia, needsAttunement: na }); } }} style={{ cursor: 'pointer' }}><div className={styles.attackRowName}>{w.name}</div>
+            <div className={styles.attackRowBonus}>+{ab}</div>
+            <div className={styles.attackRowDamage}>{dd}</div>
+            <div className={styles.attackRowType}>{dt}</div>
+            <div className={styles.attackRowSpecial}>{na && <span className={ia ? styles.specialAvailable : styles.specialLocked}>{ia ? 'Ready' : 'Attune'}</span>}{hc && !na && <span className={styles.specialAvailable}>Charge</span>}</div></div>); })}
+          </div></> : <p className={styles.noAttacks}>No weapons in inventory.</p>}</div>
           {/* Modals remain identical to your original structure, truncated here for brevity but fully functional in your build */}
         </div>
       </section>
@@ -546,6 +559,129 @@ const CharacterDisplay = () => {
       <SpellDetailsModal isOpen={isSpellDetailsModalOpen} onClose={() => setIsSpellDetailsModalOpen(false)} spell={selectedSpellForDetails} spellSaveDC={spellSaveDC} spellAttackBonus={spellAttackBonus} />
       {character && <StatModifiersModal isOpen={statModifiersModal.isOpen} onClose={() => setStatModifiersModal({ ...statModifiersModal, isOpen: false })} statName={statModifiersModal.stat === 'SpellDC' ? 'Spell Save DC' : statModifiersModal.stat === 'SpellAttack' ? 'Spell Attack Bonus' : statModifiersModal.stat} currentValue={statModifiersModal.stat === 'AC' ? calculateAC() : statModifiersModal.stat === 'Initiative' ? getAbilityModifier(character.abilityScores?.dex || 10) : statModifiersModal.stat === 'Speed' ? character.speed || 30 : statModifiersModal.stat === 'SpellDC' ? spellSaveDC : statModifiersModal.stat === 'SpellAttack' ? spellAttackBonus : 0} modifiers={statModifiersModal.stat === 'AC' ? getACModifiers() : statModifiersModal.stat === 'Initiative' ? getInitiativeModifiers() : statModifiersModal.stat === 'Speed' ? getSpeedModifiers() : statModifiersModal.stat === 'SpellDC' ? getSpellDCModifiers() : statModifiersModal.stat === 'SpellAttack' ? getSpellAttackModifiers() : []} />}
       <ProficiencyModal isOpen={proficiencyModal.isOpen} onClose={() => setProficiencyModal({ ...proficiencyModal, isOpen: false })} modalType={proficiencyModal.type} proficiencies={proficiencyModal.type === 'skills' ? getSkillProficiencies() : proficiencyModal.type === 'weapons' ? getWeaponProficiencies() : proficiencyModal.type === 'tools' ? getToolProficiencies() : getLanguages()} />
+      
+      {/* Attack Modal */}
+      {selectedAttackData && (
+        <div className={styles.attackModal} onClick={() => { setSelectedAttackForModal(null); setSelectedAttackData(null); }}>
+          <div className={styles.attackModalContent} onClick={(e) => e.stopPropagation()}>
+            <button className={styles.attackModalClose} onClick={() => { setSelectedAttackForModal(null); setSelectedAttackData(null); }}>✕</button>
+            
+            <h3 className={styles.attackModalTitle}>{selectedAttackData.weapon?.name || 'Attack'}</h3>
+            
+            <div className={styles.attackModalData}>
+              <div className={styles.attackModalBox}>
+                <h4>Attack Bonus</h4>
+                <div className={styles.attackModalValue}>+{selectedAttackData.attackBonus}</div>
+                <p className={styles.diceLabel}>{selectedAttackData.abilityUsed?.toUpperCase()} {selectedAttackData.abilityModifier >= 0 ? '+' : ''}{selectedAttackData.abilityModifier}</p>
+              </div>
+              
+              <div className={styles.attackModalBox}>
+                <h4>Damage</h4>
+                <div className={styles.attackModalValue}>{selectedAttackData.damageDice}</div>
+                <p className={styles.damageTypeLabel}>{selectedAttackData.damageType}</p>
+              </div>
+            </div>
+            
+            {selectedAttackData.needsAttunement && (
+              <div className={styles.attunementDisplay}>
+                {selectedAttackData.isAttuned ? (
+                  <span style={{ color: '#27ae60', fontWeight: 'bold' }}>✓ Attuned</span>
+                ) : (
+                  <span style={{ color: '#e74c3c', fontWeight: 'bold' }}>⚠ Requires Attunement</span>
+                )}
+              </div>
+            )}
+            
+            <div className={styles.attackDetailsActions}>
+              <button 
+                className={styles.makeAttackBtn}
+                onClick={() => {
+                  const roll = Math.floor(Math.random() * 20) + 1;
+                  const total = roll + selectedAttackData.attackBonus;
+                  alert(`🎲 Attack Roll: ${roll} + ${selectedAttackData.attackBonus} = ${total}`);
+                }}
+              >
+                Roll Attack (d20 + {selectedAttackData.attackBonus})
+              </button>
+              
+              <button 
+                className={styles.makeAttackBtn}
+                onClick={() => {
+                  alert(`⚔️ Damage Roll: ${selectedAttackData.damageDice} (${selectedAttackData.damageType})`);
+                }}
+              >
+                Roll Damage ({selectedAttackData.damageDice})
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Weapon Variant Selector Modal */}
+      {weaponVariantSelectorOpen && weaponToVariantSelect && (
+        <div className={styles.attackModal} onClick={() => { setWeaponVariantSelectorOpen(false); setWeaponToVariantSelect(null); }}>
+          <div className={styles.attackModalContent} onClick={(e) => e.stopPropagation()}>
+            <button className={styles.attackModalClose} onClick={() => { setWeaponVariantSelectorOpen(false); setWeaponToVariantSelect(null); }}>✕</button>
+            
+            <h3 className={styles.attackModalTitle}>Choose Attack Style: {weaponToVariantSelect.name}</h3>
+            
+            <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {getWeaponVariants(weaponToVariantSelect).map((variant: any) => {
+                const ba = getBestAbilityForWeapon(weaponToVariantSelect);
+                const ab = ba.modifier + proficiencyBonus;
+                const ia = isItemAttuned(weaponToVariantSelect);
+                const na = requiresAttunement(weaponToVariantSelect);
+                
+                return (
+                  <button
+                    key={variant.id}
+                    onClick={() => {
+                      console.log('Selected variant:', variant.id);
+                      setWeaponVariantSelectorOpen(false);
+                      setSelectedAttackForModal(weaponToVariantSelect);
+                      setSelectedAttackData({
+                        weapon: weaponToVariantSelect,
+                        attackBonus: ab,
+                        damageDice: variant.damageDice || '1d4',
+                        damageType: variant.damageType || 'bludgeoning',
+                        abilityUsed: ba.ability,
+                        abilityModifier: ba.modifier,
+                        isAttuned: ia,
+                        needsAttunement: na
+                      });
+                    }}
+                    style={{
+                      padding: '12px',
+                      backgroundColor: '#f0e6d2',
+                      border: '2px solid #d6c38a',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '1rem',
+                      fontWeight: '600',
+                      color: '#5a3921',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.target as HTMLButtonElement).style.backgroundColor = '#e8d5c4';
+                      (e.target as HTMLButtonElement).style.borderColor = '#8b7355';
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.target as HTMLButtonElement).style.backgroundColor = '#f0e6d2';
+                      (e.target as HTMLButtonElement).style.borderColor = '#d6c38a';
+                    }}
+                  >
+                    {variant.name}
+                    <br />
+                    <span style={{ fontSize: '0.9rem', fontWeight: 'normal' }}>
+                      {variant.damageDice} {variant.damageType}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
