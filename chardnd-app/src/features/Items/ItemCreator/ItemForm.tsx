@@ -587,7 +587,7 @@ const ItemForm: React.FC = () => {
             </div>
           )}
           
-          {features.length === 0 && <p style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.5rem' }}>No features found. Ensure /API/features endpoint exists.</p>}
+          {features.length === 0 && <p style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.5rem' }}>No features found. Ensure /api/v1/features endpoint exists.</p>}
           {features.length > 0 && filteredFeatures.length === 0 && searchQuery && <p style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.5rem' }}>No features match "{searchQuery}"</p>}
         </div>
 

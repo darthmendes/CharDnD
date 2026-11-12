@@ -1,7 +1,7 @@
 // src/constants.ts
 
 // ============ API Configuration ============
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8001/API';
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8001/api/v1';
 
 // ============ Game Constants ============
 export const DEFAULT_ATTUNEMENT_SLOTS = 3;

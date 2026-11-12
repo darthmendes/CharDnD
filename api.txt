@@ -1,0 +1,185 @@
+CharDnD - Complete Feature List
+
+1. Account Management
+    Register an account
+    Log in and log out
+    View and edit account details
+    Change password
+    Reset a forgotten password
+    Delete account
+
+2. Character Management
+    Create a character
+    View character list
+    Select and view a character sheet
+    Edit character details
+    Duplicate a character
+    Archive and restore a character
+    Delete a character
+    Export a character sheet as PDF
+    Import or export a character
+    View character activity history
+    View character version history
+    Manage character portraits
+    Share a character
+
+    Character creation and choices
+        Select species
+        Select class and subclass, where applicable
+        Select background
+        Choose background items and starting equipment
+        Choose spells
+        Set initial ability scores
+        Select skills and proficiencies
+        Select languages
+        Choose alignment
+        Enter appearance and backstory
+        Enter personality traits, ideals, bonds, and flaws
+
+3. Character Statistics
+    Update ability scores after character creation
+    Calculate ability modifiers
+    Track current, maximum, and temporary HP
+    Track hit dice
+    Track death saves
+    Track experience points and current character level
+    Calculate proficiency bonus
+    Calculate Armor Class and initiative modifier
+    Calculate movement speed and passive perception
+    Calculate saving throw and skill modifiers
+    Calculate attack bonuses and damage modifiers
+    Calculate spell attack bonus and spell save DC
+    Track inspiration
+    View character senses and languages
+    Calculate carrying capacity
+
+4. Inventory Management
+    View inventory
+    Add, remove, and edit items and quantities
+    Equip and unequip items
+    Attune and unattune items
+    Drop or transfer items
+    Track item and total inventory weight
+    Manage copper, silver, electrum, gold, and platinum pieces
+    Manage ammunition and consumables
+    Track item charges
+    View item properties
+    Track equipped armor and shields
+    Track attuned items and attunement limits
+
+5. Spell Management
+    View spell details
+    Learn and forget spells
+    Prepare and unprepare spells
+    Track spell slots and used spell slots
+    Recover spell slots
+    View spell components, duration, and ritual availability
+    Track spellcasting ability
+    Track concentration and concentration effects
+
+6. Character Progression
+    Level up character
+    Select feats and class choices
+    Manage multiclassing and subclasses
+    Select ability score improvements
+    Manage class, subclass, species, and background features
+    Manage proficiencies and spells gained through progression
+    Track hit dice gained per level
+
+7. Gameplay Management
+    Apply and remove conditions
+    Track condition effects
+    Apply temporary effects and track their duration
+    Track exhaustion
+    Track advantage and disadvantage
+    Take short and long rests
+    Recover resources, hit dice, and HP during rests
+    Stabilize a dying character
+    Track character death
+    Apply damage and healing
+    Track temporary bonuses and penalties
+    Make concentration checks
+
+8. Combat Management
+    Track initiative and attacks
+    Calculate attack rolls and damage rolls
+    Track damage types, resistances, vulnerabilities, and immunities
+    Apply armor and shield effects
+    Track ammunition use
+    Apply weapon properties during combat
+    Track combat-related conditions
+    Manage combat encounters
+
+9. Notes Management
+    View, create, edit, and delete character notes
+
+10. Game Content Management
+    Species
+        View, create, edit, and delete species
+        Manage species traits and abilities
+        Manage species-granted proficiencies and languages
+        Manage species movement speeds and senses
+
+    Classes and Subclasses
+        View, create, edit, and delete classes
+        Manage class features and hit dice
+        Manage class proficiencies and starting equipment
+        Manage class choices and spell lists
+        Manage multiclass requirements
+        View, create, edit, and delete subclasses
+        Manage subclass features and choices
+
+    Backgrounds
+        View, create, edit, and delete backgrounds
+        Manage background features and proficiencies
+        Manage background languages and equipment
+        Manage background choices
+
+    Items
+        View, create, edit, and delete items
+        Manage item properties, weight, value, and rarity
+        Manage item effects and charges
+        Manage attunement requirements
+        Manage weapon statistics and properties
+        Manage armor and shield statistics and properties
+
+    Spells
+        View, create, edit, and delete spells
+        Manage spell levels and schools
+        Manage components, duration, range, and casting time
+        Manage spell effects and eligible classes
+
+    Feats
+        View, create, edit, and delete feats
+        Manage feat requirements, effects, and choices
+
+    Conditions
+        View, create, edit, and delete conditions
+        Manage condition effects
+
+    Shared Reference Content
+        Manage proficiencies and skills
+        Manage languages and damage types
+        Manage weapon, armor, and item properties
+        Manage spell schools and character alignments
+
+11. Content Permissions
+    Manage system content
+    Create, edit, and delete private custom content
+    Share custom content
+    Manage campaign-specific content
+    Control access to custom content
+
+12. Optional Campaign Features
+    Create, view, edit, and delete campaigns
+    Invite and remove players
+    Manage campaign members and permissions
+    Share characters with a campaign
+    Manage parties and view party characters
+    Create campaign notes
+    Manage campaign resources
+
+13. Optional Additional Features
+    Dice roller
+    Dungeon Master tools
+    Campaign journal

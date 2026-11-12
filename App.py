@@ -6,7 +6,7 @@
 #
 
 import logging
-from flask import Flask, request, jsonify
+from flask import Blueprint, Flask, request, jsonify
 from flask_cors import CORS
 from http import HTTPStatus
 
@@ -27,6 +27,7 @@ from Backend.config import FLASK_DEBUG, FLASK_PORT, CORS_ORIGINS, SECRET_KEY
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = SECRET_KEY
+api_v1 = Blueprint('api_v1', __name__, url_prefix='/api/v1')
 
 # CORS: Use environment-configured origins
 if '*' in CORS_ORIGINS:
@@ -39,7 +40,7 @@ else:
 # Character Routes
 ################################################################
 
-@app.route('/API/characters/creator', methods=['POST'])
+@api_v1.route('/characters/creator', methods=['POST'])
 def create_character():
     """Create a new character with the provided data."""
     data = request.json
@@ -56,7 +57,7 @@ def create_character():
     return jsonify(result["data"]), HTTPStatus.CREATED
 
 
-@app.route('/API/characters/<int:id>', methods=['DELETE'])
+@api_v1.route('/characters/<int:id>', methods=['DELETE'])
 def delete_character(id):
     """Delete a character by ID."""
     result = Character.delete(id)
@@ -65,7 +66,7 @@ def delete_character(id):
     return jsonify({"message": result["message"]}), HTTPStatus.OK
 
 
-@app.route('/API/characters/<int:id>', methods=['GET'])
+@api_v1.route('/characters/<int:id>', methods=['GET'])
 def get_character(id):
     """Retrieve a character by ID."""
     char = Character.get_byID(id)
@@ -74,7 +75,7 @@ def get_character(id):
     return jsonify(char.to_dict()), HTTPStatus.OK
 
 
-@app.route('/API/characters', methods=['GET'])
+@api_v1.route('/characters', methods=['GET'])
 def list_characters():
     """Retrieve a list of all characters."""
     chars = Character.get_all()
@@ -82,7 +83,7 @@ def list_characters():
     return jsonify(result), HTTPStatus.OK
 
 
-@app.route('/API/characters/<int:charID>/items', methods=['POST'])
+@api_v1.route('/characters/<int:charID>/items', methods=['POST'])
 def add_item_to_character(charID):
     """Add an item or pack to a character's inventory."""
     data = request.json
@@ -107,7 +108,7 @@ def add_item_to_character(charID):
         return jsonify(result), HTTPStatus.BAD_REQUEST
 
 
-@app.route('/API/characters/<int:charID>/inventory/<int:inventoryID>', methods=['DELETE'])
+@api_v1.route('/characters/<int:charID>/inventory/<int:inventoryID>', methods=['DELETE'])
 def delete_inventory_item(charID, inventoryID):
     """Delete an item from character's inventory."""
     result = Item.delete_inventory_item(inventoryID, charID)
@@ -120,7 +121,7 @@ def delete_inventory_item(charID, inventoryID):
         return jsonify(result), HTTPStatus.BAD_REQUEST
 
 
-@app.route('/API/characters/<int:charID>/inventory/<int:inventoryID>/charges', methods=['PATCH'])
+@api_v1.route('/characters/<int:charID>/inventory/<int:inventoryID>/charges', methods=['PATCH'])
 def update_item_charges(charID, inventoryID):
     """Update current charges of an inventory item."""
     data = request.json
@@ -141,7 +142,7 @@ def update_item_charges(charID, inventoryID):
         return jsonify(result), HTTPStatus.BAD_REQUEST
 
 
-@app.route('/API/characters/<int:charID>/inventory/<int:inventoryID>/remove-one', methods=['PATCH'])
+@api_v1.route('/characters/<int:charID>/inventory/<int:inventoryID>/remove-one', methods=['PATCH'])
 def remove_one_item(charID, inventoryID):
     """Remove 1 item from inventory (or delete entire entry if quantity is 1)."""
     result = Item.remove_one_item(inventoryID, charID)
@@ -154,7 +155,7 @@ def remove_one_item(charID, inventoryID):
         return jsonify(result), HTTPStatus.BAD_REQUEST
 
 
-@app.route('/API/characters/<int:charID>/inventory/<int:inventoryID>/equip', methods=['PATCH'])
+@api_v1.route('/characters/<int:charID>/inventory/<int:inventoryID>/equip', methods=['PATCH'])
 def equip_item(charID, inventoryID):
     """Equip an armor/shield item. Automatically unequips conflicting items."""
     result = Item.equip_item(inventoryID, charID)
@@ -167,7 +168,7 @@ def equip_item(charID, inventoryID):
         return jsonify(result), HTTPStatus.BAD_REQUEST
 
 
-@app.route('/API/characters/<int:charID>/inventory/<int:inventoryID>/unequip', methods=['PATCH'])
+@api_v1.route('/characters/<int:charID>/inventory/<int:inventoryID>/unequip', methods=['PATCH'])
 def unequip_item(charID, inventoryID):
     """Unequip an armor/shield item."""
     result = Item.unequip_item(inventoryID, charID)
@@ -182,7 +183,7 @@ def unequip_item(charID, inventoryID):
 
 # app.py
 
-@app.route('/API/characters/<int:charID>/inventory/<int:inventoryID>/attune', methods=['PATCH'])
+@api_v1.route('/characters/<int:charID>/inventory/<int:inventoryID>/attune', methods=['PATCH'])
 def attune_item(charID, inventoryID):
     """Attune to a magic item."""
     result = Item.attune_item(inventoryID, charID)
@@ -196,7 +197,7 @@ def attune_item(charID, inventoryID):
         return jsonify(result), status
 
 
-@app.route('/API/characters/<int:charID>/inventory/<int:inventoryID>/unattune', methods=['PATCH'])
+@api_v1.route('/characters/<int:charID>/inventory/<int:inventoryID>/unattune', methods=['PATCH'])
 def unattune_item(charID, inventoryID):
     """Unattune from a magic item."""
     result = Item.unattune_item(inventoryID, charID)
@@ -213,7 +214,7 @@ def unattune_item(charID, inventoryID):
 # Species Routes
 ################################################################
 
-@app.route('/API/species/creator', methods=['POST'])
+@api_v1.route('/species/creator', methods=['POST'])
 def create_species():
     data = request.json
     if not data or 'name' not in data:
@@ -227,7 +228,7 @@ def create_species():
     return jsonify({"message": "Species created"}), HTTPStatus.CREATED
 
 
-@app.route('/API/species/<int:id>', methods=['DELETE'])
+@api_v1.route('/species/<int:id>', methods=['DELETE'])
 def delete_species(id):
     result = Species.delete(id)
     if not result["success"]:
@@ -235,7 +236,7 @@ def delete_species(id):
     return jsonify({"message": "Species deleted"}), HTTPStatus.OK
 
 
-@app.route('/API/species/<int:id>', methods=['GET'])
+@api_v1.route('/species/<int:id>', methods=['GET'])
 def get_species(id):
     species = Species.get_byID(id)
     if not species:
@@ -243,14 +244,14 @@ def get_species(id):
     return jsonify(species.to_dict()), HTTPStatus.OK
 
 
-@app.route('/API/species', methods=['GET'])
+@api_v1.route('/species', methods=['GET'])
 def list_species():
     all_species = Species.get_all()  # This MUST load subspecies
     result = [s.to_dict() for s in all_species]
     return jsonify(result), HTTPStatus.OK
 
 
-@app.route('/API/species/<species_name>/traits', methods=['GET'])
+@api_v1.route('/species/<species_name>/traits', methods=['GET'])
 def get_species_traits(species_name):
     """Get all traits for a species (with optional subspecies filter)."""
     try:
@@ -319,7 +320,7 @@ def get_species_traits(species_name):
 # Class Routes
 ################################################################
 
-@app.route('/API/classes/creator', methods=['POST'])
+@api_v1.route('/classes/creator', methods=['POST'])
 def create_class():
     data = request.json
     if not data or 'name' not in data:
@@ -333,7 +334,7 @@ def create_class():
     return jsonify({"message": "Class created"}), HTTPStatus.CREATED
 
 
-@app.route('/API/classes/<int:id>', methods=['DELETE'])
+@api_v1.route('/classes/<int:id>', methods=['DELETE'])
 def delete_class(id):
     result = DnDClass.delete(id)
     if not result["success"]:
@@ -341,7 +342,7 @@ def delete_class(id):
     return jsonify({"message": "Class deleted"}), HTTPStatus.OK
 
 
-@app.route('/API/classes/<int:id>', methods=['GET'])
+@api_v1.route('/classes/<int:id>', methods=['GET'])
 def get_class(id):
     dnd_class = DnDClass.get_byID(id)
     if not dnd_class:
@@ -349,7 +350,7 @@ def get_class(id):
     return jsonify(dnd_class.to_dict()), HTTPStatus.OK
 
 
-@app.route('/API/classes', methods=['GET'])
+@api_v1.route('/classes', methods=['GET'])
 def list_classes():
     all_classes = DnDClass.get_all()
     return jsonify([c.to_dict() for c in all_classes]), 200
@@ -359,7 +360,7 @@ from flask import Flask, request, jsonify
 from Backend.models import session
 from Backend.models.character import CharacterClassResource
 
-@app.route('/API/characters/<int:char_id>/classes/<int:class_id>/resources', methods=['GET'])
+@api_v1.route('/characters/<int:char_id>/classes/<int:class_id>/resources', methods=['GET'])
 def get_class_resources(char_id, class_id):
     """Get all resources for a specific class"""
     resources = session.query(CharacterClassResource).filter_by(
@@ -367,7 +368,7 @@ def get_class_resources(char_id, class_id):
     ).all()
     return jsonify([r.to_dict() for r in resources]), 200
 
-@app.route('/API/characters/<int:char_id>/classes/<int:class_id>/resources/<resource_type>', methods=['PATCH'])
+@api_v1.route('/characters/<int:char_id>/classes/<int:class_id>/resources/<resource_type>', methods=['PATCH'])
 def update_resource(char_id, class_id, resource_type):
     """Update a specific resource (e.g., spend rage, regain ki point)"""
     data = request.json
@@ -385,7 +386,7 @@ def update_resource(char_id, class_id, resource_type):
     session.commit()
     return jsonify(resource.to_dict()), 200
 
-@app.route('/API/characters/<int:char_id>/rest', methods=['POST'])
+@api_v1.route('/characters/<int:char_id>/rest', methods=['POST'])
 def take_rest(char_id):
     """Take a short or long rest - recover appropriate resources"""
     from Backend.models.character import CharacterClass as CharClassAssoc
@@ -413,7 +414,7 @@ def take_rest(char_id):
 # Background Routes
 ################################################################
 
-@app.route('/API/backgrounds', methods=['GET'])
+@api_v1.route('/backgrounds', methods=['GET'])
 def list_backgrounds():
     from Backend.services.BackgroundService import BackgroundService
     result = BackgroundService.get_all()
@@ -422,7 +423,7 @@ def list_backgrounds():
     return jsonify({"error": result["error"]}), 500
 
 
-@app.route('/API/backgrounds/<int:bgID>', methods=['GET'])
+@api_v1.route('/backgrounds/<int:bgID>', methods=['GET'])
 def get_background(bgID):
     from Backend.services.BackgroundService import BackgroundService
     result = BackgroundService.get_byID(bgID)
@@ -435,7 +436,7 @@ def get_background(bgID):
 # Item Routes
 ################################################################
 
-@app.route('/API/items/creator', methods=['POST'])
+@api_v1.route('/items/creator', methods=['POST'])
 def create_item():
     data = request.json
     if not data or 'name' not in data:
@@ -449,20 +450,20 @@ def create_item():
     return jsonify({"message": "Item created"}), HTTPStatus.CREATED
 
 
-@app.route('/API/items/<int:id>', methods=['GET'])
+@api_v1.route('/items/<int:id>', methods=['GET'])
 def get_item(id):
     item = Item.get_byID(id)
     if not item:
         return jsonify({"error": "Item not found"}), HTTPStatus.NOT_FOUND
     return jsonify(item.to_dict()), HTTPStatus.OK
 
-@app.route('/API/items', methods=['GET'])
+@api_v1.route('/items', methods=['GET'])
 def list_items():
     all_items = Item.get_all()
     result = [c.to_dict() for c in all_items]
     return jsonify(result), HTTPStatus.OK
 
-@app.route('/API/items/<int:id>', methods=['DELETE'])
+@api_v1.route('/items/<int:id>', methods=['DELETE'])
 def delete_item(id):
     result = Item.delete(id)
     if not result["success"]:
@@ -474,7 +475,7 @@ def delete_item(id):
 ################################################################
 
 
-@app.route('/API/languages', methods=['GET'])
+@api_v1.route('/languages', methods=['GET'])
 def get_languages():
     try:
         languages = Language.get_all_languages()
@@ -487,7 +488,7 @@ def get_languages():
 # Spell Routes
 ################################################################
 
-@app.route('/API/spells', methods=['GET'])
+@api_v1.route('/spells', methods=['GET'])
 def list_spells():
     """Get all available spells."""
     try:
@@ -497,7 +498,7 @@ def list_spells():
     except Exception as e:
         return jsonify({"error": str(e)}), HTTPStatus.INTERNAL_SERVER_ERROR
 
-@app.route('/API/characters/<int:charID>/spell-slots', methods=['GET'])
+@api_v1.route('/characters/<int:charID>/spell-slots', methods=['GET'])
 def get_spell_slots(charID):
     """Get character's available spell slots."""
     result = Spell.get_character_spell_slots(charID)
@@ -507,7 +508,7 @@ def get_spell_slots(charID):
         return jsonify({"error": result["error"]}), HTTPStatus.NOT_FOUND
 
 
-@app.route('/API/characters/<int:charID>/spell-slots/expended', methods=['PATCH'])
+@api_v1.route('/characters/<int:charID>/spell-slots/expended', methods=['PATCH'])
 def update_expended_slots(charID):
     """Update expended spell slots."""
     data = request.json
@@ -521,7 +522,7 @@ def update_expended_slots(charID):
         return jsonify({"error": result["error"]}), HTTPStatus.BAD_REQUEST
 
 
-@app.route('/API/characters/<int:charID>/spells', methods=['GET'])
+@api_v1.route('/characters/<int:charID>/spells', methods=['GET'])
 def get_character_spells(charID):
     """Get all spells known by character."""
     result = Spell.get_character_spells(charID)
@@ -531,7 +532,7 @@ def get_character_spells(charID):
         return jsonify({"error": result["error"]}), HTTPStatus.NOT_FOUND
 
 
-@app.route('/API/characters/<int:charID>/spells', methods=['POST'])
+@api_v1.route('/characters/<int:charID>/spells', methods=['POST'])
 def add_character_spell(charID):
     """Add a spell to character's known spells."""
     data = request.json
@@ -545,7 +546,7 @@ def add_character_spell(charID):
         return jsonify({"error": result["error"]}), HTTPStatus.BAD_REQUEST
 
 
-@app.route('/API/characters/<int:charID>/spells/<int:spellID>', methods=['DELETE'])
+@api_v1.route('/characters/<int:charID>/spells/<int:spellID>', methods=['DELETE'])
 def remove_character_spell(charID, spellID):
     """Remove a spell from character's known spells."""
     result = Spell.remove_spell_from_character(charID, spellID)
@@ -555,7 +556,7 @@ def remove_character_spell(charID, spellID):
         return jsonify({"error": result["error"]}), HTTPStatus.NOT_FOUND
 
 
-@app.route('/API/characters/<int:charID>/spells/<int:spellID>/prepare', methods=['PATCH'])
+@api_v1.route('/characters/<int:charID>/spells/<int:spellID>/prepare', methods=['PATCH'])
 def toggle_spell_prepared(charID, spellID):
     """Toggle whether a spell is prepared."""
     result = Spell.toggle_spell_prepared(charID, spellID)
@@ -565,7 +566,7 @@ def toggle_spell_prepared(charID, spellID):
         return jsonify({"error": result["error"]}), HTTPStatus.NOT_FOUND
 
 
-@app.route('/API/characters/<int:charID>/prepare-limit', methods=['GET'])
+@api_v1.route('/characters/<int:charID>/prepare-limit', methods=['GET'])
 def get_prepare_limit(charID):
     """Get spell prepare limit for character based on D&D 5e rules."""
     result = Spell.calculate_prepare_limit(charID)
@@ -580,7 +581,7 @@ def get_prepare_limit(charID):
     else:
         return jsonify({"error": result["error"]}), HTTPStatus.NOT_FOUND
 
-@app.route('/API/classes/<class_name>/spells', methods=['GET'])
+@api_v1.route('/classes/<class_name>/spells', methods=['GET'])
 def get_class_spells(class_name):
     """Get all spells available to a class."""
     try:
@@ -622,13 +623,13 @@ def get_class_spells(class_name):
 ################################################################
 # Monsters
 ################################################################
-@app.route('/API/monsters', methods=['GET'])
+@api_v1.route('/monsters', methods=['GET'])
 def list_monsters():
     monsters = Monster.get_all()
     # Convert SQLAlchemy objects to dicts for JSON response
     return jsonify([m.to_dict() for m in monsters]), 200
 
-@app.route('/API/monsters', methods=['POST'])
+@api_v1.route('/monsters', methods=['POST'])
 def create_monster():
     if not request.is_json:
         return jsonify({"success": False, "error": "Request must be JSON"}), 415
@@ -637,14 +638,14 @@ def create_monster():
     status = 201 if result["success"] else 400
     return jsonify(result), status
 
-@app.route('/API/monsters/<int:monster_id>', methods=['GET'])
+@api_v1.route('/monsters/<int:monster_id>', methods=['GET'])
 def get_monster(monster_id):
     monster = Monster.get_byID(monster_id)
     if not monster:
         return jsonify({"success": False, "error": "Monster not found"}), 404
     return jsonify(monster.to_dict()), 200
 
-@app.route('/API/monsters/<int:monster_id>', methods=['PUT', 'PATCH'])
+@api_v1.route('/monsters/<int:monster_id>', methods=['PUT', 'PATCH'])
 def update_monster(monster_id):
     monster = Monster.get_byID(monster_id)
     if not monster:
@@ -657,7 +658,7 @@ def update_monster(monster_id):
     status = 200 if result["success"] else 400
     return jsonify(result), status
 
-@app.route('/API/monsters/<int:monster_id>', methods=['DELETE'])
+@api_v1.route('/monsters/<int:monster_id>', methods=['DELETE'])
 def delete_monster(monster_id):
     result = Monster.delete(monster_id)
     status = 200 if result["success"] else 404
@@ -667,7 +668,7 @@ def delete_monster(monster_id):
 # Misc
 ################################################################
 
-@app.route('/API/fighting-styles', methods=['GET'])
+@api_v1.route('/fighting-styles', methods=['GET'])
 def get_fighting_styles():
     fighting_styles = [
         {'id': 1, 'name': 'Archery', 'description': '+2 to hit with ranged weapons'},
@@ -679,7 +680,7 @@ def get_fighting_styles():
     ]
     return jsonify(fighting_styles), 200
 
-@app.route('/API/features', methods=['GET'])
+@api_v1.route('/features', methods=['GET'])
 def list_features():
     from Backend.models import session
     from Backend.models.features import Features
@@ -689,6 +690,8 @@ def list_features():
 ################################################################
 # App Entry
 ################################################################
+
+app.register_blueprint(api_v1)
 
 if __name__ == "__main__":
     app.run(port=FLASK_PORT, debug=FLASK_DEBUG)

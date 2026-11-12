@@ -1,0 +1,187 @@
+CharDnD API Endpoints
+
+Routes are grouped by the backend service responsible for the work.
+The /API prefix matches App.py. {id} values are resource IDs.
+
+Status:
+    Existing = route is currently registered in App.py.
+    Planned  = route is a proposed endpoint and still needs implementation.
+    All routes under "Planned services" are planned and are not yet in App.py.
+
+CharacterService
+    POST   /API/characters/creator                         - Existing: create a character, including creation choices.
+    GET    /API/characters                                 - Existing: list characters.
+    GET    /API/characters/{id}                             - Existing: get the character and its sheet data.
+    PATCH  /API/characters/{id}                             - Planned: edit character details, scores, and other sheet values.
+    DELETE /API/characters/{id}                             - Existing: delete a character.
+    GET    /API/characters/{id}/classes/{classID}/resources - Existing: view a character class's tracked resources.
+    PATCH  /API/characters/{id}/classes/{classID}/resources/{resourceType} - Existing: update a tracked class resource.
+    POST   /API/characters/{id}/rest                         - Existing: take a short or long rest.
+    POST   /API/characters/{id}/copies                      - Planned: duplicate a character.
+    GET    /API/characters/{id}/exports/pdf                 - Planned: export a character sheet as PDF.
+    GET    /API/characters/{id}/exports                     - Planned: export a character in another supported format.
+    POST   /API/characters/imports                           - Planned: import a character.
+    GET    /API/characters/{id}/history                     - Planned: view activity or versions (use ?type=activity|versions).
+    GET    /API/characters/{id}/portraits                    - Planned: list character portraits.
+    POST   /API/characters/{id}/portraits                    - Planned: add a character portrait.
+    DELETE /API/characters/{id}/portraits/{portraitID}       - Planned: remove a character portrait.
+    POST   /API/characters/{id}/shares                       - Planned: share a character with another user.
+    DELETE /API/characters/{id}/shares/{shareID}             - Planned: revoke a character share.
+    GET    /API/characters/{id}/stats/derived                - Planned: get calculated statistics not stored on the character.
+    GET    /API/characters/{id}/proficiencies               - Planned: view the character's proficiencies.
+    PUT    /API/characters/{id}/proficiencies               - Planned: set the character's proficiencies.
+    POST   /API/characters/{id}/level-ups                    - Planned: apply a level-up and its choices.
+    GET    /API/characters/{id}/progression                 - Planned: view level and experience progression.
+    PATCH  /API/characters/{id}/progression                 - Planned: update class levels, feats, and progression choices.
+
+SpeciesService
+    GET    /API/species                                     - Existing: list species.
+    GET    /API/species/{id}                                - Existing: get a species and its details.
+    POST   /API/species/creator                             - Existing: create a species.
+    PATCH  /API/species/{id}                                - Planned: edit species details, traits, and abilities.
+    DELETE /API/species/{id}                                - Existing: delete a species.
+    GET    /API/species/{speciesName}/traits                - Existing: list species traits; optional ?subspecies=name.
+    POST   /API/species/{id}/subspecies                     - Planned: add a subspecies.
+    PATCH  /API/species/{id}/subspecies/{subspeciesID}      - Planned: edit a subspecies.
+    DELETE /API/species/{id}/subspecies/{subspeciesID}      - Planned: remove a subspecies.
+
+ClassService
+    GET    /API/classes                                     - Existing: list classes.
+    GET    /API/classes/{id}                                - Existing: get a class and its details.
+    POST   /API/classes/creator                             - Existing: create a class.
+    PATCH  /API/classes/{id}                                - Planned: edit class features, choices, and starting options.
+    DELETE /API/classes/{id}                                - Existing: delete a class.
+    GET    /API/classes/{id}/subclasses                     - Planned: list a class's subclasses.
+    POST   /API/classes/{id}/subclasses                     - Planned: add a subclass to a class.
+
+BackgroundService
+    GET    /API/backgrounds                                 - Existing: list backgrounds.
+    GET    /API/backgrounds/{id}                            - Existing: get a background, including its features and choices.
+    POST   /API/backgrounds                                 - Planned: create a background.
+    PATCH  /API/backgrounds/{id}                            - Planned: edit background features, proficiencies, and equipment.
+    DELETE /API/backgrounds/{id}                            - Planned: delete a background.
+
+ItemService
+    GET    /API/items                                       - Existing: list item definitions.
+    GET    /API/items/{id}                                  - Existing: get an item definition.
+    POST   /API/items/creator                               - Existing: create an item definition.
+    PATCH  /API/items/{id}                                  - Planned: edit item properties and statistics.
+    DELETE /API/items/{id}                                  - Existing: delete an item definition.
+    POST   /API/characters/{id}/items                       - Existing: add an item or pack to a character's inventory.
+    DELETE /API/characters/{id}/inventory/{inventoryID}     - Existing: remove an inventory entry.
+    PATCH  /API/characters/{id}/inventory/{inventoryID}/remove-one - Existing: reduce its quantity by one.
+    PATCH  /API/characters/{id}/inventory/{inventoryID}/charges   - Existing: update its current charges.
+    PATCH  /API/characters/{id}/inventory/{inventoryID}/equip     - Existing: equip an item.
+    PATCH  /API/characters/{id}/inventory/{inventoryID}/unequip   - Existing: unequip an item.
+    PATCH  /API/characters/{id}/inventory/{inventoryID}/attune    - Existing: attune to an item.
+    PATCH  /API/characters/{id}/inventory/{inventoryID}/unattune  - Existing: unattune from an item.
+    POST   /API/characters/{id}/inventory/transfers        - Planned: transfer items to another character.
+    PATCH  /API/characters/{id}/inventory/currency         - Planned: update the character's coin balances.
+    GET    /API/characters/{id}/inventory/weight           - Planned: view total inventory weight and carrying load.
+
+SpellService
+    GET    /API/spells                                      - Existing: list spell definitions.
+    GET    /API/spells/{id}                                 - Planned: get one spell and its details.
+    GET    /API/classes/{className}/spells                  - Existing: list spells available to a class; optional ?level=n.
+    GET    /API/characters/{id}/spells                      - Existing: list a character's spells.
+    POST   /API/characters/{id}/spells                      - Existing: add a spell to a character.
+    DELETE /API/characters/{id}/spells/{spellID}            - Existing: remove a spell from a character.
+    PATCH  /API/characters/{id}/spells/{spellID}/prepare    - Existing: prepare or unprepare a spell.
+    GET    /API/characters/{id}/spell-slots                 - Existing: view spell slots and calculated spell stats.
+    PATCH  /API/characters/{id}/spell-slots/expended        - Existing: update used spell slots.
+    GET    /API/characters/{id}/prepare-limit               - Existing: view the character's spell preparation limit.
+
+FeaturesService
+    GET    /API/features                                    - Existing: list game features.
+    POST   /API/features                                    - Planned: create a game feature.
+    GET    /API/features/{id}                               - Planned: get a feature and its level details.
+    PATCH  /API/features/{id}                               - Planned: edit a game feature.
+    DELETE /API/features/{id}                               - Planned: delete a game feature.
+
+LanguageService
+    GET    /API/languages                                   - Existing: list available languages.
+
+MonsterService
+    GET    /API/monsters                                    - Existing: list monsters.
+    POST   /API/monsters                                    - Existing: create a monster.
+    GET    /API/monsters/{id}                               - Existing: get a monster.
+    PATCH  /API/monsters/{id}                               - Existing: edit a monster.
+    DELETE /API/monsters/{id}                               - Existing: delete a monster.
+
+Class/reference lookups
+    GET    /API/fighting-styles                             - Existing: list fighting styles.
+
+Planned services
+    These features are in api.txt but do not yet have a matching service in Backend/services.
+
+AccountService
+    POST   /API/accounts                                    - Register an account.
+    POST   /API/auth/login                                  - Log in.
+    POST   /API/auth/logout                                 - Log out.
+    GET    /API/accounts/me                                 - Get the signed-in account.
+    PATCH  /API/accounts/me                                 - Edit account details.
+    PUT    /API/accounts/me/password                        - Change password.
+    POST   /API/auth/password-resets                        - Request a password reset.
+    PUT    /API/auth/password-resets/{token}                - Complete a password reset.
+    DELETE /API/accounts/me                                 - Delete the signed-in account.
+
+GameplayService
+    PATCH  /API/characters/{id}/game-state                  - Update conditions, effects, exhaustion, death saves, and inspiration.
+    POST   /API/characters/{id}/rests                       - Take a short or long rest and recover resources.
+    POST   /API/characters/{id}/damage                      - Apply damage.
+    POST   /API/characters/{id}/healing                     - Apply healing.
+
+CombatService
+    GET    /API/characters/{id}/combat                      - Get combat-relevant character data.
+    POST   /API/characters/{id}/combat/rolls                - Roll an attack or damage using a request type.
+    GET    /API/combat-encounters                            - List encounters.
+    POST   /API/combat-encounters                            - Create an encounter.
+    GET    /API/combat-encounters/{encounterID}             - Get an encounter.
+    PATCH  /API/combat-encounters/{encounterID}             - Update encounter or initiative state.
+    DELETE /API/combat-encounters/{encounterID}             - Delete an encounter.
+    POST   /API/dice-rolls                                  - Roll dice outside a combat encounter.
+
+NotesService
+    GET    /API/characters/{id}/notes                       - List character notes.
+    POST   /API/characters/{id}/notes                       - Create a character note.
+    PATCH  /API/characters/{id}/notes/{noteID}              - Edit a character note.
+    DELETE /API/characters/{id}/notes/{noteID}              - Delete a character note.
+
+CampaignService
+    GET    /API/campaigns                                   - List campaigns.
+    POST   /API/campaigns                                   - Create a campaign.
+    GET    /API/campaigns/{campaignID}                      - Get a campaign.
+    PATCH  /API/campaigns/{campaignID}                      - Edit a campaign.
+    DELETE /API/campaigns/{campaignID}                      - Delete a campaign.
+    GET    /API/campaigns/{campaignID}/members              - List campaign members.
+    POST   /API/campaigns/{campaignID}/invitations          - Invite a player.
+    DELETE /API/campaigns/{campaignID}/members/{memberID}   - Remove a player.
+    PUT    /API/campaigns/{campaignID}/characters/{id}      - Share a character with the campaign.
+    GET    /API/campaigns/{campaignID}/parties              - List campaign parties.
+    POST   /API/campaigns/{campaignID}/parties              - Create a party.
+    GET    /API/campaigns/{campaignID}/parties/{partyID}    - Get a party and its characters.
+    GET    /API/campaigns/{campaignID}/notes                - List campaign notes.
+    POST   /API/campaigns/{campaignID}/notes                - Create a campaign note.
+    GET    /API/campaigns/{campaignID}/resources            - Get campaign resources.
+    PUT    /API/campaigns/{campaignID}/resources            - Update campaign resources.
+    GET    /API/campaigns/{campaignID}/journal              - List campaign journal entries.
+    POST   /API/campaigns/{campaignID}/journal              - Create a campaign journal entry.
+    GET    /API/campaigns/{campaignID}/dm-tools             - Access campaign Dungeon Master tools.
+    DELETE /API/campaigns/{campaignID}/characters/{id}      - Remove a shared character from the campaign.
+
+ReferenceContentService
+    GET    /API/reference/{type}                            - List reference content (for example skills, proficiencies, or damage types).
+    POST   /API/reference/{type}                            - Create reference content.
+    GET    /API/reference/{type}/{id}                       - Get one reference content record.
+    PATCH  /API/reference/{type}/{id}                       - Edit a reference content record.
+    DELETE /API/reference/{type}/{id}                       - Delete a reference content record.
+
+ContentPermissionService
+    GET    /API/custom-content                              - List the current user's custom content.
+    POST   /API/custom-content                              - Create custom content.
+    PATCH  /API/custom-content/{contentID}                  - Edit custom content.
+    DELETE /API/custom-content/{contentID}                  - Delete custom content.
+    GET    /API/content/{contentID}/permissions             - View content access rules.
+    PUT    /API/content/{contentID}/permissions             - Set content access rules.
+    POST   /API/custom-content/{contentID}/shares           - Share custom content.
+    DELETE /API/custom-content/{contentID}/shares/{shareID} - Revoke a content share.

@@ -1,0 +1,27 @@
+ItemService:
+GET     /items - list all 
+GET     /items/{itemID} - see item details
+POST    /items/{itemID} - create item
+PATCH   /items/{itemID} - modify item
+DELETE  /items/{itemID} - delete item
+
+SpellService:
+GET     /spells - list all 
+GET     /spells/{spellsID} - see spell details
+POST    /spells/{spellsID} - create spell
+PATCH   /spells/{spellsID} - modify spell
+DELETE  /spells/{spellsID} - delete spell
+
+BackgroundService
+FeatureService
+FeatService
+SpeciesService
+ClassService
+LanguageService ? 
+
+CharacterService
+POST    /characters/creator - create a character
+GET     /characters - get all characters
+GET     /characters/{characterID} - get character details
+PATCH   /characters/{characterID} - modify character details
+DELETE  /characters/{characterID} - delete character details

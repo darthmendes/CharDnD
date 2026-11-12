@@ -1,0 +1,1336 @@
+/* CharacterDisplay.module.css - Consolidated Character Sheet Styles */
+
+/* ============ GLOBAL CONTAINER ============ */
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #fdf6e3; /* Parchment */
+  color: #333;
+  border: 1px solid #d6c38a;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* ============ HEADER ============ */
+.header {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.button {
+  padding: 8px 16px;
+  background-color: #5a3921; /* Dark brown */
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.button:hover:not(:disabled) {
+  background-color: #442c18; /* Darker brown */
+}
+
+/* ============ TITLE ============ */
+h1 {
+  text-align: center;
+  color: #5a3921;
+  margin-bottom: 20px;
+  font-size: 2rem;
+  font-weight: bold;
+  border-bottom: 2px solid #d6c38a;
+  padding-bottom: 10px;
+}
+
+h2 {
+  margin: 0;
+  color: #5a3921;
+  font-size: 1.3rem;
+  border-bottom: 2px solid #d6c38a;
+  padding-bottom: 6px;
+}
+
+h3 {
+  color: #5a3921;
+  font-size: 1.1rem;
+  margin: 16px 0 12px 0;
+  border-bottom: 2px solid #d6c38a;
+  padding-bottom: 8px;
+}
+
+h4 {
+  margin: 0 0 8px 0;
+  color: #5a3921;
+  font-size: 0.95rem;
+}
+
+/* ============ SECTION STYLING ============ */
+.section {
+  margin-bottom: 24px;
+  padding: 20px;
+  background-color: #fffef9; /* Lighter parchment */
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(90, 57, 33, 0.1);
+  border: 1px solid #d6c38a;
+}
+
+.sectionHeader {
+  margin-bottom: 16px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toggleIcon {
+  display: inline-block;
+  transition: transform 0.2s;
+  color: #5a3921;
+}
+
+.toggleIcon.collapsed {
+  transform: rotate(-90deg);
+}
+
+.collapseHint {
+  color: #7a684f;
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+.sectionContent {
+  max-height: 10000px;
+  overflow: visible;
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+  opacity: 1;
+}
+
+.sectionContent.collapsed {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+}
+
+/* ============ FORMS & INPUTS ============ */
+label {
+  display: block;
+  margin: 6px 0;
+  font-size: 14px;
+  color: #5a3921;
+  font-weight: 600;
+}
+
+input[type='number'],
+input[type='text'],
+input[type='email'],
+textarea,
+select {
+  padding: 8px 10px;
+  border: 1px solid #c9b47e;
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: #fffef9;
+  color: #333;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: #a88b5e;
+  box-shadow: 0 0 0 2px rgba(168, 139, 94, 0.2);
+}
+
+/* ============ BUTTONS ============ */
+.primary {
+  padding: 10px 20px;
+  background-color: #7a684f; /* Muted gold-brown */
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.primary:hover:not(:disabled) {
+  background-color: #65543f;
+}
+
+.primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.secondary {
+  padding: 10px 20px;
+  background-color: #6c757d; /* Gray */
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.secondary:hover:not(:disabled) {
+  background-color: #5a6268;
+}
+
+.secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.danger {
+  padding: 10px 20px;
+  background-color: #c0392b; /* Red */
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.danger:hover:not(:disabled) {
+  background-color: #a93226;
+}
+
+.danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.saveBtn {
+  padding: 10px 20px;
+  background-color: #5a3921;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.saveBtn:hover:not(:disabled) {
+  background-color: #442c18;
+}
+
+.saveBtn:disabled {
+  background-color: #b8a88f;
+  cursor: not-allowed;
+}
+
+.active {
+  background-color: #4a90e2 !important;
+  color: white;
+}
+
+/* ============ LEVEL & XP STYLING ============ */
+.levelXpGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 12px 0;
+  padding: 14px;
+  background-color: #f8f4e9;
+  border: 1px dashed #c9b47e;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.levelXpRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.levelXpLabel {
+  font-weight: bold;
+  color: #5a3921;
+  min-width: 60px;
+}
+
+.xpInput {
+  width: 100px;
+  padding: 6px 10px;
+  border: 1px solid #c9b47e;
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: #fffef9;
+}
+
+.levelButtons,
+.xpButtons {
+  display: flex;
+  gap: 6px;
+}
+
+.levelButton,
+.xpStepButton {
+  width: 40px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #e0d3b9;
+  border: 1px solid #c9b47e;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #5a3921;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.levelButton:hover,
+.xpStepButton:hover {
+  background-color: #d6c38a;
+  transform: translateY(-1px);
+}
+
+.levelButton:disabled,
+.xpStepButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: #e8e0c9;
+}
+
+.xpHint {
+  font-size: 0.85rem;
+  color: #5a3921;
+  margin-top: 6px;
+  padding: 6px 10px;
+  background-color: #f0e6d2;
+  border-left: 3px solid #d6c38a;
+  border-radius: 4px;
+  font-style: italic;
+}
+
+/* ============ STAT BOXES ============ */
+.statBox {
+  background-color: #f8f4e9;
+  border: 2px solid #d6c38a;
+  border-radius: 8px;
+  padding: 14px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.statBox strong {
+  display: block;
+  color: #5a3921;
+  font-weight: 700;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+}
+
+.statBox span {
+  display: block;
+  color: #27ae60;
+  font-size: 1.4rem;
+  font-weight: bold;
+}
+
+.statBox.clickable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.statBox.clickable:hover {
+  background-color: #fef8f0;
+  border-color: #4a90e2;
+  box-shadow: 0 4px 8px rgba(74, 144, 226, 0.2);
+  transform: translateY(-2px);
+}
+
+/* ============ HP SECTION ============ */
+.hpSection {
+  margin: 12px 0;
+  padding: 14px;
+  background-color: #f8f4e9;
+  border: 1px solid #d6c38a;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.hpRow {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.hpContainer {
+  flex: 2;
+  min-width: 250px;
+}
+
+.hpContainer strong {
+  display: block;
+  margin-bottom: 10px;
+  color: #5a3921;
+  font-weight: 700;
+}
+
+.totalHpContainer {
+  flex: 1;
+  min-width: 140px;
+  background-color: #fffef9;
+  border: 2px solid #d6c38a;
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+}
+
+.totalHpContainer strong {
+  display: block;
+  color: #5a3921;
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: 8px;
+}
+
+.hpDisplay {
+  margin: 12px 0;
+}
+
+.hpMainDisplay {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #5a3921;
+  background-color: #f0e6d2;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 2px solid #d6c38a;
+}
+
+.hpCurrent {
+  color: #c0392b;
+  font-size: 1.5rem;
+}
+
+.hpSeparator {
+  color: #a88b5e;
+}
+
+.hpMax {
+  color: #27ae60;
+}
+
+.hpTemp {
+  margin-left: 8px;
+  color: #e67e22;
+  font-size: 0.8rem;
+  background-color: rgba(230, 126, 34, 0.1);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.totalHpDisplay {
+  background-color: #f0e6d2;
+  border: 2px solid #d6c38a;
+  border-radius: 6px;
+  padding: 10px;
+  text-align: center;
+}
+
+.totalHpValue {
+  display: block;
+  color: #c0392b;
+  font-size: 1.3rem;
+  font-weight: bold;
+}
+
+.hpButton {
+  padding: 10px 16px;
+  background-color: #e8d9c3;
+  border: 2px solid #d6c38a;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #5a3921;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.hpButton:hover:not(:disabled) {
+  background-color: #d6c38a;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.hpButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.hpControls {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+/* HP Modal */
+.hpModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.hpModalContent {
+  background-color: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  min-width: 300px;
+  border: 2px solid #d6c38a;
+}
+
+.hpModalContent label {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #5a3921;
+}
+
+.hpModalInput {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 16px;
+  border: 2px solid #d6c38a;
+  border-radius: 6px;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+.hpModalButtons {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.confirmBtn {
+  padding: 10px 20px;
+  background-color: #27ae60;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.confirmBtn:hover {
+  background-color: #229954;
+}
+
+.cancelBtn {
+  padding: 10px 20px;
+  background-color: #e8d9c3;
+  color: #5a3921;
+  border: 1px solid #d6c38a;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.cancelBtn:hover {
+  background-color: #d6c38a;
+}
+
+/* ============ COMBAT STATS ============ */
+.combatStats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 20px 0;
+}
+
+@media (max-width: 768px) {
+  .combatStats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ============ ATTACKS SECTION ============ */
+.attacksSection {
+  margin-top: 24px;
+}
+
+.attackRowHeader {
+  background-color: #e8d5c4;
+  border: 2px solid #8b7355;
+  border-radius: 8px 8px 0 0;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-weight: bold;
+  color: #5a3921;
+  margin-bottom: -2px;
+  font-size: 0.95rem;
+}
+
+.attacksList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.attackRow {
+  background-color: #f8f4e9;
+  border: 2px solid #d6c38a;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.attackRow:hover {
+  background-color: #f0e6d2;
+  transform: translateX(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.attackRowName {
+  flex: 2;
+  font-weight: bold;
+  color: #5a3921;
+  font-size: 1rem;
+  min-width: 120px;
+}
+
+.attackRowBonus {
+  flex: 1;
+  text-align: center;
+  color: #c0392b;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.attackRowDamage {
+  flex: 1;
+  text-align: center;
+  color: #e67e22;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.attackRowType {
+  flex: 1;
+  text-align: center;
+  color: #7a684f;
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+.attackRowSpecial {
+  flex: 1;
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+.specialAvailable {
+  color: #27ae60;
+  font-weight: 600;
+}
+
+.specialLocked {
+  color: #c0392b;
+  font-weight: 600;
+}
+
+.noAttacks {
+  color: #7a684f;
+  font-size: 0.95rem;
+  font-style: italic;
+  padding: 12px;
+  background-color: #f0e6d2;
+  border-radius: 6px;
+  text-align: center;
+}
+
+/* Attack Modal */
+.attackModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.attackModalContent {
+  background-color: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  max-width: 500px;
+  width: 90%;
+  border: 3px solid #c0392b;
+  position: relative;
+}
+
+.attackModalClose {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  color: #5a3921;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.attackModalClose:hover {
+  color: #c0392b;
+}
+
+.attackModalTitle {
+  color: #5a3921;
+  margin: 0 0 20px 0;
+  font-size: 1.3rem;
+  border-bottom: 2px solid #d6c38a;
+  padding-bottom: 10px;
+}
+
+.attackModalData {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.attackModalBox {
+  background-color: #f8f4e9;
+  border: 2px solid #d6c38a;
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+}
+
+.attackModalBox h4 {
+  margin: 0 0 8px 0;
+  color: #5a3921;
+  font-size: 0.95rem;
+}
+
+.attackModalValue {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #c0392b;
+  margin-bottom: 8px;
+}
+
+.diceLabel {
+  color: #666;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.damageTypeLabel {
+  color: #e67e22;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin: 4px 0 0 0;
+}
+
+.attunementDisplay {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 12px 0;
+  padding: 10px;
+  background-color: #f0e6d2;
+  border-radius: 6px;
+}
+
+.attunementFull {
+  color: #c0392b;
+  font-weight: bold;
+}
+
+.attunementAvailable {
+  color: #27ae60;
+  font-weight: bold;
+}
+
+.attunementWarning {
+  color: #c0392b;
+  font-size: 0.9rem;
+}
+
+/* ============ INVENTORY ============ */
+.inventoryList {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.inventoryItem {
+  background-color: #f8f4e9;
+  border: 2px solid #d6c38a;
+  border-radius: 8px;
+  padding: 12px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.inventoryItem:hover {
+  background-color: #f0e6d2;
+  transform: translateX(4px);
+}
+
+.equippedItem {
+  background-color: rgba(100, 255, 100, 0.1) !important;
+}
+
+.attunedItem {
+  background-color: rgba(155, 89, 182, 0.1) !important;
+}
+
+.selectedForDelete {
+  background-color: rgba(192, 57, 43, 0.15) !important;
+  border: 2px solid #c0392b !important;
+}
+
+.inventoryItemContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.inventoryItemHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background-color: #f8f4e9;
+  border-radius: 6px;
+}
+
+.inventoryItemName {
+  font-weight: bold;
+  color: #5a3921;
+  font-size: 1rem;
+  flex: 1;
+}
+
+.equippedBadge {
+  background-color: #27ae60;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: 8px;
+}
+
+.attunedBadge {
+  background-color: #9b59b6;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.attunementBadge {
+  background-color: #e67e22;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.inventoryItemQuickInfo {
+  display: flex;
+  gap: 12px;
+  margin-left: auto;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.itemType {
+  background-color: #e0d3b9;
+  color: #5a3921;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.equipButton,
+.unequipButton,
+.attuneButton,
+.unattuneButton {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.equipButton {
+  background-color: #27ae60;
+  color: white;
+}
+
+.equipButton:hover {
+  background-color: #229954;
+}
+
+.unequipButton {
+  background-color: #e67e22;
+  color: white;
+}
+
+.unequipButton:hover {
+  background-color: #d35400;
+}
+
+.attuneButton {
+  background-color: #3498db;
+  color: white;
+}
+
+.attuneButton:hover:not(:disabled) {
+  background-color: #2980b9;
+}
+
+.attuneButtonDisabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.unattuneButton {
+  background-color: #9b59b6;
+  color: white;
+}
+
+.unattuneButton:hover {
+  background-color: #8e44ad;
+}
+
+.chargesIndicator {
+  background-color: #e67e22;
+  color: white;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.lockedBadge {
+  color: #c0392b;
+  font-weight: bold;
+}
+
+.emptyInventory {
+  color: #7a684f;
+  font-size: 0.95rem;
+  font-style: italic;
+  padding: 16px;
+  background-color: #f0e6d2;
+  border-radius: 6px;
+  text-align: center;
+  margin-top: 12px;
+}
+
+/* ============ TRAITS ============ */
+.traitsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.traitCard {
+  background-color: #f8f4e9;
+  border: 2px solid #d6c38a;
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.traitCard:hover {
+  background-color: #f0e6d2;
+  transform: translateX(4px);
+}
+
+.traitCardExpanded {
+  background-color: #fffef9;
+  border-color: #a88b5e;
+}
+
+.traitCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.traitName {
+  font-weight: bold;
+  color: #5a3921;
+  flex: 1;
+}
+
+.traitSource {
+  background-color: #e0d3b9;
+  color: #5a3921;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.traitExpandIcon {
+  color: #7a684f;
+  font-size: 0.9rem;
+}
+
+.traitDescription {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #d6c38a;
+  color: #333;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+/* ============ SPELLCASTING ============ */
+.spellcastingStats {
+  display: grid;
+  gridTemplateColumns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background-color: #f0f4f8;
+  border-radius: 8px;
+}
+
+.spellSlots {
+  margin-bottom: 1rem;
+}
+
+/* ============ CLASS RESOURCES ============ */
+.resourcesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.resourceCard {
+  background-color: #f8f4e9;
+  border: 2px solid #d6c38a;
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+}
+
+.resourceHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.resourceHeader strong {
+  font-size: 0.95rem;
+  color: #5a3921;
+}
+
+.rechargeBadge {
+  background-color: #3498db;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.resourceCount {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #c0392b;
+  margin-bottom: 12px;
+}
+
+.resourceControls {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+
+.resourceControls button {
+  width: 32px;
+  height: 32px;
+  border: 2px solid #d6c38a;
+  background-color: #e0d3b9;
+  color: #5a3921;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.resourceControls button:hover:not(:disabled) {
+  background-color: #d6c38a;
+}
+
+.resourceControls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.restButtons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.restBtnShort,
+.restBtnLong {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.restBtnShort {
+  background-color: #f39c12;
+  color: white;
+}
+
+.restBtnShort:hover {
+  background-color: #e67e22;
+}
+
+.restBtnLong {
+  background-color: #2980b9;
+  color: white;
+}
+
+.restBtnLong:hover {
+  background-color: #3498db;
+}
+
+.emptyStateMessage {
+  color: #7a684f;
+  font-size: 0.95rem;
+  font-style: italic;
+  padding: 16px;
+  background-color: #f0e6d2;
+  border-radius: 6px;
+  text-align: center;
+}
+
+/* ============ PROFICIENCY TABS ============ */
+.proficiencyTabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.tabButton {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  background-color: #e0e0e0;
+  color: #333;
+  font-weight: normal;
+  transition: all 0.2s;
+}
+
+.tabButton:hover {
+  background-color: #d0d0d0;
+}
+
+.activeTab {
+  background-color: #4a90e2 !important;
+  color: white !important;
+  font-weight: bold !important;
+}
+
+.skillCard {
+  padding: 0.25rem;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.skillCardWithBonus {
+  background-color: #e8f5e9 !important;
+  border: 1px solid #4caf50 !important;
+}
+
+.skillCardWithAdvantage {
+  background-color: #fff3e0 !important;
+  border: 2px solid #ff9800 !important;
+}
+
+.skillCardFromItem {
+  background-color: #e3f2fd !important;
+  border: 1px solid #2196f3 !important;
+}
+
+.itemBonusBadge {
+  font-size: 0.75rem;
+  color: #27ae60;
+  font-weight: 600;
+}
+
+.itemSourceBadge {
+  font-size: 0.75rem;
+  color: #2196f3;
+  font-weight: 600;
+}
+
+.advantageBadge {
+  font-size: 0.75rem;
+  color: #ff9800;
+  font-weight: 600;
+  background-color: rgba(255, 152, 0, 0.1);
+  padding: 2px 4px;
+  border-radius: 2px;
+}
+
+.advantageCard {
+  cursor: pointer;
+  padding: 0.5rem;
+  background-color: #fff3e0;
+  border: 2px solid #ff9800;
+  border-radius: 4px;
+  flex: 1 1 200px;
+  max-width: 300px;
+}
+
+.advantageCardExpanded {
+  border-color: #ff6f00;
+  background-color: #ffe0b2;
+}
+
+/* ============ STATUS & MESSAGES ============ */
+.loading {
+  text-align: center;
+  font-size: 18px;
+  color: #7a684f;
+  margin: 40px 0;
+}
+
+.error {
+  text-align: center;
+  color: #c0392b;
+  font-weight: bold;
+  margin: 20px;
+  background-color: #f9eaea;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #e7bcbc;
+}
+
+/* ============ RESPONSIVE DESIGN ============ */
+@media (max-width: 768px) {
+  .container {
+    padding: 12px;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  .header {
+    flex-direction: column;
+  }
+
+  .header button {
+    width: 100%;
+  }
+
+  .levelXpRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .xpInput {
+    width: 100%;
+  }
+
+  .inventoryItem {
+    flex-direction: column;
+  }
+
+  .attackRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .attackRowBonus,
+  .attackRowDamage,
+  .attackRowType,
+  .attackRowSpecial {
+    width: 100%;
+  }
+}
