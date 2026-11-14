@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import styles from '../CharacterCreator.module.css';
 import { fetchBackgrounds, fetchLanguages } from '../../../services/api';
+import type { Language } from '../../../types/api';
 
 interface Background {
   id: number;
@@ -12,12 +13,6 @@ interface Background {
   tool_proficiencies: string[];
   languages: number;
   starting_gold_bonus: number;
-}
-
-interface Language {
-  id: number;
-  name: string;
-  desc: string;
 }
 
 interface Props {
@@ -42,7 +37,7 @@ const Step2Background: React.FC<Props> = ({ character, updateField }) => {
     });
 
     // Fetch languages
-    fetchLanguages().then((languages: Language[]) => {
+    fetchLanguages().then((languages) => {
       setLanguageList(languages);
       setLoadingLanguages(false);
     }).catch(err => {

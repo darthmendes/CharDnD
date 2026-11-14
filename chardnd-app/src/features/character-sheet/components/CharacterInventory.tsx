@@ -44,7 +44,6 @@ interface CharacterInventoryProps {
 
 const CharacterInventory: React.FC<CharacterInventoryProps> = ({
   character,
-  characterId,
   isItemModalOpen,
   onItemModalOpen,
   onItemModalClose,

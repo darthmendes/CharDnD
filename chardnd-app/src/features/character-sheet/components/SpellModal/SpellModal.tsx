@@ -19,10 +19,8 @@ const SpellCastModal: React.FC<SpellCastModalProps> = ({
   isOpen,
   onClose,
   spell,
-  character,
   spellSaveDC,
   spellAttackBonus,
-  spellcastingAbility,
   spellSlots,
   onCast
 }) => {

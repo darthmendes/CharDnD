@@ -178,7 +178,18 @@ const MonsterForm: React.FC = () => {
         ? crMap[formData.challenge_rating]
         : parseFloat(formData.challenge_rating) || 0;
 
-      const payload = { ...formData, challenge_rating: finalCr };
+      const payload = {
+        ...formData,
+        challenge_rating: finalCr,
+        abilities: {
+          strength: formData.strength,
+          dexterity: formData.dexterity,
+          constitution: formData.constitution,
+          intelligence: formData.intelligence,
+          wisdom: formData.wisdom,
+          charisma: formData.charisma,
+        },
+      };
       const newMonster = await createMonster(payload);
 
       if (returnTo) {

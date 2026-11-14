@@ -3,30 +3,12 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import styles from "../character-creator/CharacterCreator.module.css"
 import { fetchMonster } from '../../services/api';
-
-interface MonsterData {
-  id: number;
-  name: string;
-  size: string;
-  type: string;
-  alignment: string;
-  armor_class: number;
-  hit_points: number;
-  speed: string;
-  strength: number;
-  dexterity: number;
-  constitution: number;
-  intelligence: number;
-  wisdom: number;
-  charisma: number;
-  challenge_rating: string;
-  description: string;
-}
+import type { Monster } from '../../types/api';
 
 const MonsterDisplay: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [monster, setMonster] = useState<MonsterData | null>(null);
+  const [monster, setMonster] = useState<Monster | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -82,7 +64,7 @@ const MonsterDisplay: React.FC = () => {
           {(['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'] as const).map(stat => (
             <div key={stat}>
               <div style={{ fontWeight: 'bold', fontSize: '0.9rem', textTransform: 'uppercase' }}>{stat.slice(0,3)}</div>
-              <div>{monster[stat]}</div>
+              <div>{monster.abilities?.[stat] ?? '—'}</div>
             </div>
           ))}
         </div>

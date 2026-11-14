@@ -1,5 +1,5 @@
 import React from 'react';
-import { useClassResources, type ClassResource } from '../hooks';
+import { useClassResources } from '../hooks';
 import { Character } from '../../../types/Character';
 import styles from '../CharacterDisplay.module.css';
 

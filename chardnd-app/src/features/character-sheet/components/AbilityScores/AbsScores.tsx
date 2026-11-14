@@ -1,18 +1,24 @@
-import React from 'react';
 import styles from './AbsScores.module.css';
 
-const AbsScores = ({ abilityScores, onScoreChange }) => {
-  const abilityOrder = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
+type Ability = 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha';
+
+interface AbsScoresProps {
+  abilityScores: Record<string, number> | null;
+  onScoreChange: (scores: Record<string, number>) => void;
+}
+
+const AbsScores = ({ abilityScores, onScoreChange }: AbsScoresProps) => {
+  const abilityOrder: Ability[] = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
 
   // [NOTE] Ensure valid scores with defaults
-  const validScores = abilityOrder.reduce((acc, ability) => {
+  const validScores = abilityOrder.reduce<Record<Ability, number>>((acc, ability) => {
     const val = abilityScores?.[ability];
-    const score = parseInt(val) || 10;
+    const score = Number(val) || 10;
     acc[ability] = Math.max(1, Math.min(20, score));
     return acc;
-  }, {});
+  }, { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 });
 
-  const handleChange = (ability, delta) => {
+  const handleChange = (ability: Ability, delta: number) => {
     const current = validScores[ability];
     const newValue = Math.max(1, Math.min(20, current + delta));
     const updated = { ...validScores, [ability]: newValue };

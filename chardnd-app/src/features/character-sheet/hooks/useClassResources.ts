@@ -1,27 +1,18 @@
 import { useState, useCallback, useEffect } from 'react';
 import { updateCharacter } from '../../../services/api';
-import type { Character } from '../../../types/Character';
-
-const DEFAULT_ATTUNEMENT_SLOTS = 4;
-
-export type ClassResource = {
-  id: string;
-  name: string;
-  current: number;
-  max: number;
-  recharge: 'short' | 'long' | 'both';
-  icon?: string;
-  customRecovery?: Array<{ restType: 'short' | 'long' | 'both'; amount: number }>;
-};
+import type { Character, ClassResource } from '../../../types/Character';
 
 const deriveAndEnhanceClassResources = (character: Character): ClassResource[] => {
   if (!character.classes || character.classes.length === 0) return [];
   const resources: ClassResource[] = [];
 
   for (const cls of character.classes) {
-    const name = cls.className.trim().toLowerCase();
+    const className = typeof cls?.className === 'string' ? cls.className.trim() : '';
+    if (!className) continue;
+
+    const name = className.toLowerCase();
     const lvl = cls.level;
-    const prefix = cls.className.replace(/\s+/g, '');
+    const prefix = className.replace(/\s+/g, '');
 
     switch (name) {
       case 'druid':

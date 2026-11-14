@@ -23,7 +23,6 @@ const StatModifiersModal: React.FC<StatModifiersModalProps> = ({
   statName,
   currentValue,
   modifiers,
-  baseValue = 0,
 }) => {
   if (!isOpen) return null;
 

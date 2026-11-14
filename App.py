@@ -73,6 +73,23 @@ def get_character(id):
     return jsonify(char.to_dict()), HTTPStatus.OK
 
 
+@api_v1.route('/characters/<int:id>', methods=['PATCH'])
+def update_character(id):
+    """Update a character by ID."""
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "Request body must be valid JSON"}), HTTPStatus.BAD_REQUEST
+
+    result = Character.update(id, **data)
+    if not result["success"]:
+        return jsonify({"error": result["error"]}), HTTPStatus.BAD_REQUEST
+
+    char = Character.get_byID(id)
+    if not char:
+        return jsonify({"error": "Character not found"}), HTTPStatus.NOT_FOUND
+    return jsonify(char.to_dict()), HTTPStatus.OK
+
+
 @api_v1.route('/characters', methods=['GET'])
 def list_characters():
     """Retrieve a list of all characters."""
@@ -234,6 +251,18 @@ def delete_species(id):
     return jsonify({"message": "Species deleted"}), HTTPStatus.OK
 
 
+@api_v1.route('/species/<int:id>', methods=['PATCH'])
+def update_species(id):
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "Request body must be valid JSON"}), HTTPStatus.BAD_REQUEST
+
+    result = Species.update(id, **data)
+    if not result["success"]:
+        return jsonify({"error": result["error"]}), HTTPStatus.BAD_REQUEST
+    return jsonify(result["data"]), HTTPStatus.OK
+
+
 @api_v1.route('/species/<int:id>', methods=['GET'])
 def get_species(id):
     result = Species.get_byID(id)
@@ -329,6 +358,18 @@ def delete_class(id):
     return jsonify({"message": "Class deleted"}), HTTPStatus.OK
 
 
+@api_v1.route('/classes/<int:id>', methods=['PATCH'])
+def update_class(id):
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "Request body must be valid JSON"}), HTTPStatus.BAD_REQUEST
+
+    result = DnDClass.update(id, **data)
+    if not result["success"]:
+        return jsonify({"error": result["error"]}), HTTPStatus.BAD_REQUEST
+    return jsonify(result["data"]), HTTPStatus.OK
+
+
 @api_v1.route('/classes/<int:id>', methods=['GET'])
 def get_class(id):
     dnd_class = DnDClass.get_byID(id)
@@ -359,6 +400,19 @@ def take_rest(char_id):
 # Background Routes
 ################################################################
 
+@api_v1.route('/backgrounds', methods=['POST'])
+def create_background():
+    from Backend.services.BackgroundService import BackgroundService
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "Request body must be valid JSON"}), HTTPStatus.BAD_REQUEST
+
+    result = BackgroundService.create(data)
+    if not result["success"]:
+        return jsonify({"error": result["error"]}), HTTPStatus.BAD_REQUEST
+    return jsonify(result["data"]), HTTPStatus.CREATED
+
+
 @api_v1.route('/backgrounds', methods=['GET'])
 def list_backgrounds():
     from Backend.services.BackgroundService import BackgroundService
@@ -375,6 +429,28 @@ def get_background(bgID):
     if result["success"]:
         return jsonify(result["data"]), 200
     return jsonify({"error": result["error"]}), 404
+
+
+@api_v1.route('/backgrounds/<int:bgID>', methods=['PATCH'])
+def update_background(bgID):
+    from Backend.services.BackgroundService import BackgroundService
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "Request body must be valid JSON"}), HTTPStatus.BAD_REQUEST
+
+    result = BackgroundService.update(bgID, **data)
+    if not result["success"]:
+        return jsonify({"error": result["error"]}), HTTPStatus.BAD_REQUEST
+    return jsonify(result["data"]), HTTPStatus.OK
+
+
+@api_v1.route('/backgrounds/<int:bgID>', methods=['DELETE'])
+def delete_background(bgID):
+    from Backend.services.BackgroundService import BackgroundService
+    result = BackgroundService.delete(bgID)
+    if not result["success"]:
+        return jsonify({"error": result["error"]}), HTTPStatus.NOT_FOUND
+    return jsonify({"message": "Background deleted"}), HTTPStatus.OK
 
 
 ################################################################
@@ -401,6 +477,19 @@ def get_item(id):
     if not item:
         return jsonify({"error": "Item not found"}), HTTPStatus.NOT_FOUND
     return jsonify(item.to_dict()), HTTPStatus.OK
+
+
+@api_v1.route('/items/<int:id>', methods=['PATCH'])
+def update_item(id):
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "Request body must be valid JSON"}), HTTPStatus.BAD_REQUEST
+
+    result = Item.update(id, **data)
+    if not result["success"]:
+        return jsonify({"error": result["error"]}), HTTPStatus.BAD_REQUEST
+    return jsonify(result["data"]), HTTPStatus.OK
+
 
 @api_v1.route('/items', methods=['GET'])
 def list_items():
@@ -580,27 +669,27 @@ def get_class_spells(class_name):
 ################################################################
 # Monsters
 ################################################################
-@api_v1.route('/monsters', methods=['GET'])
-def list_monsters():
-    return jsonify({"error": "Monsters are not represented in the current data model."}), HTTPStatus.NOT_IMPLEMENTED
+# @api_v1.route('/monsters', methods=['GET'])
+# def list_monsters():
+#     return jsonify({"error": "Monsters are not represented in the current data model."}), HTTPStatus.NOT_IMPLEMENTED
 
-@api_v1.route('/monsters', methods=['POST'])
-def create_monster():
-    return jsonify({"error": "Monsters are not represented in the current data model."}), HTTPStatus.NOT_IMPLEMENTED
+# @api_v1.route('/monsters', methods=['POST'])
+# def create_monster():
+#     return jsonify({"error": "Monsters are not represented in the current data model."}), HTTPStatus.NOT_IMPLEMENTED
 
-@api_v1.route('/monsters/<int:monster_id>', methods=['GET'])
-def get_monster(monster_id):
-    return jsonify({"error": "Monsters are not represented in the current data model."}), HTTPStatus.NOT_IMPLEMENTED
+# @api_v1.route('/monsters/<int:monster_id>', methods=['GET'])
+# def get_monster(monster_id):
+#     return jsonify({"error": "Monsters are not represented in the current data model."}), HTTPStatus.NOT_IMPLEMENTED
 
-@api_v1.route('/monsters/<int:monster_id>', methods=['PUT', 'PATCH'])
-def update_monster(monster_id):
-    return jsonify({"error": "Monsters are not represented in the current data model."}), HTTPStatus.NOT_IMPLEMENTED
+# @api_v1.route('/monsters/<int:monster_id>', methods=['PUT', 'PATCH'])
+# def update_monster(monster_id):
+#     return jsonify({"error": "Monsters are not represented in the current data model."}), HTTPStatus.NOT_IMPLEMENTED
 
-@api_v1.route('/monsters/<int:monster_id>', methods=['DELETE'])
-def delete_monster(monster_id):
-    result = Monster.delete(monster_id)
-    status = 200 if result["success"] else 404
-    return jsonify(result), status
+# @api_v1.route('/monsters/<int:monster_id>', methods=['DELETE'])
+# def delete_monster(monster_id):
+#     result = Monster.delete(monster_id)
+#     status = 200 if result["success"] else 404
+#     return jsonify(result), status
 
 ################################################################
 # Misc

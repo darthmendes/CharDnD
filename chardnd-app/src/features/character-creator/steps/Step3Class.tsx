@@ -93,10 +93,6 @@ const Step3Class: React.FC<Props> = ({ character, updateClasses, dndClasses }) =
     updateClassEntry(index, 'level', Math.min(Math.max(newLevel, 1), 20));
   };
 
-  const handleSubclassChange = (index: number, e: React.ChangeEvent<HTMLSelectElement>) => {
-    updateClassEntry(index, 'subclass', e.target.value);
-  };
-
   // [NOTE] Handle skill toggle and auto-preview first class
   const handleSkillToggle = (skill: string, isChecked: boolean) => {
     const currentFirstClass = character.classes?.[0] || {};
@@ -155,11 +151,7 @@ const Step3Class: React.FC<Props> = ({ character, updateClasses, dndClasses }) =
   const selectedClassData = previewClass && previewClass.className 
     ? classList.find(c => c.name === previewClass.className) 
     : null;
-  const selectedSubclass = selectedClassData?.subclasses?.find(
-    (sc: any) => sc.name === previewClass?.subclass
-  );
   const previewLevel = previewClass?.level || 1;
-  const subclassAvailableLevel = selectedClassData?.subclass_level || 3;
 
   // Get FIRST class data for skill selection (independent of preview)
   const firstClass = characterClass[0];

@@ -22,7 +22,7 @@ const CharacterCombat: React.FC<CharacterCombatProps> = ({
   onToggle,
   onAttackClick,
 }) => {
-  const { hpCurrent, setHpCurrent, hpMax, setHpMax, hpTmp, setHpTmp, hpModalType, setHpModalType, hpModalInput, setHpModalInput, saving, heal, takeDamage, addTempHp, handleHpModalSubmit, saveHp } = useHitPoints(
+  const { hpCurrent, hpMax, hpTmp, hpModalType, setHpModalType, hpModalInput, setHpModalInput, saving, handleHpModalSubmit, saveHp } = useHitPoints(
     character?.id?.toString(),
     character?.hpCurrent || 0,
     character?.hpMax || 10,

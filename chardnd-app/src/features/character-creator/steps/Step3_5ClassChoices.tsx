@@ -8,8 +8,7 @@ import {
   CANTRIP_CASTERS,
   FIGHTING_STYLE_CLASSES,
   CANTRIP_COUNTS,
-  SUBCLASS_LABELS,
-  ABILITIES
+  SUBCLASS_LABELS
 } from '../../../constants';
 
 interface ClassChoice {
@@ -91,6 +90,8 @@ const Step3_5ClassChoices: React.FC<Props> = ({ character, updateField, dndClass
   };
 
   const classChoices = getClassChoices();
+  const selectedSubclass = character.classChoices?.subclass;
+  const selectedCantrips = character.classChoices?.cantrips ?? [];
 
   useEffect(() => {
     const loadData = async () => {
@@ -206,9 +207,9 @@ const Step3_5ClassChoices: React.FC<Props> = ({ character, updateField, dndClass
               <option key={sub.id} value={sub.name}>{sub.name}</option>
             ))}
           </select>
-          {character.classChoices?.subclass && classData.subclasses && (
+          {selectedSubclass && classData.subclasses && (
             <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem', fontStyle: 'italic' }}>
-              {classData.subclasses.find((s: Subclass) => s.name === character.classChoices.subclass)?.subclass_flavor}
+              {classData.subclasses.find((s: Subclass) => s.name === selectedSubclass)?.subclass_flavor}
             </p>
           )}
         </div>
@@ -244,7 +245,7 @@ const Step3_5ClassChoices: React.FC<Props> = ({ character, updateField, dndClass
       <div style={{ padding: '1rem', backgroundColor: '#f0e6d2', border: '1px solid #d9c8a9', borderRadius: '8px', marginTop: '1.5rem' }}>
         <strong style={{ display: 'block', marginBottom: '0.5rem', color: '#5a3921' }}>Class Choices Summary</strong>
         <ul style={{ margin: 0, paddingLeft: '1.2rem', fontSize: '0.9rem' }}>
-          {character.classChoices?.cantrips?.length > 0 && <li>Cantrips: {character.classChoices.cantrips.join(', ')}</li>}
+          {selectedCantrips.length > 0 && <li>Cantrips: {selectedCantrips.join(', ')}</li>}
           {character.classChoices?.fightingStyle && <li>Fighting Style: {character.classChoices.fightingStyle}</li>}
           {character.classChoices?.subclass && <li>Subclass/Domain: {character.classChoices.subclass}</li>}
           {availableASIs > 0 && (

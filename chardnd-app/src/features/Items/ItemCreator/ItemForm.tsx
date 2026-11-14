@@ -3,6 +3,7 @@ import React, { useState, useEffect, KeyboardEvent, ChangeEvent } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import styles from '../../character-creator/CharacterCreator.module.css';
 import { createItem, fetchFeatures } from '../../../services/api';
+import type { CreateItemRequest } from '../../../types/api';
 
 // [NOTE] D&D 5e Constants
 const VALID_ITEM_TYPES = ['Armor', 'Potion', 'Ring', 'Rod', 'Scroll', 'Staff', 'Tool', 'Wand', 'Weapon', 'Wondrous Item'] as const;
@@ -117,7 +118,7 @@ const ItemForm: React.FC = () => {
   };
 
   // [NOTE] Tag Input Handlers
-  const handleTagKeyDown = (type: 'properties' | 'abilities', e: KeyboardEvent) => {
+  const handleTagKeyDown = (type: 'properties', e: KeyboardEvent) => {
     if (e.key === 'Enter' && tagInput[type].trim()) {
       e.preventDefault();
       const val = tagInput[type].trim();
@@ -129,7 +130,7 @@ const ItemForm: React.FC = () => {
     }
   };
 
-  const removeTag = (type: 'properties' | 'abilities', index: number) => {
+  const removeTag = (type: 'properties', index: number) => {
     setFormData(prev => ({ ...prev, [type]: prev[type].filter((_, i) => i !== index) }));
   };
 
@@ -205,7 +206,20 @@ const ItemForm: React.FC = () => {
     }
 
     // Prepare payload for API
-    const payload: Record<string, any> = { ...formData };
+    const payload: CreateItemRequest = {
+      name: formData.name,
+      desc: formData.desc,
+      weight: formData.weight,
+      cost: formData.cost,
+      item_type: formData.item_type,
+      item_category: formData.item_category,
+      rarity: formData.rarity,
+      properties: formData.properties,
+      special_abilities: formData.special_abilities,
+      max_charges: formData.max_charges === '' ? undefined : formData.max_charges,
+      charge_recharge: formData.charge_recharge || undefined,
+      on_hit_effect: formData.on_hit_effect || undefined,
+    };
 
     // Serialize damage entries into property_data JSON
     if (formData.item_type === 'Weapon' && formData.damage_entries.length > 0) {
@@ -224,22 +238,6 @@ const ItemForm: React.FC = () => {
       payload.property_data = { properties: formData.property_data.map(({ id, ...rest }) => rest) };
     }
     
-    // Remove temporary UI fields
-    delete payload.damage_entries;
-    delete payload.property_data; // Wait, we already set it above. Let's fix structure:
-    // Actually, let's rebuild cleanly:
-    delete payload.damage_entries;
-    delete payload.properties; // Moved into property_data
-    
-    // Clean up optional/empty fields
-    if (formData.max_charges === '') delete payload.max_charges;
-    if (!formData.charge_recharge.trim()) delete payload.charge_recharge;
-    if (!formData.on_hit_effect.trim()) delete payload.on_hit_effect;
-    if (formData.item_type !== 'Weapon') {
-      delete payload.damage_dice;
-      delete payload.damage_type;
-    }
-
     try {
       setLoading(true);
       setError(null);

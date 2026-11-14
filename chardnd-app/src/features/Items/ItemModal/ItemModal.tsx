@@ -236,7 +236,7 @@ const ItemModal: React.FC<ItemModalProps> = ({
                       <div>
                         <strong>Special Abilities:</strong>
                         <ul>
-                          {selectedItem.specialAbilities.map((ability, i) => (
+                          {selectedItem.specialAbilities.map((ability: string, i: number) => (
                             <li key={i}>{ability}</li>
                           ))}
                         </ul>

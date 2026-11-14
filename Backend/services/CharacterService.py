@@ -71,8 +71,8 @@ class CharacterService(BaseModelService):
                     character_class = CharacterClass(
                         characterID=new_char.id,
                         classID=dnd_class_obj.id,
-                        level=cls_data['level'],
-                        subclass=cls_data.get('subclass', '')
+                        classLevel=cls_data['level'],
+                        subclassID=None,
                     )
                     session.add(character_class)
             else:

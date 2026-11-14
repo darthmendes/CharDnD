@@ -20,7 +20,6 @@ import type {
   CharacterSpell,
   PrepareLimit,
   CreateCharacterRequest,
-  UpdateCharacterRequest,
   CreateItemRequest,
   CreateMonsterRequest,
   RestRequest,
@@ -46,6 +45,15 @@ const jsonHeaders = { 'Content-Type': 'application/json' };
 
 export const fetchSpecies = async (): Promise<Species[]> => {
   const response = await fetch(`${API_BASE_URL}/species`);
+  return handleResponse(response);
+};
+
+export const updateSpecies = async (id: number, data: Partial<Species>): Promise<Species> => {
+  const response = await fetch(`${API_BASE_URL}/species/${id}`, {
+    method: 'PATCH',
+    headers: jsonHeaders,
+    body: JSON.stringify(data),
+  });
   return handleResponse(response);
 };
 
@@ -119,9 +127,9 @@ export const fetchAllCharacters = async (): Promise<CharacterListItem[]> => {
   return handleResponse(response);
 };
 
-export const updateCharacter = async (
+export const updateCharacter = async <T extends object>(
   id: number,
-  data: UpdateCharacterRequest
+  data: T
 ): Promise<Character> => {
   const response = await fetch(`${API_BASE_URL}/characters/${id}`, {
     method: 'PATCH',

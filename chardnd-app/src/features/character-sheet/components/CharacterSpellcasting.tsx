@@ -159,7 +159,7 @@ const CharacterSpellcasting: React.FC<CharacterSpellcastingProps> = ({
             character={character}
             prepareLimit={spellPrepareLimit}
             preparedCount={spellPreparedCount}
-            isPreparedUnlimited={spellPrepareUnlimited}
+            isPrepareUnlimited={spellPrepareUnlimited}
             onTogglePrepare={onTogglePreparedSpell}
             onCastSpell={onExpendSpellSlot}
           />

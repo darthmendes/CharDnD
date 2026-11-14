@@ -109,6 +109,7 @@ export interface Monster {
     skills?: Record<string, number>;
     challenge_rating?: number;
     xp?: number;
+    description?: string;
     actions?: MonsterAction[];
     special_abilities?: SpecialAbility[];
 }
@@ -214,6 +215,15 @@ export interface Character {
     passivePerception?: number;
     traits?: CharacterTrait[];
     items?: InventoryItem[];
+    classResources?: Array<{
+        id: string;
+        name: string;
+        current: number;
+        max: number;
+        recharge: 'short' | 'long' | 'both';
+        icon?: string;
+        customRecovery?: Array<{ restType: 'short' | 'long' | 'both'; amount: number }>;
+    }>;
 }
 
 export interface CharacterListItem {
@@ -290,10 +300,31 @@ export interface CreateItemRequest {
     item_category: string;
     rarity: string;
     properties?: string[];
+    special_abilities?: Array<{ id?: number; name: string; description: string }>;
+    property_data?: Record<string, unknown>;
     damageDice?: string;
     damageType?: string;
+    damage_dice?: string;
+    damage_type?: string;
     maxCharges?: number;
     chargeRecharge?: string;
+    max_charges?: number;
+    charge_recharge?: string;
+    on_hit_effect?: string;
+}
+
+export interface MonsterFormAction {
+    name: string;
+    description: string;
+    attack_bonus: string;
+    damage: string;
+}
+
+export interface MonsterFormActions {
+    actions: MonsterFormAction[];
+    bonus_actions: MonsterFormAction[];
+    legendary_actions: MonsterFormAction[];
+    reactions: MonsterFormAction[];
 }
 
 export interface CreateMonsterRequest {
@@ -309,7 +340,7 @@ export interface CreateMonsterRequest {
     skills?: Record<string, number>;
     challenge_rating?: number;
     xp?: number;
-    actions?: MonsterAction[];
+    actions?: MonsterAction[] | MonsterFormActions;
     special_abilities?: SpecialAbility[];
 }
 

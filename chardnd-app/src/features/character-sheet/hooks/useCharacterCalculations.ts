@@ -19,10 +19,14 @@ export interface CharacterCalculations {
   abilityModifier: (score: number) => number;
   getAbilityScore: (ability: string) => number;
   getBestAbilityForWeapon: (weapon: any) => { modifier: number; ability: string };
-  getWeaponVariants: (weapon: any) => any[];
+  getWeaponVariants: (weapon: any) => Array<{
+    id: string;
+    name: string;
+    damageDice: string;
+    damageType: string;
+    range?: string;
+  }>;
 }
-
-const LEVEL_XP_TABLE = [0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000, 85000, 100000, 120000, 140000, 165000, 195000, 225000, 265000, 305000, 355000];
 
 export const useCharacterCalculations = (
   character: Character | null,
@@ -92,11 +96,15 @@ export const useCharacterCalculations = (
     if (!character?.items) return [];
     return character.items
       .filter((i) => i.is_equipped && i.item?.property_data?.speed_modifier)
-      .map((i) => ({
-        itemName: (i.item || i).name,
-        value: (i.item || i).property_data.speed_modifier,
-        type: (i.item || i).property_data.speed_modifier >= 0 ? ('bonus' as const) : ('penalty' as const),
-      }));
+      .map((i) => {
+        const item = i.item || i;
+        const speedModifier = item.property_data?.speed_modifier ?? 0;
+        return {
+          itemName: item.name,
+          value: speedModifier,
+          type: speedModifier >= 0 ? ('bonus' as const) : ('penalty' as const),
+        };
+      });
   }, [character?.items]);
 
   const initiativeModifiers = useMemo(() => {
@@ -106,11 +114,15 @@ export const useCharacterCalculations = (
 
     const itemMods = character.items
       .filter((i) => i.is_equipped && i.item?.property_data?.initiative_modifier)
-      .map((i) => ({
-        itemName: (i.item || i).name,
-        value: (i.item || i).property_data.initiative_modifier,
-        type: (i.item || i).property_data.initiative_modifier >= 0 ? ('bonus' as const) : ('penalty' as const),
-      }));
+      .map((i) => {
+        const item = i.item || i;
+        const initiativeModifier = item.property_data?.initiative_modifier ?? 0;
+        return {
+          itemName: item.name,
+          value: initiativeModifier,
+          type: initiativeModifier >= 0 ? ('bonus' as const) : ('penalty' as const),
+        };
+      });
 
     return [...modifiers, ...itemMods];
   }, [character?.items, character?.abilityScores?.dex]);
@@ -166,7 +178,13 @@ export const useCharacterCalculations = (
   };
 
   const getWeaponVariants = (weapon: any) => {
-    const variants = [{ id: 'melee', name: 'Melee Attack', damageDice: weapon.damageDice || '1d4', damageType: weapon.damageType || 'bludgeoning' }];
+    const variants: Array<{
+      id: string;
+      name: string;
+      damageDice: string;
+      damageType: string;
+      range?: string;
+    }> = [{ id: 'melee', name: 'Melee Attack', damageDice: weapon.damageDice || '1d4', damageType: weapon.damageType || 'bludgeoning' }];
     const properties = (weapon.properties || []).map((p: any) => typeof p === 'string' ? p.toLowerCase() : (p.name || '').toLowerCase());
     const propertyData = weapon.property_data || {};
 

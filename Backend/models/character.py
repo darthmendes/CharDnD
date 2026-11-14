@@ -1,5 +1,5 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Numeric
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Numeric, JSON
+from sqlalchemy.orm import relationship, synonym
 from . import Base
 
 
@@ -8,6 +8,24 @@ class Character(Base):
     
     id = Column("characterID", Integer, primary_key=True, autoincrement=True)
     name = Column(String, nullable=False)
+    abilityScores = Column(JSON, default={})
+    xp = Column(Integer, default=0)
+    level = Column(Integer, default=1)
+    curr_hp = Column(Integer, default=0)
+    max_hp = Column(Integer, default=0)
+    tmp_hp = Column(Integer, default=0)
+    speciesID = Column(Integer, ForeignKey("species.speciesID"), nullable=False)
+    backgroundID = Column(Integer, ForeignKey("backgrounds.backgroundID"), nullable=False)
+    subspecies = Column(String)
+    proficient_skills = Column(JSON, default=list)
+    proficient_weapons = Column(JSON, default=list)
+    proficient_tools = Column(JSON, default=list)
+    known_languages = Column(JSON, default=list)
+    hit_points = Column(Integer, default=0)
+    spell_slots = Column(JSON, default=dict)
+    spell_slots_expended = Column(JSON, default=dict)
+    spellcasting_ability = Column(String)
+
     age = Column(Integer)
     alignment = Column(String)
     description = Column(String)
@@ -17,10 +35,6 @@ class Character(Base):
     maxhp = Column(Integer, default=0)
     money = Column(Numeric(10, 2), default=0)
     inspiration = Column(Integer, default=0)
-
-    speciesID = Column(Integer, ForeignKey("species.speciesID"), nullable=False)
-    backgroundID = Column(Integer, ForeignKey("backgrounds.backgroundID"), nullable=False)
-
     strength = Column(Integer, default=10)
     dexterity = Column(Integer, default=10)
     constitution = Column(Integer, default=10)
@@ -43,34 +57,40 @@ class Character(Base):
     feature_uses = relationship("CharacterFeatureUse", back_populates="character")
 
     def to_dict(self):
+        ability_scores = self.abilityScores or {
+            "str": self.strength,
+            "dex": self.dexterity,
+            "con": self.constitution,
+            "cha": self.charisma,
+            "int": self.intelligence,
+            "wis": self.wisdom,
+        }
         return {
             "id": self.id,
             "name": self.name,
+            "speciesID": self.speciesID,
+            "backgroundID": self.backgroundID,
             "age": self.age,
             "alignment": self.alignment,
             "description": self.description,
+            "level": self.level,
+            "xp": self.xp,
+            "curr_hp": self.curr_hp,
+            "max_hp": self.max_hp,
+            "tmp_hp": self.tmp_hp,
+            "abilityScores": ability_scores,
+            "strength": ability_scores.get("str", self.strength),
+            "dexterity": ability_scores.get("dex", self.dexterity),
+            "constitution": ability_scores.get("con", self.constitution),
+            "charisma": ability_scores.get("cha", self.charisma),
+            "intelligence": ability_scores.get("int", self.intelligence),
+            "wisdom": ability_scores.get("wis", self.wisdom),
             "experiencePoints": self.experiencePoints,
             "hp": self.hp,
             "tmpHp": self.tmpHp,
             "maxhp": self.maxhp,
             "money": self.money,
             "inspiration": self.inspiration,
-            "speciesID": self.speciesID,
-            "backgroundID": self.backgroundID,
-            "strength": self.strength,
-            "dexterity": self.dexterity,
-            "constitution": self.constitution,
-            "charisma": self.charisma,
-            "intelligence": self.intelligence,
-            "wisdom": self.wisdom,
-            "abilityScores": {
-                "str": self.strength,
-                "dex": self.dexterity,
-                "con": self.constitution,
-                "cha": self.charisma,
-                "int": self.intelligence,
-                "wis": self.wisdom,
-            },
             "classes": [assoc.to_dict() if hasattr(assoc, "to_dict") else {
                 "classID": getattr(assoc, "classID", None),
                 "classLevel": getattr(assoc, "classLevel", None),
@@ -85,8 +105,11 @@ class Inventory(Base):
     itemID = Column(Integer, ForeignKey("items.itemID"), nullable=False)
     quantity = Column(Integer, default=1)
     isEquipped = Column(Boolean, default=False)
+    is_equipped = synonym("isEquipped")
     isAttuned = Column(Boolean, default=False)
+    is_attuned = synonym("isAttuned")
     charges = Column(Integer, default=0)
+    current_charges = synonym("charges")
 
     character = relationship("Character", back_populates="inventory")
     item = relationship("Item", back_populates="inventory_entries")
@@ -117,11 +140,22 @@ class CharacterClass(Base):
     classID = Column(Integer, ForeignKey("classes.classID"), primary_key=True)
     subclassID = Column(Integer, ForeignKey("subclasses.subclassID"), nullable=True)
     classLevel = Column(Integer, default=1)
+    level = synonym("classLevel")
     hitDiceLeft = Column(Integer, default=1)
 
     character = relationship("Character", back_populates="class_associations")
     dndclass = relationship("DnDclass", back_populates="character_assoc")
     subclass = relationship("Subclass", back_populates="character_classes")
+
+    def to_dict(self):
+        return {
+            "classID": self.classID,
+            "className": self.dndclass.name if self.dndclass else None,
+            "classLevel": self.classLevel,
+            "level": self.classLevel,
+            "subclassID": self.subclassID,
+            "subclass": self.subclass.name if self.subclass else None,
+        }
 
 class CharacterSpell(Base):
     __tablename__ = "characterSpell"

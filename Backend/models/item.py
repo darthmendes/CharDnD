@@ -1,5 +1,5 @@
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, synonym
 from . import Base
 
 class Item(Base):
@@ -7,13 +7,29 @@ class Item(Base):
     id = Column("itemID", Integer, primary_key=True, autoincrement=True)
     name = Column(String, unique=True, nullable=False)
     description = Column(String, nullable=True)
+    desc = Column(String, nullable=True)
     cost = Column(Integer, default=0)
     weight = Column(Integer, default=0)
+    item_type = Column(String, default="Misc")
+    item_category = Column(String, default="Misc")
+    rarity = Column(String, default="Common")
+    properties = Column(String, default='[]')
+    damageDice = Column(String)
+    damageType = Column(String)
+    specialAbilities = Column(String)
+    maxCharges = Column(Integer, default=0)
+    max_charges = synonym("maxCharges")
+    currentCharges = Column(Integer, default=0)
+    current_charges = synonym("currentCharges")
+    chargeRecharge = Column(String)
+    charge_recharge = synonym("chargeRecharge")
+    onHitEffect = Column(String)
+    on_hit_effect = synonym("onHitEffect")
     typeID = Column(Integer, ForeignKey("itemTypes.typeID"))
     categoryID = Column(Integer, ForeignKey("itemCategories.categoryID"))
 
-    item_type = relationship("ItemTypes", back_populates="items")
-    category = relationship("ItemCategories", back_populates="items")
+    type_ref = relationship("ItemTypes", back_populates="items")
+    category_ref = relationship("ItemCategories", back_populates="items")
     weapon_details = relationship("WeaponItem", back_populates="item")
     armor_details = relationship("ArmorItem", back_populates="item")
     magic_details = relationship("MagicItem", back_populates="item")
@@ -24,12 +40,24 @@ class Item(Base):
 
     def to_dict(self):
         return {
-            "id":self.id,
-            "name":self.name,
-            "description":self.description,
-            "cost":self.cost,
-            "weight": self.weight
-        } 
+            "id": self.id,
+            "name": self.name,
+            "description": self.description or self.desc,
+            "desc": self.description or self.desc,
+            "cost": self.cost,
+            "weight": self.weight,
+            "item_type": self.item_type,
+            "item_category": self.item_category,
+            "rarity": self.rarity,
+            "properties": self.properties if isinstance(self.properties, list) else (self.properties.split(',') if self.properties else []),
+            "damageDice": self.damageDice,
+            "damageType": self.damageType,
+            "specialAbilities": self.specialAbilities,
+            "maxCharges": self.maxCharges,
+            "currentCharges": self.currentCharges,
+            "chargeRecharge": self.chargeRecharge,
+            "onHitEffect": self.onHitEffect,
+        }
 
 class WeaponItem(Base):
     __tablename__ = "weaponItem"
@@ -69,7 +97,7 @@ class ItemTypes(Base):
     id = Column("typeID", Integer, primary_key=True, autoincrement=True)
     name = Column(String, nullable=False, unique=True)
 
-    items = relationship("Item", back_populates="item_type")
+    items = relationship("Item", back_populates="type_ref")
 
 class ItemCategories(Base):
     __tablename__ = "itemCategories"
@@ -77,7 +105,7 @@ class ItemCategories(Base):
     id = Column("categoryID", Integer, primary_key=True, autoincrement=True)
     name = Column(String, nullable=False, unique=True)
 
-    items = relationship("Item", back_populates="category")
+    items = relationship("Item", back_populates="category_ref")
 
 class ItemTags(Base):
     __tablename__ = "itemTags"
