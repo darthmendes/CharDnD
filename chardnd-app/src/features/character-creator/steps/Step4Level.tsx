@@ -40,14 +40,14 @@ interface Props {
 const Step4Level: React.FC<Props> = ({ character, updateClasses, dndClasses }) => {
   const [previewIndex, setPreviewIndex] = useState(0);
   const availableClasses = Array.isArray(dndClasses) ? dndClasses : [];
-  const characterClasses = character.classes || [];
+  const characterClass = character.classes || [];
 
   // Calculate total level
-  const totalLevel = characterClasses.reduce((sum: number, c: any) => sum + (c.level || 1), 0);
+  const totalLevel = characterClass.reduce((sum: number, c: any) => sum + (c.level || 1), 0);
 
   // Update a specific class entry
   const updateClassEntry = (index: number, field: string, value: any) => {
-    const updated = [...characterClasses];
+    const updated = [...characterClass];
     updated[index] = { ...updated[index], [field]: value };
     updateClasses(updated);
     // Switch preview to this class when it's selected
@@ -70,7 +70,7 @@ const Step4Level: React.FC<Props> = ({ character, updateClasses, dndClasses }) =
   };
 
   // Get the class to preview
-  const previewClass = characterClasses[previewIndex];
+  const previewClass = characterClass[previewIndex];
   const selectedClassData = previewClass && previewClass.className 
     ? availableClasses.find(c => c.name === previewClass.className) 
     : null;
@@ -96,7 +96,7 @@ const Step4Level: React.FC<Props> = ({ character, updateClasses, dndClasses }) =
 
   // Get available classes for a specific index (excluding already selected classes)
   const getAvailableClassesForIndex = (currentIndex: number) => {
-    const selectedClassNames = characterClasses
+    const selectedClassNames = characterClass
       .map((c: any, i: number) => i !== currentIndex && c.className ? c.className : null)
       .filter(Boolean);
     
@@ -123,7 +123,7 @@ const Step4Level: React.FC<Props> = ({ character, updateClasses, dndClasses }) =
           <h4 style={{ marginTop: 0, marginBottom: '1rem' }}>Select Levels</h4>
 
           {/* Class level entries */}
-          {characterClasses.map((classLevel: any, index: number) => (
+          {characterClass.map((classLevel: any, index: number) => (
             <div key={index} style={{ marginBottom: '1.5rem' }}>
               <label htmlFor={`class-select-${index}`} style={{ display: 'block', marginBottom: '0.5rem' }}>
                 Class {index + 1}

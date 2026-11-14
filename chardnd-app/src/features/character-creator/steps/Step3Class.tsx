@@ -44,14 +44,14 @@ const Step3Class: React.FC<Props> = ({ character, updateClasses, dndClasses }) =
   const classList = dndClasses;
 
   // Get all classes for the character
-  const characterClasses = character.classes || [];
+  const characterClass = character.classes || [];
 
   // Calculate total level
-  const totalLevel = characterClasses.reduce((sum: number, c: any) => sum + (c.level || 1), 0);
+  const totalLevel = characterClass.reduce((sum: number, c: any) => sum + (c.level || 1), 0);
 
   // Add a new class level (multiclass)
   const addClassLevel = () => {
-    const newClasses = [...characterClasses, { className: '', level: 1, subclass: '', chosenSkills: [] }];
+    const newClasses = [...characterClass, { className: '', level: 1, subclass: '', chosenSkills: [] }];
     updateClasses(newClasses);
     // Auto-preview the new class
     setPreviewIndex(newClasses.length - 1);
@@ -59,7 +59,7 @@ const Step3Class: React.FC<Props> = ({ character, updateClasses, dndClasses }) =
 
   // Update a specific class entry
   const updateClassEntry = (index: number, field: string, value: any) => {
-    const updated = [...characterClasses];
+    const updated = [...characterClass];
     updated[index] = { ...updated[index], [field]: value };
     
     // Only reset chosenSkills when changing the FIRST class (index 0)
@@ -74,8 +74,8 @@ const Step3Class: React.FC<Props> = ({ character, updateClasses, dndClasses }) =
 
   // Remove a class level
   const removeClassLevel = (index: number) => {
-    if (characterClasses.length > 1) {
-      const filtered = characterClasses.filter((_: any, i: number) => i !== index);
+    if (characterClass.length > 1) {
+      const filtered = characterClass.filter((_: any, i: number) => i !== index);
       updateClasses(filtered);
       // Adjust preview index if needed
       if (previewIndex >= filtered.length) {
@@ -126,7 +126,7 @@ const Step3Class: React.FC<Props> = ({ character, updateClasses, dndClasses }) =
 
   // Get available classes for a specific index (excluding already selected classes)
   const getAvailableClassesForIndex = (currentIndex: number) => {
-    const selectedClassNames = characterClasses
+    const selectedClassNames = characterClass
       .map((c: any, i: number) => i !== currentIndex && c.className ? c.className : null)
       .filter(Boolean);
     
@@ -151,7 +151,7 @@ const Step3Class: React.FC<Props> = ({ character, updateClasses, dndClasses }) =
   };
 
   // Get the class to preview
-  const previewClass = characterClasses[previewIndex];
+  const previewClass = characterClass[previewIndex];
   const selectedClassData = previewClass && previewClass.className 
     ? classList.find(c => c.name === previewClass.className) 
     : null;
@@ -162,7 +162,7 @@ const Step3Class: React.FC<Props> = ({ character, updateClasses, dndClasses }) =
   const subclassAvailableLevel = selectedClassData?.subclass_level || 3;
 
   // Get FIRST class data for skill selection (independent of preview)
-  const firstClass = characterClasses[0];
+  const firstClass = characterClass[0];
   const firstClassData = firstClass && firstClass.className 
     ? classList.find(c => c.name === firstClass.className) 
     : null;
@@ -187,7 +187,7 @@ const Step3Class: React.FC<Props> = ({ character, updateClasses, dndClasses }) =
           <h4 style={{ marginTop: 0 }}>Class Levels</h4>
 
           {/* Class level entries */}
-          {characterClasses.map((classLevel: any, index: number) => (
+          {characterClass.map((classLevel: any, index: number) => (
             <div key={index} style={{ marginBottom: '1.5rem' }}>
               <label htmlFor={`class-select-${index}`} style={{ display: 'block', marginBottom: '0.5rem' }}>
                 Class {index + 1}
@@ -266,7 +266,7 @@ const Step3Class: React.FC<Props> = ({ character, updateClasses, dndClasses }) =
                   {previewIndex === index ? '✓ Viewing' : 'View'}
                 </button>
 
-                {characterClasses.length > 1 && (
+                {characterClass.length > 1 && (
                   <button
                     type="button"
                     onClick={() => removeClassLevel(index)}

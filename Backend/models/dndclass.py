@@ -1,110 +1,70 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, JSON, Boolean
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from . import Base
-from .utils import JSONType
 
 class DnDclass(Base):
-    __tablename__ = "dndclass"    
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    __tablename__ = "classes"
+    id = Column("classID", Integer, primary_key=True, autoincrement=True)
     name = Column(String, unique=True, nullable=False)
-    hit_dice = Column(Integer, nullable=False) 
-    saving_throws = Column(JSONType)
-    
-    # New fields for class preview
-    primary_ability = Column(String)
-    armor_proficiencies = Column(JSONType)
-    weapon_proficiencies = Column(JSONType)
-    tool_proficiencies = Column(JSONType)
-    skill_choices = Column(JSONType)
-    subclass_level = Column(Integer, default=3)  # Level at which subclass is chosen (default 3, Druid is 2)
+    hit_dice = Column("hitDice", Integer, nullable=False) 
+    description = Column(String)
+    spellcasting_ability = Column("spellcastingAbility", String)
+    caster_progression_id = Column("casterProgression",Integer,ForeignKey("casterProgression.progressionID"))
 
     # Relationships
+    caster_progression = relationship("CasterProgression", back_populates="dndclasses")
     subclasses = relationship("Subclass", back_populates="parent_class")
-    class_features = relationship("ClassFeatures", back_populates="dndclass")
     class_equipment = relationship("ClassEquipment", back_populates="dndclass")
     character_assoc = relationship("CharacterClass", back_populates="dndclass")
     class_spells = relationship("ClassSpell", back_populates="dndclass")
-
-    guaranteed_proficiencies = relationship(
-        "EntityProficiency",
-        primaryjoin="and_(DnDclass.id == foreign(EntityProficiency.sourceID), EntityProficiency.sourceType == 'class')",
-        viewonly=True
-    )
+    proficiencies = relationship("ClassProficiency", back_populates="dndclass")
+    features = relationship("Features", back_populates="dndclass")
 
     def to_dict(self):
-        # Include level information with features (for preview)
-        # Only include class features, NOT subclass features (subclass features come from subclasses)
-        seen = set()
-        unique_features = []
-        for cf in self.class_features:
-            if cf.subclassID is None and cf.features and cf.features.name not in seen:
-                seen.add(cf.features.name)
-                feature_data = cf.features.to_dict()
-                feature_data['level'] = cf.level  # Add the level at which feature is gained
-                unique_features.append(feature_data)
-        
         return {
             'id': self.id,
             'name': self.name,
+            'description': self.description,
             'hit_dice': self.hit_dice,
-            'saving_throws': self.saving_throws or [],
-            'primary_ability': self.primary_ability or "",
-            'armor_proficiencies': self.armor_proficiencies or [],
-            'weapon_proficiencies': self.weapon_proficiencies or [],
-            'tool_proficiencies': self.tool_proficiencies or [],
-            'skill_choices': self.skill_choices or {"n_choices": 0, "options": []},
-            'subclass_level': self.subclass_level or 3,
+            'spellcasting_ability': self.spellcasting_ability,
+            'caster_progression_id': self.caster_progression_id,
             'subclasses': [sc.to_dict() for sc in self.subclasses],
-            'class_features': unique_features
         }
 
 
 class Subclass(Base):
     __tablename__ = "subclasses"
     
-    id = Column(Integer, primary_key=True)
-    classID = Column(Integer, ForeignKey("dndclass.id"), nullable=False)
+    id = Column("subclassID", Integer, primary_key=True)
+    classID = Column(Integer, ForeignKey("classes.classID"), nullable=False)
     name = Column(String, nullable=False)  # e.g., "Path of the Berserker"
-    subclass_flavor = Column(String)       # e.g., "Primal Path"
+    subclass_flavor = Column("Description", String)
     
     # Relationships
     parent_class = relationship("DnDclass", back_populates="subclasses")
-    features = relationship("ClassFeatures", back_populates="subclass")
+    character_classes = relationship("CharacterClass", back_populates="subclass")
+    features = relationship("Features", back_populates="subclass")
 
     def to_dict(self):
         return {
             "id": self.id,
             "name": self.name,
             "subclass_flavor": self.subclass_flavor,
-            "features": [
-                {**cf.features.to_dict(), 'level': cf.level}
-                for cf in self.features if cf.features
-            ]
         }
 
 
 class ClassEquipment(Base):
-    __tablename__ = "class_equipment"
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    classID = Column(Integer, ForeignKey("dndclass.id"), nullable=False)
-    itemID = Column(Integer, ForeignKey("items.id"), nullable=False)
+    __tablename__ = "classEquipment"
+    classID = Column(Integer, ForeignKey("classes.classID"), primary_key=True)
+    itemID = Column(Integer, ForeignKey("items.itemID"), primary_key=True)
     quantity = Column(Integer, default=1)
+    isChoice = Column(Boolean, default=False)
+    choiceNum = Column(Integer)
+    choiceGroup = Column(String)
 
     dndclass = relationship("DnDclass", back_populates="class_equipment")
-    item = relationship("Item", back_populates="class_entries")
+    item = relationship("Item", back_populates="class_equipment")
 
-
-class ClassFeatures(Base):
-    __tablename__ = "class_features"
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    classID = Column(Integer, ForeignKey("dndclass.id"), nullable=True)
-    subclassID = Column(Integer, ForeignKey("subclasses.id"), nullable=True)  # [ADDED] subclassID
-    featureID = Column(Integer, ForeignKey("features.id"), nullable=False)
-    level = Column(Integer, nullable=False)   
-
-    dndclass = relationship("DnDclass", back_populates="class_features")
-    subclass = relationship("Subclass", back_populates="features")
-    features = relationship("Features", back_populates="classFeatures")
 
 class ClassSpell(Base):
     """
@@ -112,16 +72,10 @@ class ClassSpell(Base):
     
     This is the MASTER LIST of spell availability per class.
     """
-    __tablename__ = "class_spells"
+    __tablename__ = "classSpell"
     
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    classID = Column(Integer, ForeignKey("dndclass.id"), nullable=False, index=True)
-    spellID = Column(Integer, ForeignKey("spells.id"), nullable=False, index=True)
-    
-    # Optional restrictions
-    min_level = Column(Integer, default=1)  # Minimum class level to learn
-    subclass = Column(String)  # NULL = all subclasses, or specific subclass name
-    is_always_prepared = Column(Boolean, default=False)  # For Cleric domain spells, etc.
+    classID = Column(Integer, ForeignKey("classes.classID"), primary_key=True, index=True)
+    spellID = Column(Integer, ForeignKey("spells.spellID"), primary_key=True, index=True)
     
     # Relationships
     dndclass = relationship("DnDclass", back_populates="class_spells")
@@ -129,12 +83,8 @@ class ClassSpell(Base):
     
     def to_dict(self):
         return {
-            'id': self.id,
             'classID': self.classID,
             'spellID': self.spellID,
-            'min_level': self.min_level,
-            'subclass': self.subclass,
-            'is_always_prepared': self.is_always_prepared,
             'class': self.dndclass.to_dict() if self.dndclass else None,
             'spell': self.spell.to_dict() if self.spell else None
         }

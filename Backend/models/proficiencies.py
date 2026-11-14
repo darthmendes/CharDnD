@@ -1,50 +1,71 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
-from .utils import JSONType
 from . import Base
 
 class Proficiency(Base):
     __tablename__ = "proficiencies"
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column("proficiencyID", Integer, primary_key=True, autoincrement=True)
     name = Column(String, nullable=False)
+    description = Column(String, nullable=True)
     type = Column(String, nullable=False)
-    itemID = Column(String, ForeignKey("items.id"), nullable=True)
+    baseAbility = Column(String, nullable=False)
 
-    entity_proficiencies = relationship("EntityProficiency", back_populates="proficiency")
-    choice_proficiencies = relationship("ProficiencyChoice", back_populates="proficiency")
+    feat_associations = relationship("FeatProficiency", back_populates="proficiency")
+    character_associations = relationship("CharacterProficiency", back_populates="proficiency")
+    species_associations = relationship("SpeciesProficiency", back_populates="proficiency")
+    background_associations = relationship("BackgroundProficiency", back_populates="proficiency")
+    class_associations = relationship("ClassProficiency", back_populates="proficiency")
 
     def to_dict(self):
         return {
             "id":self.id,
             "name":self.name,
+            "description":self.description,
             "type":self.type,
-            "itemID": self.itemID
+            "baseAbility": self.baseAbility
         }
 
-class EntityProficiency(Base):
-    __tablename__ = "entity_proficiency"
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    sourceType = Column(String, nullable=False) # species, class etc
-    sourceID = Column(Integer, nullable=False)
-    proficiencyID = Column(Integer, ForeignKey("proficiencies.id"), nullable=False)
+class FeatProficiency(Base):
+    __tablename__ = "featProficiencies"
+    featID = Column(Integer, ForeignKey("feats.featID"), primary_key=True)
+    proficiencyID = Column(Integer, ForeignKey("proficiencies.proficiencyID"), primary_key=True)
 
-    proficiency = relationship("Proficiency", back_populates="entity_proficiencies")
+    feat = relationship("Feats", back_populates="proficiency_associations")
+    proficiency = relationship("Proficiency", back_populates="feat_associations")
 
-class ProficiencyChoice(Base):
-    __tablename__ = "proficiency_choices"
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    groupID = Column(Integer, ForeignKey("proficiency_choice_groups.id"), nullable=False)
-    proficiencyID = Column(Integer, ForeignKey("proficiencies.id"), nullable=False)
+class CharacterProficiency(Base):
+    __tablename__ = "characterProficiency"
+    characterID = Column(Integer, ForeignKey("characters.characterID"), primary_key=True)
+    proficiencyID = Column(Integer, ForeignKey("proficiencies.proficiencyID"), primary_key=True)
 
-    group = relationship("ProficiencyChoiceGroup", back_populates="choices")
-    proficiency = relationship("Proficiency", back_populates="choice_proficiencies")
+    character = relationship("Character", back_populates="proficiencies")
+    proficiency = relationship("Proficiency", back_populates="character_associations")
 
-class ProficiencyChoiceGroup(Base):
-    __tablename__ = "proficiency_choice_groups"
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    sourceType = Column(String, nullable=False)
-    sourceID = Column(Integer, nullable=False)
-    name = Column(String, nullable=False)
-    n_choices = Column(Integer, default= 1)
+class SpeciesProficiency(Base):
+    __tablename__ = "speciesProficiency"
+    speciesID = Column(Integer, ForeignKey("species.speciesID"), primary_key=True)
+    proficiencyID = Column(Integer, ForeignKey("proficiencies.proficiencyID"), primary_key=True)
 
-    choices = relationship("ProficiencyChoice", back_populates="group")
+    species = relationship("Species", back_populates="proficiencies")
+    proficiency = relationship("Proficiency", back_populates="species_associations")
+
+class BackgroundProficiency(Base):
+    __tablename__ = "backgroundProficiencies"
+    backgroundID = Column(Integer, ForeignKey("backgrounds.backgroundID"), primary_key=True)
+    proficiencyID = Column(Integer, ForeignKey("proficiencies.proficiencyID"), primary_key=True)
+    isChoice = Column(Boolean, default=False)
+    choiceNumber = Column(Integer)
+    choiceGroup = Column(String)
+
+    background = relationship("Background", back_populates="proficiencies")
+    proficiency = relationship("Proficiency", back_populates="background_associations")
+
+
+class ClassProficiency(Base):
+    __tablename__ = "classProficiencies"
+
+    classID = Column(Integer, ForeignKey("classes.classID"), primary_key=True)
+    proficiencyID = Column(Integer, ForeignKey("proficiencies.proficiencyID"), primary_key=True)
+
+    dndclass = relationship("DnDclass", back_populates="proficiencies")
+    proficiency = relationship("Proficiency", back_populates="class_associations")

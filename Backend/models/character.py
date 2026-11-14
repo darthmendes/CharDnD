@@ -1,251 +1,97 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, JSON, Boolean, Text, DateTime
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Numeric
 from sqlalchemy.orm import relationship
 from . import Base
-from datetime import datetime
 
 
 class Character(Base):
-    """
-    Represents a D&D character with all core attributes.
-    
-    Attributes:
-        id: Unique identifier
-        name: Character name (must be unique)
-        abilityScores: JSON object with str, dex, con, int, wis, cha scores
-        xp: Experience points (default 300)
-        level: Character level (default 1)
-        curr_hp: Current hit points
-        max_hp: Maximum hit points
-        tmp_hp: Temporary hit points
-        speciesID: Foreign key to species table
-        backgroundID: Foreign key to backgrounds table
-        subspecies: Subspecies name (string)
-        proficient_skills: JSON array of skill names
-        proficient_weapons: JSON array of weapon/armor names  
-        proficient_tools: JSON array of tool names
-        known_languages: JSON array of language names
-        hit_points: Manual hit points value
-    """
     __tablename__ = "characters"
     
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String, unique=True, nullable=False)
-    abilityScores = Column(JSON, nullable=False)
-    xp = Column(Integer, default=300)
-    level = Column(Integer, default=1)
-    curr_hp = Column(Integer)
-    max_hp = Column(Integer)
-    tmp_hp = Column(Integer)
-    
-    speciesID = Column(Integer, ForeignKey("species.id"))
-    backgroundID = Column(Integer, ForeignKey("backgrounds.id"))
-    
-    # NEW FIELDS for enhanced character creation
-    subspecies = Column(String)  # Subspecies name
-    proficient_skills = Column(JSON, default=list)      # Skill proficiencies
-    proficient_weapons = Column(JSON, default=list)     # Weapon/armor proficiencies  
-    proficient_tools = Column(JSON, default=list)       # Tool proficiencies
-    known_languages = Column(JSON, default=list)        # Language proficiencies
-    hit_points = Column(Integer)                       # Manual HP value
-   
-    spell_slots = Column(JSON)  # {"1": 4, "2": 3, "3": 2, "4": 0, ...}
-    spell_slots_expended = Column(JSON)  # {"1": 2, "2": 1, "3": 0, "4": 0, ...}
-    spellcasting_ability = Column(String)  # "int", "wis", "cha" (primary)
+    id = Column("characterID", Integer, primary_key=True, autoincrement=True)
+    name = Column(String, nullable=False)
+    age = Column(Integer)
+    alignment = Column(String)
+    description = Column(String)
+    experiencePoints = Column(Integer, default=0)
+    hp = Column(Integer, default=0)
+    tmpHp = Column(Integer, default=0)
+    maxhp = Column(Integer, default=0)
+    money = Column(Numeric(10, 2), default=0)
+    inspiration = Column(Integer, default=0)
 
-    # Relationships
+    speciesID = Column(Integer, ForeignKey("species.speciesID"), nullable=False)
+    backgroundID = Column(Integer, ForeignKey("backgrounds.backgroundID"), nullable=False)
+
+    strength = Column(Integer, default=10)
+    dexterity = Column(Integer, default=10)
+    constitution = Column(Integer, default=10)
+    charisma = Column(Integer, default=10)
+    intelligence = Column(Integer, default=10)
+    wisdom = Column(Integer, default=10)
+
     species = relationship("Species", back_populates="characters")
     background = relationship("Background", back_populates="characters")
-    classes_assoc = relationship("CharacterClass", back_populates="character")
-    inventory = relationship("CharacterInventory", back_populates="character")
+    inventory = relationship("Inventory", back_populates="character")
+    conditions = relationship("CharacterConditions", back_populates="character")
+    feats = relationship("CharacterFeats", back_populates="character")
+    class_associations = relationship("CharacterClasses", back_populates="character")
     spells = relationship("CharacterSpell", back_populates="character")
+    proficiencies = relationship("CharacterProficiency", back_populates="character")
+    traits = relationship("CharacterTraits", back_populates="character")
+    user_characters = relationship("UserCharacter", back_populates="character")
+    notes = relationship("CharacterNote", back_populates="character")
+    feature_uses = relationship("CharacterFeatureUse", back_populates="character")
 
-
-    def __repr__(self) -> str:
-        return f"Character('{self.name}', '{self.species}', '{self.level}')"
-    
-    def to_dict(self) -> dict:
-        """Convert character to dictionary for API responses."""
-        return {
-            'id': self.id,
-            'name': self.name,
-            'species': self.species.name if self.species else None,
-            'subspecies': self.subspecies,  # [NEW] Added
-            'background': self.background.to_dict() if self.background else None,
-            'classes': [{
-                'className': c.dndclass.name,
-                'level': c.level,
-                'subclass': getattr(c, 'subclass', ''),  # If you store subclass in CharacterClass
-                'chosenSkills': []  # You might want to store this separately
-            } for c in self.classes_assoc],
-            'level': self.level,
-            'xp': self.xp,
-            'abilityScores': self.abilityScores,
-            'proficientSkills': self.proficient_skills or [],      # [NEW] Added
-            'proficientWeapons': self.proficient_weapons or [],    # [NEW] Added
-            'proficientTools': self.proficient_tools or [],        # [NEW] Added
-            'knownLanguages': self.known_languages or [],          # [NEW] Added
-            'hitPoints': self.hit_points,                         # [NEW] Added
-            'hpMax': self.max_hp,
-            'hpCurrent': self.curr_hp,
-            'hpTmp': self.tmp_hp,
-            'ac': 10,  # Placeholder - calculate based on armor
-            'initiative': 0,  # Placeholder - calculate from DEX
-            'speed': 30,  # Placeholder - calculate from species/class
-            'savingThrows': {},  # Placeholder
-            'passivePerception': 10,  # Placeholder
-            'items': [{
-                'id': inv_entry.item.id,
-                'name': inv_entry.item.name,
-                'type': inv_entry.item.item_type,
-                'item_type': inv_entry.item.item_type,
-                'damageDice': inv_entry.item.damage_dice,
-                'damageType': inv_entry.item.damage_type,
-                'desc': inv_entry.item.desc,
-                'weight': inv_entry.item.weight,
-                'cost': inv_entry.item.cost,
-                'item_category': inv_entry.item.item_category,
-                'rarity': inv_entry.item.rarity,
-                'properties': inv_entry.item.properties or [],
-                'property_data': inv_entry.item.property_data or {},  # [NEW] Include property metadata
-                'specialAbilities': inv_entry.item.special_abilities or [],
-                'quantity': inv_entry.quantity,
-                'maxCharges': inv_entry.item.max_charges,
-                'currentCharges': inv_entry.current_charges,  # [NEW] Include current charges
-                'chargeRecharge': inv_entry.item.charge_recharge,
-                'onHitEffect': inv_entry.item.on_hit_effect,
-                'inventoryId': inv_entry.id,  # [NEW] Include inventory entry ID for updates
-                'is_equipped': inv_entry.is_equipped,  # [NEW] Include equipped status,
-                'is_attuned': inv_entry.is_attuned
-            } for inv_entry in self.inventory]  # [NEW] Include inventory items
-        }
-
-class CharacterClass(Base):
-    """
-    Association table mapping Characters to Classes.
-    Supports multiclassing by tracking level per class.
-    
-    Attributes:
-        id: Unique identifier
-        characterID: Foreign key to characters table
-        classID: Foreign key to dndclass table
-        level: Level in this specific class
-        subclass: Subclass name for this class level
-    """
-    __tablename__ = "characterclass"
-    
-    id = Column(Integer, primary_key=True)
-    characterID = Column(Integer, ForeignKey("characters.id"), nullable=False)
-    classID = Column(Integer, ForeignKey("dndclass.id"), nullable=False)
-    level = Column(Integer, default=1)
-    subclass = Column(String)  # [NEW] Store subclass per class
-
-    character = relationship("Character", back_populates="classes_assoc")
-    dndclass = relationship("DnDclass", back_populates="character_assoc")
-    resources = relationship("CharacterClassResource", back_populates="character_class")
-
-
-class CharacterClassResource(Base):
-    """
-    Tracks expendable class resources (Rages, Ki Points, Wild Shapes, etc.)
-    Links to CharacterClass to support multiclassing.
-    """
-    __tablename__ = "character_class_resources"
-    
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    character_class_id = Column(Integer, ForeignKey("characterclass.id"), nullable=False)
-    
-    # Resource type (e.g., "rage", "ki_point", "wild_shape", "spell_slot")
-    resource_type = Column(String, nullable=False)
-    
-    # Current and maximum values
-    current_value = Column(Integer, default=0)
-    max_value = Column(Integer, default=0)
-    
-    # Recovery mechanics
-    recovers_on_short_rest = Column(Boolean, default=False)
-    recovers_on_long_rest = Column(Boolean, default=True)
-    
-    # Relationships
-    character_class = relationship("CharacterClass", back_populates="resources")
-    
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'character_class_id': self.character_class_id,
-            'resource_type': self.resource_type,
-            'current_value': self.current_value,
-            'max_value': self.max_value,
-            'recovers_on_short_rest': self.recovers_on_short_rest,
-            'recovers_on_long_rest': self.recovers_on_long_rest
-        }
-
-class CharacterInventory(Base):
-    """
-    Tracks items in a character's inventory.
-    
-    Attributes:
-        id: Unique identifier
-        characterID: Foreign key to characters table
-        itemID: Foreign key to items table
-        quantity: Number of items (default 1)
-        current_charges: Current charges remaining (for items with max_charges)
-        is_equipped: Whether the item is currently equipped (for armor/shields),
-        is_attuned': Whether the item is currently attuned
-    """
-    __tablename__ = "characterinventory"
-    
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    characterID = Column(Integer, ForeignKey("characters.id"), nullable=False)
-    itemID = Column(Integer, ForeignKey("items.id"), nullable=False)
+class Inventory(Base):
+    __tablename__ = "inventory"
+    id = Column("inventoryEntryID", Integer, primary_key=True, autoincrement=True)
+    characterID = Column(Integer, ForeignKey("characters.characterID"), nullable=False)
+    itemID = Column(Integer, ForeignKey("items.itemID"), nullable=False)
     quantity = Column(Integer, default=1)
-    current_charges = Column(Integer, default=0)  # [NEW] Track current charges
-    is_equipped = Column(Boolean, default=False)  # [NEW] Track if armor/shield is equipped
-    is_attuned = Column(Boolean, default=False)
+    isEquipped = Column(Boolean, default=False)
+    isAttuned = Column(Boolean, default=False)
+    charges = Column(Integer, default=0)
 
     character = relationship("Character", back_populates="inventory")
     item = relationship("Item", back_populates="inventory_entries")
 
+class CharacterConditions(Base):
+    __tablename__ = "characterConditions"
+    characterID = Column(Integer, ForeignKey("characters.characterID"), primary_key=True)
+    conditionID = Column(Integer, ForeignKey("conditions.conditionID"), primary_key=True)
+    value = Column(Integer)
+    source = Column(String, nullable=True)
+
+    character = relationship("Character", back_populates="conditions")
+    condition = relationship("Conditions", back_populates="character_conditions")
+
+class CharacterFeats(Base):
+    __tablename__ = "characterFeats"
+    characterID = Column(Integer, ForeignKey("characters.characterID"), primary_key=True)
+    featsID = Column(Integer, ForeignKey("feats.featID"), primary_key=True)
+    lvlAcquired = Column(Integer)
+    source = Column(String, nullable=True)
+
+    character = relationship("Character", back_populates="feats")
+    feat = relationship("Feats", back_populates="character_feats")
+
+class CharacterClass(Base):
+    __tablename__ = "characterClass"
+    characterID = Column(Integer, ForeignKey("characters.characterID"), primary_key=True)
+    classID = Column(Integer, ForeignKey("classes.classID"), primary_key=True)
+    subclassID = Column(Integer, ForeignKey("subclasses.subclassID"), nullable=True)
+    classLevel = Column(Integer, default=1)
+    hitDiceLeft = Column(Integer, default=1)
+
+    character = relationship("Character", back_populates="class_associations")
+    dndclass = relationship("DnDclass", back_populates="character_assoc")
+    subclass = relationship("Subclass", back_populates="character_classes")
+
 class CharacterSpell(Base):
-    """
-    Junction table linking Characters to Spells they know/have prepared.
-    
-    Tracks character-specific spell data like preparation status,
-    spellcasting ability used, and source of the spell.
-    """
-    __tablename__ = "character_spells"
-    
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    characterID = Column(Integer, ForeignKey("characters.id"), nullable=False, index=True)
-    spellID = Column(Integer, ForeignKey("spells.id"), nullable=False, index=True)
-    
-    # === Source Tracking ===
-    source = Column(String, nullable=False)  # "class", "species", "background", "feat", "item"
-    source_name = Column(String)  # "Wizard", "High Elf", "Magic Initiate"
-    source_detail = Column(Text)  # Additional details (e.g., subclass name)
-    
-    # === Preparation Status ===
-    is_prepared = Column(Boolean, default=True)  # For prepared casters
-    always_prepared = Column(Boolean, default=False)  # Domain spells, etc.
-    
-    # === Timestamps ===
-    date_added = Column(DateTime, default=datetime.utcnow)
-    date_prepared = Column(DateTime)  # When spell was last prepared
-    
-    # === Relationships ===
+    __tablename__ = "characterSpell"
+    characterID = Column(Integer, ForeignKey("characters.characterID"), primary_key=True)
+    spellID = Column(Integer, ForeignKey("spells.spellID"), primary_key=True)
+    isPrepared = Column(Boolean, default=False)    
     character = relationship("Character", back_populates="spells")
     spell = relationship("Spell", back_populates="character_spells")
-    
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'characterID': self.characterID,
-            'spellID': self.spellID,
-            'spell': self.spell.to_dict() if self.spell else None,
-            'source': self.source,
-            'source_name': self.source_name,
-            'source_detail': self.source_detail,
-            'is_prepared': self.is_prepared,
-            'always_prepared': self.always_prepared,
-            'date_added': self.date_added.isoformat() if self.date_added else None,
-            'date_prepared': self.date_prepared.isoformat() if self.date_prepared else None
-        }
+
+CharacterInventory = Inventory
