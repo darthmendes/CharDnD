@@ -18,9 +18,7 @@ from Backend.services.CharacterService import CharacterService as Character
 from Backend.services.SpeciesService import SpeciesService as Species
 from Backend.services.ClassService import ClassService as DnDClass
 from Backend.services.ItemService import ItemService as Item
-from Backend.services.LanguageService import LanguageService as Language
 from Backend.services.SpellService import SpellService as Spell
-from Backend.services.MonsterService import MonsterService as Monster
 
 from Backend.constants import PACK_DEFINITIONS
 from Backend.config import FLASK_DEBUG, FLASK_PORT, CORS_ORIGINS, SECRET_KEY
@@ -238,17 +236,18 @@ def delete_species(id):
 
 @api_v1.route('/species/<int:id>', methods=['GET'])
 def get_species(id):
-    species = Species.get_byID(id)
-    if not species:
-        return jsonify({"error": "Species not found"}), HTTPStatus.NOT_FOUND
-    return jsonify(species.to_dict()), HTTPStatus.OK
+    result = Species.get_byID(id)
+    if not result["success"]:
+        return jsonify({"error": result["error"]}), HTTPStatus.NOT_FOUND
+    return jsonify(result["data"]), HTTPStatus.OK
 
 
 @api_v1.route('/species', methods=['GET'])
 def list_species():
-    all_species = Species.get_all()  # This MUST load subspecies
-    result = [s.to_dict() for s in all_species]
-    return jsonify(result), HTTPStatus.OK
+    result = Species.get_all()
+    if not result["success"]:
+        return jsonify({"error": result["error"]}), HTTPStatus.INTERNAL_SERVER_ERROR
+    return jsonify(result["data"]), HTTPStatus.OK
 
 
 @api_v1.route('/species/<species_name>/traits', methods=['GET'])
@@ -256,65 +255,53 @@ def get_species_traits(species_name):
     """Get all traits for a species (with optional subspecies filter)."""
     try:
         from Backend.models import session
-        from Backend.models.species import Species as SpeciesModel, Subspecies, SpeciesTraits
-        from Backend.models.features import Features
+        from Backend.models.species import Species as SpeciesModel
+        from Backend.services.TraitsService import TraitsService
         
-        # Find the species
         species = session.query(SpeciesModel).filter(
-            SpeciesModel.name.ilike(species_name)
+            SpeciesModel.name.ilike(species_name),
+            SpeciesModel.parent.is_(None),
         ).first()
-        
         if not species:
             return jsonify({"error": "Species not found"}), HTTPStatus.NOT_FOUND
-        
-        # Get subspecies from query params if provided
-        subspecies_name = request.args.get('subspecies')
-        
+
         traits = []
-        
-        # Get base species traits
-        base_traits = session.query(SpeciesTraits).filter(
-            SpeciesTraits.speciesID == species.id,
-            SpeciesTraits.subspeciesID == None
-        ).all()
-        
-        for st in base_traits:
-            feature = session.query(Features).filter(Features.id == st.featureID).first()
-            if feature:
-                traits.append({
-                    "feature_name": feature.name,
-                    "name": feature.name,
-                    "description": feature.desc,
-                    "source": species.name
-                })
-        
-        # Get subspecies traits if specified
+        base_traits = TraitsService.get_for_species(species.id)
+        if not base_traits["success"]:
+            return jsonify({"error": base_traits["error"]}), HTTPStatus.INTERNAL_SERVER_ERROR
+        traits.extend(
+            {
+                "name": trait["name"],
+                "description": trait["description"] or "",
+                "source": species.name,
+            }
+            for trait in base_traits["data"]
+        )
+
+        subspecies_name = request.args.get('subspecies')
         if subspecies_name:
-            sub = session.query(Subspecies).filter(
-                Subspecies.name.ilike(subspecies_name),
-                Subspecies.speciesID == species.id
+            subspecies = session.query(SpeciesModel).filter(
+                SpeciesModel.name.ilike(subspecies_name),
+                SpeciesModel.parent == species.id,
             ).first()
-            
-            if sub:
-                sub_traits = session.query(SpeciesTraits).filter(
-                    SpeciesTraits.subspeciesID == sub.id
-                ).all()
-                
-                for st in sub_traits:
-                    feature = session.query(Features).filter(Features.id == st.featureID).first()
-                    if feature:
-                        traits.append({
-                            "feature_name": feature.name,
-                            "name": feature.name,
-                            "description": feature.desc,
-                            "source": sub.name
-                        })
-        
+            if subspecies is None:
+                return jsonify({"error": "Subspecies not found"}), HTTPStatus.NOT_FOUND
+            sub_traits = TraitsService.get_for_species(subspecies.id)
+            if not sub_traits["success"]:
+                return jsonify({"error": sub_traits["error"]}), HTTPStatus.INTERNAL_SERVER_ERROR
+            traits.extend(
+                {
+                    "name": trait["name"],
+                    "description": trait["description"] or "",
+                    "source": subspecies.name,
+                }
+                for trait in sub_traits["data"]
+            )
+
         return jsonify(traits), HTTPStatus.OK
-    
-    except Exception as e:
-        logger.error(f"Error fetching species traits: {str(e)}")
-        return jsonify({"error": str(e)}), HTTPStatus.INTERNAL_SERVER_ERROR
+    except Exception:
+        logger.exception("Error fetching species traits")
+        return jsonify({"error": "Unable to fetch species traits"}), HTTPStatus.INTERNAL_SERVER_ERROR
 
 ################################################################
 # Class Routes
@@ -355,59 +342,17 @@ def list_classes():
     all_classes = DnDClass.get_all()
     return jsonify([c.to_dict() for c in all_classes]), 200
 
-# Backend/routes/character_resources.py
-from flask import Flask, request, jsonify
-from Backend.models import session
-from Backend.models.character import CharacterClassResource
-
 @api_v1.route('/characters/<int:char_id>/classes/<int:class_id>/resources', methods=['GET'])
 def get_class_resources(char_id, class_id):
-    """Get all resources for a specific class"""
-    resources = session.query(CharacterClassResource).filter_by(
-        character_class_id=class_id
-    ).all()
-    return jsonify([r.to_dict() for r in resources]), 200
+    return jsonify({"error": "Class resources are not represented in the current data model."}), HTTPStatus.NOT_IMPLEMENTED
 
 @api_v1.route('/characters/<int:char_id>/classes/<int:class_id>/resources/<resource_type>', methods=['PATCH'])
 def update_resource(char_id, class_id, resource_type):
-    """Update a specific resource (e.g., spend rage, regain ki point)"""
-    data = request.json
-    resource = session.query(CharacterClassResource).filter_by(
-        character_class_id=class_id,
-        resource_type=resource_type
-    ).first()
-    
-    if not resource:
-        return jsonify({"error": "Resource not found"}), 404
-    
-    if 'current_value' in data:
-        resource.current_value = max(0, min(data['current_value'], resource.max_value))
-    
-    session.commit()
-    return jsonify(resource.to_dict()), 200
+    return jsonify({"error": "Class resources are not represented in the current data model."}), HTTPStatus.NOT_IMPLEMENTED
 
 @api_v1.route('/characters/<int:char_id>/rest', methods=['POST'])
 def take_rest(char_id):
-    """Take a short or long rest - recover appropriate resources"""
-    from Backend.models.character import CharacterClass as CharClassAssoc
-    data = request.json
-    rest_type = data.get('rest_type')  # 'short' or 'long'
-    
-    if rest_type not in ('short', 'long'):
-        return jsonify({"error": "rest_type must be 'short' or 'long'"}), HTTPStatus.BAD_REQUEST
-    
-    # Get all character classes using the correct model
-    char_classes = session.query(CharClassAssoc).filter_by(characterID=char_id).all()
-    
-    for char_class in char_classes:
-        for resource in char_class.resources:
-            if rest_type == 'short' and resource.recovers_on_short_rest:
-                resource.current_value = resource.max_value
-            elif rest_type == 'long' and resource.recovers_on_long_rest:
-                resource.current_value = resource.max_value
-    
-    session.commit()
-    return jsonify({"message": f"{rest_type} rest completed"}), 200
+    return jsonify({"error": "Class resources are not represented in the current data model."}), HTTPStatus.NOT_IMPLEMENTED
 
 
 ################################################################
@@ -477,12 +422,7 @@ def delete_item(id):
 
 @api_v1.route('/languages', methods=['GET'])
 def get_languages():
-    try:
-        languages = Language.get_all_languages()
-        result = [lang.to_dict() for lang in languages]
-        return jsonify(result), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    return jsonify({"error": "Languages are not represented in the current data model."}), HTTPStatus.NOT_IMPLEMENTED
     
 ################################################################
 # Spell Routes
@@ -517,7 +457,7 @@ def update_expended_slots(charID):
     
     result = Spell.update_expended_slots(charID, data['level'], data['amount'])
     if result["success"]:
-        return jsonify({"success": True, "expended": result["data"]}), HTTPStatus.OK
+        return jsonify(result["data"]), HTTPStatus.OK
     else:
         return jsonify({"error": result["error"]}), HTTPStatus.BAD_REQUEST
 
@@ -541,7 +481,7 @@ def add_character_spell(charID):
     
     result = Spell.add_spell_to_character(charID, data)
     if result["success"]:
-        return jsonify({"success": True, "spell": result["data"]}), HTTPStatus.CREATED
+        return jsonify(result["data"]), HTTPStatus.CREATED
     else:
         return jsonify({"error": result["error"]}), HTTPStatus.BAD_REQUEST
 
@@ -561,7 +501,7 @@ def toggle_spell_prepared(charID, spellID):
     """Toggle whether a spell is prepared."""
     result = Spell.toggle_spell_prepared(charID, spellID)
     if result["success"]:
-        return jsonify({"success": True, "is_prepared": result["data"]["is_prepared"]}), HTTPStatus.OK
+        return jsonify(result["data"]), HTTPStatus.OK
     else:
         return jsonify({"error": result["error"]}), HTTPStatus.NOT_FOUND
 
@@ -572,14 +512,32 @@ def get_prepare_limit(charID):
     result = Spell.calculate_prepare_limit(charID)
     if result["success"]:
         return jsonify({
-            "prepare_limit": result["prepare_limit"],
-            "prepared_count": result["prepared_count"],
+            "limit": result["limit"],
+            "prepared": result["prepared"],
             "prepare_ability": result["prepare_ability"],
             "primary_spellcasting_class": result["primary_spellcasting_class"],
             "unlimited": result["unlimited"]
         }), HTTPStatus.OK
     else:
         return jsonify({"error": result["error"]}), HTTPStatus.NOT_FOUND
+
+
+@api_v1.route('/characters/<int:charID>/spells/bulk-prepare', methods=['PATCH'])
+def bulk_prepare_character_spells(charID):
+    data = request.get_json(silent=True) or {}
+    result = Spell.set_spells_prepared(charID, data.get("spellIDs"), True)
+    if result["success"]:
+        return jsonify(result["data"]), HTTPStatus.OK
+    return jsonify({"error": result["error"]}), HTTPStatus.BAD_REQUEST
+
+
+@api_v1.route('/characters/<int:charID>/spells/bulk-unprepare', methods=['PATCH'])
+def bulk_unprepare_character_spells(charID):
+    data = request.get_json(silent=True) or {}
+    result = Spell.set_spells_prepared(charID, data.get("spellIDs"), False)
+    if result["success"]:
+        return jsonify(result["data"]), HTTPStatus.OK
+    return jsonify({"error": result["error"]}), HTTPStatus.BAD_REQUEST
 
 @api_v1.route('/classes/<class_name>/spells', methods=['GET'])
 def get_class_spells(class_name):
@@ -599,10 +557,9 @@ def get_class_spells(class_name):
         if not dnd_class:
             return jsonify({"error": "Class not found"}), HTTPStatus.NOT_FOUND
         
-        # Get spells from junction table for base class only
+        # The current class-spell junction has no subclass-specific column.
         class_spells = session.query(ClassSpell).filter(
-            ClassSpell.classID == dnd_class.id,
-            ClassSpell.subclass == None
+            ClassSpell.classID == dnd_class.id
         ).all()
 
         # Get the actual spell objects
@@ -625,38 +582,19 @@ def get_class_spells(class_name):
 ################################################################
 @api_v1.route('/monsters', methods=['GET'])
 def list_monsters():
-    monsters = Monster.get_all()
-    # Convert SQLAlchemy objects to dicts for JSON response
-    return jsonify([m.to_dict() for m in monsters]), 200
+    return jsonify({"error": "Monsters are not represented in the current data model."}), HTTPStatus.NOT_IMPLEMENTED
 
 @api_v1.route('/monsters', methods=['POST'])
 def create_monster():
-    if not request.is_json:
-        return jsonify({"success": False, "error": "Request must be JSON"}), 415
-    
-    result = Monster.new(request.get_json())
-    status = 201 if result["success"] else 400
-    return jsonify(result), status
+    return jsonify({"error": "Monsters are not represented in the current data model."}), HTTPStatus.NOT_IMPLEMENTED
 
 @api_v1.route('/monsters/<int:monster_id>', methods=['GET'])
 def get_monster(monster_id):
-    monster = Monster.get_byID(monster_id)
-    if not monster:
-        return jsonify({"success": False, "error": "Monster not found"}), 404
-    return jsonify(monster.to_dict()), 200
+    return jsonify({"error": "Monsters are not represented in the current data model."}), HTTPStatus.NOT_IMPLEMENTED
 
 @api_v1.route('/monsters/<int:monster_id>', methods=['PUT', 'PATCH'])
 def update_monster(monster_id):
-    monster = Monster.get_byID(monster_id)
-    if not monster:
-        return jsonify({"success": False, "error": "Monster not found"}), 404
-        
-    if not request.is_json:
-        return jsonify({"success": False, "error": "Request must be JSON"}), 415
-        
-    result = Monster.update(monster.name, **request.get_json())
-    status = 200 if result["success"] else 400
-    return jsonify(result), status
+    return jsonify({"error": "Monsters are not represented in the current data model."}), HTTPStatus.NOT_IMPLEMENTED
 
 @api_v1.route('/monsters/<int:monster_id>', methods=['DELETE'])
 def delete_monster(monster_id):

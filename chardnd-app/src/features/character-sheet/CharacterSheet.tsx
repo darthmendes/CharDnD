@@ -96,10 +96,12 @@ const CharacterDisplay = () => {
 
   // Transform spell slots for component
   const transformedSpellSlots: Record<string, number> = {};
+  const transformedSpellSlotsExpended: Record<string, number> = {};
   if (spellSlots) {
     for (const [key, value] of Object.entries(spellSlots)) {
       if (typeof value === 'object' && value !== null && 'total' in value) {
         transformedSpellSlots[key] = (value as any).total;
+        transformedSpellSlotsExpended[key] = (value as any).expended;
       }
     }
   }
@@ -513,7 +515,7 @@ const CharacterDisplay = () => {
         spellSaveDC={calcSpellDC()}
         spellAttackBonus={calcSpellAttackBonus()}
         spellSlots={transformedSpellSlots}
-        spellSlotsExpended={{}}
+        spellSlotsExpended={transformedSpellSlotsExpended}
         characterSpells={characterSpells}
         spellPrepareLimit={prepareLimit?.limit || null}
         spellPreparedCount={prepareLimit?.prepared || 0}

@@ -67,7 +67,7 @@ export function useCharacterData(characterId: string | undefined): UseCharacterD
             const slotsMap: Record<string, { total: number; expended: number }> = {};
             if (slots && Array.isArray(slots.slots)) {
                 slots.slots.forEach((slot: any) => {
-                    slotsMap[`level${slot.level}`] = {
+                    slotsMap[String(slot.level)] = {
                         total: slot.total,
                         expended: slot.expended,
                     };

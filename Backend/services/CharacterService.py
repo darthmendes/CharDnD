@@ -4,9 +4,11 @@ from ..models.species import Species
 from ..models.dndclass import DnDclass, ClassSpell
 from ..models.background import Background  # [IMPORT] Add this import
 from ..models import session
+from .BaseModelService import BaseModelService
 
 
-class CharacterService:
+class CharacterService(BaseModelService):
+    model = Character
     
     @classmethod
     def new(cls, data: Dict[str, Any]) -> Dict[str, Any]:

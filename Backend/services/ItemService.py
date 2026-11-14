@@ -5,9 +5,11 @@ from ..models.item import Item
 from ..models.character import CharacterInventory
 from ..models import session
 from ..constants import ITEM_TYPES, PACK_DEFINITIONS
+from .BaseModelService import BaseModelService
 
 
-class ItemService:
+class ItemService(BaseModelService):
+    model = Item
 
     @classmethod
     def new(cls, data: Dict[str, Any]) -> Dict[str, Any]:

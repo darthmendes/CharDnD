@@ -83,6 +83,15 @@ class SpellSlotProgression(Base):
 
     caster_progression = relationship("CasterProgression", back_populates="spell_slot_progressions")
 
+class CharacterSpellSlot(Base):
+    __tablename__ = "characterSpellSlots"
+
+    characterID = Column(Integer, ForeignKey("characters.characterID"), primary_key=True)
+    slotLevel = Column(Integer, primary_key=True)
+    expendedSlots = Column(Integer, nullable=False, default=0)
+
+    character = relationship("Character", back_populates="spell_slot_usage")
+
 class RechargeTrigger(Base):
     __tablename__ = "rechargeTrigger"
 

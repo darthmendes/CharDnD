@@ -1,22 +1,29 @@
-# Backend/services/SpellService.py
-from Backend.models import session
-from Backend.models.character import Character, CharacterClass, CharacterSpell
-from Backend.models.spells import Spell
-from typing import List
-from .CharacterService import CharacterService
+import logging
 
-class SpellService:
-    # [NOTE] PHB Multiclass Spellcaster Table
+from sqlalchemy.exc import SQLAlchemyError
+
+from Backend.models.character import Character, CharacterClass, CharacterSpell
+from Backend.models.extra import CharacterSpellSlot
+from Backend.models.spells import Spell
+from .BaseModelService import BaseModelService
+
+
+logger = logging.getLogger(__name__)
+
+
+class SpellService(BaseModelService):
+    model = Spell
+
     MULTICLASS_SLOT_TABLE = {
-        1:  {1: 2},
-        2:  {1: 3},
-        3:  {1: 4, 2: 2},
-        4:  {1: 4, 2: 3},
-        5:  {1: 4, 2: 3, 3: 2},
-        6:  {1: 4, 2: 3, 3: 3},
-        7:  {1: 4, 2: 3, 3: 3, 4: 1},
-        8:  {1: 4, 2: 3, 3: 3, 4: 2},
-        9:  {1: 4, 2: 3, 3: 3, 4: 3, 5: 1},
+        1: {1: 2},
+        2: {1: 3},
+        3: {1: 4, 2: 2},
+        4: {1: 4, 2: 3},
+        5: {1: 4, 2: 3, 3: 2},
+        6: {1: 4, 2: 3, 3: 3},
+        7: {1: 4, 2: 3, 3: 3, 4: 1},
+        8: {1: 4, 2: 3, 3: 3, 4: 2},
+        9: {1: 4, 2: 3, 3: 3, 4: 3, 5: 1},
         10: {1: 4, 2: 3, 3: 3, 4: 3, 5: 2},
         11: {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1},
         12: {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1},
@@ -27,369 +34,462 @@ class SpellService:
         17: {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1, 9: 1},
         18: {1: 4, 2: 3, 3: 3, 4: 3, 5: 3, 6: 1, 7: 1, 8: 1, 9: 1},
         19: {1: 4, 2: 3, 3: 3, 4: 3, 5: 3, 6: 2, 7: 1, 8: 1, 9: 1},
-        20: {1: 4, 2: 3, 3: 3, 4: 3, 5: 3, 6: 2, 7: 2, 8: 1, 9: 1}
+        20: {1: 4, 2: 3, 3: 3, 4: 3, 5: 3, 6: 2, 7: 2, 8: 1, 9: 1},
     }
+
     @classmethod
-    def get_all_spells(cls) -> List[Spell]:
-        """Get all available spells."""
-        return session.query(Spell).all()
-    
+    def get_all_spells(cls):
+        return cls.db_session.query(Spell).order_by(Spell.name).all()
+
     @staticmethod
-    def calculate_spellcaster_level(classes: list) -> int:
-        """
-        Calculate total spellcaster level for multiclass characters.
-        
-        Rules:
-        - Full casters (Bard, Cleric, Druid, Sorcerer, Wizard): 100%
-        - Half casters (Paladin, Ranger): 50% (rounded down)
-        - Third casters (Eldritch Knight, Arcane Trickster): 33% (rounded down)
-        """
-        full_casters = ['bard', 'cleric', 'druid', 'sorcerer', 'wizard']
-        half_casters = ['paladin', 'ranger']
-        third_casters = ['eldritch knight', 'arcane trickster']
-        
+    def _class_data(classes):
+        result = []
+        for character_class in classes:
+            if isinstance(character_class, dict):
+                result.append(character_class)
+                continue
+            dnd_class = character_class.dndclass
+            result.append({
+                "className": dnd_class.name,
+                "level": character_class.classLevel,
+                "subclass": character_class.subclass.name if character_class.subclass else "",
+                "spellcastingAbility": dnd_class.spellcasting_ability,
+                "progression": (
+                    dnd_class.caster_progression.name
+                    if dnd_class.caster_progression
+                    else None
+                ),
+            })
+        return result
+
+    @staticmethod
+    def calculate_spellcaster_level(classes):
+        full_casters = {"bard", "cleric", "druid", "sorcerer", "wizard"}
+        half_casters = {"paladin", "ranger"}
+        third_subclasses = {"eldritch knight", "arcane trickster"}
         total = 0
-        
-        for cls in classes:
-            class_name = cls.get('className', '').lower()
-            level = cls.get('level', 0)
-            subclass = cls.get('subclass', '').lower()
-            
-            if class_name in full_casters:
+
+        for character_class in classes:
+            name = str(character_class.get("className", "")).strip().lower()
+            level = character_class.get("level", character_class.get("classLevel", 0))
+            if type(level) is not int or level < 0:
+                continue
+
+            progression = str(character_class.get("progression") or "").strip().lower()
+            if name == "artificer":
+                total += (level + 1) // 2
+            elif progression in {"full", "full caster", "full-caster"} or name in full_casters:
                 total += level
-            elif class_name in half_casters:
+            elif progression in {"half", "half caster", "half-caster"} or name in half_casters:
                 total += level // 2
-            elif class_name in ['fighter', 'rogue']:
-                # Only count if they have the right subclass
-                if subclass in third_casters:
+            elif progression in {"third", "third caster", "third-caster"}:
+                total += level // 3
+            elif name in {"fighter", "rogue"}:
+                subclass = str(character_class.get("subclass") or "").strip().lower()
+                if subclass in third_subclasses:
                     total += level // 3
-        
-        return min(total, 20)  # Cap at 20
-    
+        return min(total, 20)
+
+    @classmethod
+    def get_spell_slots(cls, spellcaster_level):
+        return cls.MULTICLASS_SLOT_TABLE.get(spellcaster_level, {})
+
     @staticmethod
-    def get_spell_slots(spellcaster_level: int) -> dict:
-        """Get spell slots for a given spellcaster level."""
-        if spellcaster_level < 1:
-            return {}
-        return SpellService.MULTICLASS_SLOT_TABLE.get(spellcaster_level, {})
-    
+    def _ability_name(value):
+        normalized = str(value or "").strip().lower()
+        return {
+            "str": "strength", "strength": "strength",
+            "dex": "dexterity", "dexterity": "dexterity",
+            "con": "constitution", "constitution": "constitution",
+            "int": "intelligence", "intelligence": "intelligence",
+            "wis": "wisdom", "wisdom": "wisdom",
+            "cha": "charisma", "charisma": "charisma",
+        }.get(normalized)
+
+    @classmethod
+    def _ability_score(cls, character, ability):
+        field = cls._ability_name(ability)
+        if field is None:
+            return 10
+        if isinstance(character, dict):
+            scores = character.get("abilityScores", {})
+            abbreviation = field[:3]
+            return scores.get(abbreviation, scores.get(field, character.get(field, 10)))
+        return getattr(character, field, 10) or 10
+
     @staticmethod
-    def calculate_spell_dc(character: dict, spellcasting_ability: str) -> int:
-        """Calculate spell save DC: 8 + proficiency + ability modifier"""
-        ability_score = character.get('abilityScores', {}).get(spellcasting_ability, 10)
-        ability_modifier = (ability_score - 10) // 2
-        proficiency_bonus = CharacterService.get_proficiency_bonus(character.get('level', 1))
-        
-        return 8 + proficiency_bonus + ability_modifier
-    
-    @staticmethod
-    def calculate_spell_attack_bonus(character: dict, spellcasting_ability: str) -> int:
-        """Calculate spell attack bonus: proficiency + ability modifier"""
-        ability_score = character.get('abilityScores', {}).get(spellcasting_ability, 10)
-        ability_modifier = (ability_score - 10) // 2
-        proficiency_bonus = CharacterService.get_proficiency_bonus(character.get('level', 1))
-        
-        return proficiency_bonus + ability_modifier
-    
-    
-    @staticmethod
-    def get_spellcasting_ability(classes: list) -> str:
-        """Determine primary spellcasting ability from classes."""
+    def _proficiency_bonus(level):
+        return 2 + max(0, min(4, (max(1, level) - 1) // 4))
+
+    @classmethod
+    def _character_level(cls, character, fallback=1):
+        if isinstance(character, dict):
+            for key in ("level", "totalLevel", "characterLevel"):
+                value = character.get(key)
+                if isinstance(value, int) and value >= 1:
+                    return value
+            classes = character.get("classes") or []
+            total = 0
+            for item in classes:
+                if isinstance(item, dict):
+                    level = item.get("level", item.get("classLevel"))
+                    if isinstance(level, int) and level >= 0:
+                        total += level
+            if total > 0:
+                return total
+            return fallback
+
+        for key in ("level", "totalLevel", "characterLevel"):
+            value = getattr(character, key, None)
+            if isinstance(value, int) and value >= 1:
+                return value
+
+        classes = getattr(character, "class_associations", None) or []
+        total = 0
+        for item in classes:
+            level = getattr(item, "classLevel", None)
+            if isinstance(level, int) and level >= 0:
+                total += level
+        if total > 0:
+            return total
+        return fallback
+
+    @classmethod
+    def calculate_spell_dc(cls, character, spellcasting_ability, level=None):
+        ability_modifier = (cls._ability_score(character, spellcasting_ability) - 10) // 2
+        if level is None:
+            level = cls._character_level(character)
+        return 8 + cls._proficiency_bonus(level) + ability_modifier
+
+    @classmethod
+    def calculate_spell_attack_bonus(cls, character, spellcasting_ability, level=None):
+        ability_modifier = (cls._ability_score(character, spellcasting_ability) - 10) // 2
+        if level is None:
+            level = cls._character_level(character)
+        return cls._proficiency_bonus(level) + ability_modifier
+
+    @classmethod
+    def get_spellcasting_ability(cls, classes):
         ability_map = {
-            'wizard': 'int',
-            'cleric': 'wis',
-            'druid': 'wis',
-            'sorcerer': 'cha',
-            'bard': 'cha',
-            'paladin': 'cha',
-            'ranger': 'wis',
-            'warlock': 'cha'
+            "wizard": "int", "cleric": "wis", "druid": "wis",
+            "sorcerer": "cha", "bard": "cha", "paladin": "cha",
+            "ranger": "wis", "warlock": "cha", "artificer": "int",
         }
-        
-        # Return first spellcasting class's ability
-        for cls in classes:
-            class_name = cls.get('className', '').lower()
-            if class_name in ability_map:
-                return ability_map[class_name]
-        
-        return 'int'  # Default
-    
-    # [NOTE] Database operations
-    @staticmethod
-    def get_character_spell_slots(charID: int) -> dict:
-        """Get character's spell slots with all calculations."""
-        char = session.query(Character).filter_by(id=charID).first()
-        if not char:
-            return {"success": False, "error": "Character not found"}
-        
+        for character_class in classes:
+            ability = character_class.get("spellcastingAbility")
+            if ability:
+                normalized = cls._ability_name(ability)
+                if normalized:
+                    return normalized[:3]
+            name = str(character_class.get("className", "")).strip().lower()
+            if name in ability_map:
+                return ability_map[name]
+        return "int"
+
+    @classmethod
+    def get_character_spell_slots(cls, charID):
         try:
-            # Get all class levels
-            classes = session.query(CharacterClass).filter_by(characterID=charID).all()
-            classes_data = [{'className': c.dndclass.name, 'level': c.level, 'subclass': c.subclass} for c in classes]
-            
-            # Calculate spellcaster level
-            spellcaster_level = SpellService.calculate_spellcaster_level(classes_data)
-            
-            # Get spell slots
-            spell_slots = SpellService.get_spell_slots(spellcaster_level)
-            
-            # Get or initialize expended slots
-            expended = char.spell_slots_expended or {str(k): 0 for k in spell_slots.keys()}
-            
-            # Calculate remaining
-            remaining = {k: v - expended.get(str(k), 0) for k, v in spell_slots.items()}
-            
-            # Get spellcasting ability
-            spellcasting_ability = SpellService.get_spellcasting_ability(classes_data)
-            
-            # Calculate DC and attack bonus
-            spell_dc = SpellService.calculate_spell_dc(char.to_dict(), spellcasting_ability)
-            spell_attack = SpellService.calculate_spell_attack_bonus(char.to_dict(), spellcasting_ability)
-            
+            character = cls.db_session.query(Character).filter_by(id=charID).first()
+            if character is None:
+                return {"success": False, "error": "Character not found."}
+
+            classes = cls.db_session.query(CharacterClass).filter_by(
+                characterID=charID
+            ).all()
+            classes_data = cls._class_data(classes)
+            caster_level = cls.calculate_spellcaster_level(classes_data)
+            slot_counts = cls.get_spell_slots(caster_level)
+            expended_rows = cls.db_session.query(CharacterSpellSlot).filter_by(
+                characterID=charID
+            ).all()
+            expended = {row.slotLevel: row.expendedSlots for row in expended_rows}
+            slots = [
+                {
+                    "level": level,
+                    "total": count,
+                    "expended": min(expended.get(level, 0), count),
+                    "remaining": max(0, count - expended.get(level, 0)),
+                }
+                for level, count in sorted(slot_counts.items())
+            ]
+            ability = cls.get_spellcasting_ability(classes_data)
+            total_level = sum(item["level"] for item in classes_data)
             return {
                 "success": True,
                 "data": {
-                    'spell_slots': spell_slots,
-                    'spell_slots_expended': expended,
-                    'spell_slots_remaining': remaining,
-                    'spellcaster_level': spellcaster_level,
-                    'spellcasting_ability': spellcasting_ability,
-                    'spell_save_dc': spell_dc,
-                    'spell_attack_bonus': spell_attack
-                }
+                    "slots": slots,
+                    "spellcaster_level": caster_level,
+                    "spellcasting_ability": ability,
+                    "spell_save_dc": cls.calculate_spell_dc(character, ability, total_level),
+                    "spell_attack_bonus": cls.calculate_spell_attack_bonus(
+                        character, ability, total_level
+                    ),
+                },
             }
-        except Exception as e:
-            return {"success": False, "error": str(e)}
-    
-    @staticmethod
-    def update_expended_slots(charID: int, level: int, amount: int) -> dict:
-        """Update expended spell slots."""
+        except SQLAlchemyError as error:
+            cls.db_session.rollback()
+            logger.exception("Database error calculating character spell slots")
+            return {"success": False, "error": str(error)}
+
+    @classmethod
+    def update_expended_slots(cls, charID, level, amount):
+        if type(level) is not int or not 1 <= level <= 9:
+            return {"success": False, "error": "Slot level must be an integer from 1 to 9."}
+        if type(amount) is not int or amount == 0:
+            return {"success": False, "error": "Amount must be a non-zero integer."}
+
         try:
-            char = session.query(Character).filter_by(id=charID).first()
-            if not char:
-                return {"success": False, "error": "Character not found"}
-            
-            level_str = str(level)
-            
-            # Initialize if needed
-            if not char.spell_slots_expended:
-                char.spell_slots_expended = {}
-            
-            # Update expended
-            current = char.spell_slots_expended.get(level_str, 0)
-            char.spell_slots_expended[level_str] = max(0, current + amount)
-            
-            session.commit()
-            return {"success": True, "data": char.spell_slots_expended}
-        except Exception as e:
-            session.rollback()
-            return {"success": False, "error": str(e)}
-    
+            character = cls.db_session.query(Character).filter_by(id=charID).first()
+            if character is None:
+                return {"success": False, "error": "Character not found."}
+
+            slot_result = cls.get_character_spell_slots(charID)
+            if not slot_result["success"]:
+                return slot_result
+            totals = {slot["level"]: slot["total"] for slot in slot_result["data"]["slots"]}
+            if level not in totals:
+                return {"success": False, "error": "Character has no slots at that level."}
+
+            usage = cls.db_session.query(CharacterSpellSlot).filter_by(
+                characterID=charID,
+                slotLevel=level,
+            ).first()
+            current = usage.expendedSlots if usage else 0
+            updated = current + amount
+            if updated < 0 or updated > totals[level]:
+                return {"success": False, "error": "Expended slots must stay within the available slot count."}
+
+            if usage is None:
+                usage = CharacterSpellSlot(
+                    characterID=charID,
+                    slotLevel=level,
+                    expendedSlots=updated,
+                )
+                cls.db_session.add(usage)
+            else:
+                usage.expendedSlots = updated
+            cls.db_session.commit()
+            return cls.get_character_spell_slots(charID)
+        except SQLAlchemyError as error:
+            cls.db_session.rollback()
+            logger.exception("Database error updating character spell slots")
+            return {"success": False, "error": str(error)}
+
     @staticmethod
-    def get_character_spells(charID: int) -> dict:
-        """Get all spells known by character."""
+    def _serialize_character_spell(character_spell):
+        return {
+            "id": character_spell.spellID,
+            "spell": character_spell.spell.to_dict(),
+            "prepared": bool(character_spell.isPrepared),
+        }
+
+    @classmethod
+    def get_character_spells(cls, charID):
         try:
-            spells = session.query(CharacterSpell).filter_by(characterID=charID).all()
+            character = cls.db_session.query(Character).filter_by(id=charID).first()
+            if character is None:
+                return {"success": False, "error": "Character not found."}
+            spells = cls.db_session.query(CharacterSpell).filter_by(
+                characterID=charID
+            ).all()
             return {
                 "success": True,
-                "data": [s.to_dict() for s in spells]
+                "data": [cls._serialize_character_spell(row) for row in spells],
             }
-        except Exception as e:
-            return {"success": False, "error": str(e)}
-    
-    @staticmethod
-    def add_spell_to_character(charID: int, spell_data: dict) -> dict:
-        """Add a spell to character's known spells."""
+        except SQLAlchemyError as error:
+            cls.db_session.rollback()
+            logger.exception("Database error listing character spells")
+            return {"success": False, "error": str(error)}
+
+    @classmethod
+    def add_spell_to_character(cls, charID, spell_data):
+        if not isinstance(spell_data, dict) or not isinstance(spell_data.get("spellID"), int):
+            return {"success": False, "error": "spellID must be an integer."}
+
         try:
-            if 'spellID' not in spell_data:
-                return {"success": False, "error": "Missing spellID"}
-            
-            # Verify spell exists
-            spell = session.query(Spell).filter_by(id=spell_data['spellID']).first()
-            if not spell:
-                return {"success": False, "error": "Spell not found"}
-            
-            # Create character spell entry
-            char_spell = CharacterSpell(
+            character = cls.db_session.query(Character).filter_by(id=charID).first()
+            if character is None:
+                return {"success": False, "error": "Character not found."}
+            spell = cls.db_session.query(Spell).filter_by(id=spell_data["spellID"]).first()
+            if spell is None:
+                return {"success": False, "error": "Spell not found."}
+            existing = cls.db_session.query(CharacterSpell).filter_by(
                 characterID=charID,
-                spellID=spell_data['spellID'],
-                source=spell_data.get('source', 'class'),
-                source_name=spell_data.get('source_name', ''),
-                is_prepared=spell_data.get('is_prepared', False),
-                always_prepared=spell_data.get('always_prepared', False)
+                spellID=spell.id,
+            ).first()
+            if existing is not None:
+                return {"success": False, "error": "Spell is already on this character."}
+
+            prepared = spell_data.get("isPrepared", spell_data.get("is_prepared", False))
+            if not isinstance(prepared, bool):
+                return {"success": False, "error": "isPrepared must be a boolean."}
+            association = CharacterSpell(
+                characterID=charID,
+                spellID=spell.id,
+                isPrepared=prepared,
             )
-            
-            session.add(char_spell)
-            session.commit()
-            
-            return {"success": True, "data": char_spell.to_dict()}
-        except Exception as e:
-            session.rollback()
-            return {"success": False, "error": str(e)}
-    
-    @staticmethod
-    def add_spells_bulk_to_character(charID: int, spell_ids: list, is_prepared: bool = True) -> dict:
-        """Add multiple spells to character at once (much faster than one-by-one)."""
+            cls.db_session.add(association)
+            cls.db_session.commit()
+            return {"success": True, "data": cls._serialize_character_spell(association)}
+        except SQLAlchemyError as error:
+            cls.db_session.rollback()
+            logger.exception("Database error adding a character spell")
+            return {"success": False, "error": str(error)}
+
+    @classmethod
+    def add_spells_bulk_to_character(cls, charID, spell_ids, is_prepared=False):
+        if not isinstance(spell_ids, (list, tuple)) or any(
+            not isinstance(spell_id, int) for spell_id in spell_ids
+        ):
+            return {"success": False, "error": "spell_ids must be a list of integer IDs."}
+        if not isinstance(is_prepared, bool):
+            return {"success": False, "error": "is_prepared must be a boolean."}
+
         try:
-            if not spell_ids:
-                return {"success": True, "data": [], "message": "No spells to add"}
-            
-            # Verify all spells exist
-            spells = session.query(Spell).filter(Spell.id.in_(spell_ids)).all()
-            if len(spells) != len(spell_ids):
-                return {"success": False, "error": "One or more spells not found"}
-            
-            # Create all character spell entries at once
-            char_spells = [
+            character = cls.db_session.query(Character).filter_by(id=charID).first()
+            if character is None:
+                return {"success": False, "error": "Character not found."}
+            requested_ids = set(spell_ids)
+            if not requested_ids:
+                return {"success": True, "data": [], "count": 0}
+            spells = cls.db_session.query(Spell).filter(Spell.id.in_(requested_ids)).all()
+            if {spell.id for spell in spells} != requested_ids:
+                return {"success": False, "error": "One or more spells were not found."}
+
+            existing_ids = {
+                row.spellID
+                for row in cls.db_session.query(CharacterSpell).filter(
+                    CharacterSpell.characterID == charID,
+                    CharacterSpell.spellID.in_(requested_ids),
+                ).all()
+            }
+            associations = [
                 CharacterSpell(
                     characterID=charID,
                     spellID=spell_id,
-                    source='class',
-                    source_name='',
-                    is_prepared=is_prepared,  # Allow caller to specify prepared status
-                    always_prepared=False
+                    isPrepared=is_prepared,
                 )
-                for spell_id in spell_ids
+                for spell_id in sorted(requested_ids - existing_ids)
             ]
-            
-            # Bulk add and commit once
-            session.add_all(char_spells)
-            session.commit()
-            
-            return {"success": True, "data": [cs.to_dict() for cs in char_spells], "count": len(char_spells)}
-        except Exception as e:
-            session.rollback()
-            return {"success": False, "error": str(e)}
-    
-    @staticmethod
-    def toggle_spell_prepared(charID: int, spellID: int) -> dict:
-        """Toggle whether a spell is prepared."""
-        try:
-            char_spell = session.query(CharacterSpell).filter_by(
-                characterID=charID,
-                spellID=spellID
-            ).first()
-            
-            if not char_spell:
-                return {"success": False, "error": "Spell not found on character"}
-            
-            char_spell.is_prepared = not char_spell.is_prepared
-            session.commit()
-            
-            return {"success": True, "data": {"is_prepared": char_spell.is_prepared}}
-        except Exception as e:
-            session.rollback()
-            return {"success": False, "error": str(e)}
-    
-    @staticmethod
-    def calculate_prepare_limit(charID: int) -> dict:
-        """
-        Calculate spell prepare limit based on D&D 5e rules by class.
-        
-        Rules by class:
-        - Cleric: Wisdom Mod + Cleric Level
-        - Druid: Wisdom Mod + Druid Level
-        - Paladin: Charisma Mod + Paladin Level / 2 (rounded down)
-        - Ranger: Wisdom Mod + Ranger Level / 2 (rounded down)
-        - Monk: Intelligence Mod + Monk Level / 2 (rounded down)
-        - Artificer: Intelligence Mod + Artificer Level / 2 (rounded down)
-        - Wizard: Intelligence Mod + Wizard Level (can prepare all known)
-        - Bard, Sorcerer, Warlock: No limit (all known are prepared)
-        """
-        try:
-            character = session.query(Character).filter_by(id=charID).first()
-            if not character:
-                return {"success": False, "error": "Character not found"}
-            
-            classes = session.query(CharacterClass).filter_by(characterID=charID).all()
-            prepared_count = 0
-            prepare_limit = None
-            prepare_ability = None
-            primary_spellcasting_class = None
-            
-            ability_scores = character.abilityScores or {}
-            
-            for char_class in classes:
-                class_name = char_class.dndclass.name.lower()
-                class_level = char_class.level
-                
-                # Classes with fixed prepare limits
-                if class_name == 'cleric':
-                    wis_mod = (ability_scores.get('wis', 10) - 10) // 2
-                    limit = max(1, wis_mod + class_level)
-                    prepare_limit = limit
-                    prepare_ability = 'wis'
-                    primary_spellcasting_class = 'Cleric'
-                    
-                elif class_name == 'druid':
-                    wis_mod = (ability_scores.get('wis', 10) - 10) // 2
-                    limit = max(1, wis_mod + class_level)
-                    prepare_limit = limit
-                    prepare_ability = 'wis'
-                    primary_spellcasting_class = 'Druid'
-                    
-                elif class_name == 'paladin':
-                    cha_mod = (ability_scores.get('cha', 10) - 10) // 2
-                    limit = max(1, cha_mod + (class_level // 2))
-                    prepare_limit = limit
-                    prepare_ability = 'cha'
-                    primary_spellcasting_class = 'Paladin'
-                    
-                elif class_name == 'ranger':
-                    wis_mod = (ability_scores.get('wis', 10) - 10) // 2
-                    limit = max(1, wis_mod + (class_level // 2))
-                    prepare_limit = limit
-                    prepare_ability = 'wis'
-                    primary_spellcasting_class = 'Ranger'
-                    
-                elif class_name == 'monk':
-                    int_mod = (ability_scores.get('int', 10) - 10) // 2
-                    limit = max(0, int_mod + (class_level // 2))
-                    prepare_limit = limit
-                    prepare_ability = 'int'
-                    primary_spellcasting_class = 'Monk'
-                    
-                elif class_name == 'artificer':
-                    int_mod = (ability_scores.get('int', 10) - 10) // 2
-                    limit = max(1, int_mod + (class_level // 2))
-                    prepare_limit = limit
-                    prepare_ability = 'int'
-                    primary_spellcasting_class = 'Artificer'
-                    
-                elif class_name == 'wizard':
-                    int_mod = (ability_scores.get('int', 10) - 10) // 2
-                    limit = max(1, int_mod + class_level)
-                    prepare_limit = limit
-                    prepare_ability = 'int'
-                    primary_spellcasting_class = 'Wizard'
-                    
-                elif class_name in ['bard', 'sorcerer', 'warlock']:
-                    # No limit - all known spells are prepared
-                    prepare_limit = float('inf')
-                    primary_spellcasting_class = class_name.title()
-            
-            # Count currently prepared spells (EXCLUDE CANTRIPS)
-            prepared_spells = session.query(CharacterSpell).filter(
-                CharacterSpell.characterID == charID,
-                CharacterSpell.is_prepared == True
-            ).all()
-            
-            # Filter out cantrips from the count
-            spell_ids = [cs.spellID for cs in prepared_spells]
-            non_cantrip_spells = session.query(Spell).filter(
-                Spell.id.in_(spell_ids),
-                Spell.level > 0  # Exclude cantrips (level 0)
-            ).all()
-            prepared_count = len(non_cantrip_spells) if spell_ids else 0
-            
+            cls.db_session.add_all(associations)
+            cls.db_session.commit()
             return {
                 "success": True,
-                "prepare_limit": prepare_limit if prepare_limit != float('inf') else None,
-                "prepared_count": prepared_count,
-                "prepare_ability": prepare_ability,
-                "primary_spellcasting_class": primary_spellcasting_class,
-                "unlimited": prepare_limit == float('inf')
+                "data": [cls._serialize_character_spell(row) for row in associations],
+                "count": len(associations),
             }
-        except Exception as e:
-            return {"success": False, "error": str(e)}
-        
+        except SQLAlchemyError as error:
+            cls.db_session.rollback()
+            logger.exception("Database error bulk adding character spells")
+            return {"success": False, "error": str(error)}
+
+    @classmethod
+    def remove_spell_from_character(cls, charID, spellID):
+        try:
+            association = cls.db_session.query(CharacterSpell).filter_by(
+                characterID=charID,
+                spellID=spellID,
+            ).first()
+            if association is None:
+                return {"success": False, "error": "Spell not found on character."}
+            cls.db_session.delete(association)
+            cls.db_session.commit()
+            return {"success": True, "message": "Spell removed from character."}
+        except SQLAlchemyError as error:
+            cls.db_session.rollback()
+            logger.exception("Database error removing a character spell")
+            return {"success": False, "error": str(error)}
+
+    @classmethod
+    def toggle_spell_prepared(cls, charID, spellID):
+        try:
+            association = cls.db_session.query(CharacterSpell).filter_by(
+                characterID=charID,
+                spellID=spellID,
+            ).first()
+            if association is None:
+                return {"success": False, "error": "Spell not found on character."}
+            association.isPrepared = not association.isPrepared
+            cls.db_session.commit()
+            return {
+                "success": True,
+                "data": cls._serialize_character_spell(association),
+            }
+        except SQLAlchemyError as error:
+            cls.db_session.rollback()
+            logger.exception("Database error toggling character spell preparation")
+            return {"success": False, "error": str(error)}
+
+    @classmethod
+    def set_spells_prepared(cls, charID, spell_ids, is_prepared):
+        if not isinstance(spell_ids, list) or any(
+            not isinstance(spell_id, int) for spell_id in spell_ids
+        ):
+            return {"success": False, "error": "spell_ids must be a list of integer IDs."}
+        if not isinstance(is_prepared, bool):
+            return {"success": False, "error": "is_prepared must be a boolean."}
+
+        try:
+            associations = cls.db_session.query(CharacterSpell).filter(
+                CharacterSpell.characterID == charID,
+                CharacterSpell.spellID.in_(set(spell_ids)),
+            ).all() if spell_ids else []
+            if len(associations) != len(set(spell_ids)):
+                return {"success": False, "error": "One or more spells were not found on character."}
+            for association in associations:
+                association.isPrepared = is_prepared
+            cls.db_session.commit()
+            return {"success": True, "data": [cls._serialize_character_spell(row) for row in associations]}
+        except SQLAlchemyError as error:
+            cls.db_session.rollback()
+            logger.exception("Database error updating character spell preparation")
+            return {"success": False, "error": str(error)}
+
+    @classmethod
+    def calculate_prepare_limit(cls, charID):
+        try:
+            character = cls.db_session.query(Character).filter_by(id=charID).first()
+            if character is None:
+                return {"success": False, "error": "Character not found."}
+            classes = cls._class_data(
+                cls.db_session.query(CharacterClass).filter_by(characterID=charID).all()
+            )
+            limits = []
+            abilities = []
+            unlimited = False
+            for character_class in classes:
+                name = str(character_class["className"]).lower()
+                level = character_class["level"]
+                rule = {
+                    "cleric": ("wis", 1), "druid": ("wis", 1),
+                    "paladin": ("cha", 0.5), "ranger": ("wis", 0.5),
+                    "wizard": ("int", 1), "artificer": ("int", 0.5),
+                }.get(name)
+                if rule:
+                    ability, multiplier = rule
+                    class_level = int(level * multiplier)
+                    limits.append(max(1, (cls._ability_score(character, ability) - 10) // 2 + class_level))
+                    abilities.append(ability)
+                elif name in {"bard", "sorcerer"}:
+                    unlimited = True
+
+            prepared_count = cls.db_session.query(CharacterSpell).join(Spell).filter(
+                CharacterSpell.characterID == charID,
+                CharacterSpell.isPrepared.is_(True),
+                Spell.level > 0,
+            ).count()
+            limit = sum(limits) if limits else None
+            if limits:
+                unlimited = False
+            return {
+                "success": True,
+                "limit": limit,
+                "prepared": prepared_count,
+                "prepare_ability": ", ".join(sorted(set(abilities))) or None,
+                "primary_spellcasting_class": classes[0]["className"] if classes else None,
+                "unlimited": unlimited,
+            }
+        except SQLAlchemyError as error:
+            cls.db_session.rollback()
+            logger.exception("Database error calculating spell preparation limit")
+            return {"success": False, "error": str(error)}

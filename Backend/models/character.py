@@ -33,8 +33,9 @@ class Character(Base):
     inventory = relationship("Inventory", back_populates="character")
     conditions = relationship("CharacterConditions", back_populates="character")
     feats = relationship("CharacterFeats", back_populates="character")
-    class_associations = relationship("CharacterClasses", back_populates="character")
+    class_associations = relationship("CharacterClass", back_populates="character")
     spells = relationship("CharacterSpell", back_populates="character")
+    spell_slot_usage = relationship("CharacterSpellSlot", back_populates="character")
     proficiencies = relationship("CharacterProficiency", back_populates="character")
     traits = relationship("CharacterTraits", back_populates="character")
     user_characters = relationship("UserCharacter", back_populates="character")
@@ -75,7 +76,7 @@ class CharacterFeats(Base):
     feat = relationship("Feats", back_populates="character_feats")
 
 class CharacterClass(Base):
-    __tablename__ = "characterClass"
+    __tablename__ = "characterClasses"
     characterID = Column(Integer, ForeignKey("characters.characterID"), primary_key=True)
     classID = Column(Integer, ForeignKey("classes.classID"), primary_key=True)
     subclassID = Column(Integer, ForeignKey("subclasses.subclassID"), nullable=True)

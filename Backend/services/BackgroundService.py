@@ -1,57 +1,14 @@
-from Backend.models import session, Background
+from Backend.models import Background
+from .BaseModelService import BaseModelService
 
-class BackgroundService:
-    @staticmethod
-    def get_all():
-        """Get all backgrounds"""
-        try:
-            backgrounds = session.query(Background).all()
-            return {
-                "success": True,
-                "data": [bg.to_dict() for bg in backgrounds]
-            }
-        except Exception as e:
-            return {
-                "success": False,
-                "error": str(e)
-            }
 
-    @staticmethod
-    def get_byID(bgID):
-        """Get a background by ID"""
-        try:
-            background = session.query(Background).filter_by(id=bgID).first()
-            if not background:
-                return {
-                    "success": False,
-                    "error": "Background not found"
-                }
-            return {
-                "success": True,
-                "data": background.to_dict()
-            }
-        except Exception as e:
-            return {
-                "success": False,
-                "error": str(e)
-            }
+class BackgroundService(BaseModelService):
+    model = Background
 
-    @staticmethod
-    def get_by_name(name):
-        """Get a background by name"""
-        try:
-            background = session.query(Background).filter_by(name=name).first()
-            if not background:
-                return {
-                    "success": False,
-                    "error": "Background not found"
-                }
-            return {
-                "success": True,
-                "data": background.to_dict()
-            }
-        except Exception as e:
-            return {
-                "success": False,
-                "error": str(e)
-            }
+    @classmethod
+    def get_byID(cls, bg_id):
+        return cls.get_by_id(bg_id)
+
+    @classmethod
+    def get_by_name(cls, name):
+        return cls.get_by_field("name", name)

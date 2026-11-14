@@ -232,6 +232,10 @@ export interface SpellSlot {
 
 export interface SpellSlotResponse {
     slots: SpellSlot[];
+    spellcaster_level?: number;
+    spellcasting_ability?: string;
+    spell_save_dc?: number;
+    spell_attack_bonus?: number;
 }
 
 export interface CharacterSpell {
@@ -242,8 +246,11 @@ export interface CharacterSpell {
 }
 
 export interface PrepareLimit {
-    limit: number;
+    limit: number | null;
     prepared: number;
+    unlimited?: boolean;
+    prepare_ability?: string | null;
+    primary_spellcasting_class?: string | null;
 }
 
 // ============ Request Types ============

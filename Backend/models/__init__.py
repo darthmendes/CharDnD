@@ -59,6 +59,7 @@ from .traits import CharacterTraits, SpeciesTraits, Traits
 from .random import Conditions
 from .extra import (
     CasterProgression,
+    CharacterSpellSlot,
     CharacterFeatureUse,
     CharacterNote,
     CreatureSize,

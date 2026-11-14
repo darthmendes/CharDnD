@@ -1294,6 +1294,21 @@
         <mxCell id="IdzM_anxmXLFGTUkYMHz-189" parent="IdzM_anxmXLFGTUkYMHz-182" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" value="source" vertex="1">
           <mxGeometry height="30" width="140" y="120" as="geometry" />
         </mxCell>
+        <mxCell id="spell-slot-usage-table" parent="59tXjGPmyOReb6u7SUXh-1" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=light-dark(#FFFFFF,#990000);" value="characterSpellSlots" vertex="1">
+          <mxGeometry height="120" width="180" x="-590" y="600" as="geometry" />
+        </mxCell>
+        <mxCell id="spell-slot-usage-character-id" parent="spell-slot-usage-table" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" value="characterID" vertex="1">
+          <mxGeometry height="30" width="180" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="spell-slot-usage-level" parent="spell-slot-usage-table" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" value="slotLevel" vertex="1">
+          <mxGeometry height="30" width="180" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="spell-slot-usage-expended" parent="spell-slot-usage-table" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" value="expendedSlots" vertex="1">
+          <mxGeometry height="30" width="180" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="spell-slot-usage-character-edge" edge="1" parent="59tXjGPmyOReb6u7SUXh-1" source="59tXjGPmyOReb6u7SUXh-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="spell-slot-usage-table">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
         <mxCell id="IdzM_anxmXLFGTUkYMHz-186" edge="1" parent="59tXjGPmyOReb6u7SUXh-1" source="59tXjGPmyOReb6u7SUXh-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0.007;entryY=0.156;entryDx=0;entryDy=0;entryPerimeter=0;defaultLabelBackgroundColor=page;" target="IdzM_anxmXLFGTUkYMHz-182">
           <mxGeometry relative="1" x="0.6135" as="geometry">
             <Array as="points">

@@ -4,6 +4,7 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import SQLAlchemyError
 from ..models.dndclass import DnDclass
 from ..models import session
+from .BaseModelService import BaseModelService
 
 __all__ = [
     'ClassService',
@@ -12,7 +13,8 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-class ClassService:
+class ClassService(BaseModelService):
+    model = DnDclass
     """
     Service layer for DnD Class CRUD operations.
     Follows consistent return pattern: {"success": bool, "data"/"error"/"message": ...}
