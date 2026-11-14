@@ -42,6 +42,42 @@ class Character(Base):
     notes = relationship("CharacterNote", back_populates="character")
     feature_uses = relationship("CharacterFeatureUse", back_populates="character")
 
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "age": self.age,
+            "alignment": self.alignment,
+            "description": self.description,
+            "experiencePoints": self.experiencePoints,
+            "hp": self.hp,
+            "tmpHp": self.tmpHp,
+            "maxhp": self.maxhp,
+            "money": self.money,
+            "inspiration": self.inspiration,
+            "speciesID": self.speciesID,
+            "backgroundID": self.backgroundID,
+            "strength": self.strength,
+            "dexterity": self.dexterity,
+            "constitution": self.constitution,
+            "charisma": self.charisma,
+            "intelligence": self.intelligence,
+            "wisdom": self.wisdom,
+            "abilityScores": {
+                "str": self.strength,
+                "dex": self.dexterity,
+                "con": self.constitution,
+                "cha": self.charisma,
+                "int": self.intelligence,
+                "wis": self.wisdom,
+            },
+            "classes": [assoc.to_dict() if hasattr(assoc, "to_dict") else {
+                "classID": getattr(assoc, "classID", None),
+                "classLevel": getattr(assoc, "classLevel", None),
+                "subclassID": getattr(assoc, "subclassID", None),
+            } for assoc in self.class_associations],
+        }
+
 class Inventory(Base):
     __tablename__ = "inventory"
     id = Column("inventoryEntryID", Integer, primary_key=True, autoincrement=True)

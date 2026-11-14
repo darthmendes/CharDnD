@@ -18,10 +18,12 @@ class BaseModelService:
 
     @classmethod
     def _column_fields(cls):
+        """Return every mapped database column name for the model so we can safely serialize or validate input."""
         return [prop.key for prop in inspect(cls.model).column_attrs]
 
     @classmethod
     def _primary_key_fields(cls):
+        """Return the model's primary key column names so lookups and updates can be built consistently."""
         mapper = inspect(cls.model)
         return [
             mapper.get_property_by_column(column).key
@@ -30,6 +32,7 @@ class BaseModelService:
 
     @classmethod
     def _serialize(cls, instance):
+        """Convert a SQLAlchemy row into a plain dictionary using the model's mapped columns."""
         return {
             field: getattr(instance, field)
             for field in cls._column_fields()
@@ -37,6 +40,7 @@ class BaseModelService:
 
     @classmethod
     def _identity_filter(cls, identifier):
+        """Normalize a primary-key lookup so a service can accept a single value, a tuple/list, or a mapping."""
         primary_key_fields = cls._primary_key_fields()
 
         if isinstance(identifier, Mapping):
@@ -60,11 +64,13 @@ class BaseModelService:
 
     @classmethod
     def _get_instance(cls, identifier):
+        """Fetch a single model instance by its identifier using the standard SQLAlchemy filter_by pattern."""
         filters = cls._identity_filter(identifier)
         return cls.db_session.query(cls.model).filter_by(**filters).first()
 
     @classmethod
     def _validate_data(cls, data, allow_primary_key=False):
+        """Ensure payload keys match the model's column fields and reject unknown/immutable fields before writing."""
         if not isinstance(data, Mapping):
             raise ValueError("Data must be an object with mapped column fields.")
 
@@ -83,6 +89,7 @@ class BaseModelService:
 
     @classmethod
     def get_all(cls, limit=None, offset=0):
+        """Return all rows for this model, optionally paginated with a limit and offset."""
         if limit is not None and (not isinstance(limit, int) or limit < 1):
             return {"success": False, "error": "limit must be a positive integer."}
         if not isinstance(offset, int) or offset < 0:
@@ -103,6 +110,7 @@ class BaseModelService:
 
     @classmethod
     def get_by_id(cls, identifier):
+        """Return one record by its primary key, formatted as a serialized dictionary for API use."""
         try:
             instance = cls._get_instance(identifier)
             if instance is None:
@@ -117,6 +125,7 @@ class BaseModelService:
 
     @classmethod
     def get_by_field(cls, field, value):
+        """Look up the first row matching a non-primary-key column and serialize the result."""
         if field not in cls._column_fields():
             return {"success": False, "error": "Unknown field: " + str(field)}
 
@@ -136,6 +145,7 @@ class BaseModelService:
 
     @classmethod
     def create(cls, data):
+        """Create a new database row from a validated dictionary of model fields and return the stored record."""
         try:
             values = cls._validate_data(data, allow_primary_key=True)
             instance = cls.model(**values)
@@ -152,6 +162,7 @@ class BaseModelService:
 
     @classmethod
     def update(cls, identifier, data):
+        """Update one record by identifier with only valid model fields and return the new serialized version."""
         try:
             values = cls._validate_data(data)
             instance = cls._get_instance(identifier)
@@ -170,6 +181,7 @@ class BaseModelService:
 
     @classmethod
     def delete(cls, identifier):
+        """Delete a record by identifier and return a success message if the row exists and is removed cleanly."""
         try:
             instance = cls._get_instance(identifier)
             if instance is None:

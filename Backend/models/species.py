@@ -26,6 +26,16 @@ class Species(Base):
     traits = relationship("SpeciesTraits", back_populates="species")
     proficiencies = relationship("SpeciesProficiency", back_populates="species")
 
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "creatureType": self.creatureType,
+            "sizeID": self.sizeID,
+            "parent": self.parent,
+        }
+
 class SpeciesSpeed(Base):
     __tablename__ = "speciesSpeed"
     speciesID = Column(Integer, ForeignKey("species.speciesID"), primary_key=True)
