@@ -19,6 +19,7 @@ from Backend.services.SpeciesService import SpeciesService as Species
 from Backend.services.ClassService import ClassService as DnDClass
 from Backend.services.ItemService import ItemService as Item
 from Backend.services.SpellService import SpellService as Spell
+from Backend.services.LanguageService import LanguageService
 
 from Backend.constants import PACK_DEFINITIONS
 from Backend.config import FLASK_DEBUG, FLASK_PORT, CORS_ORIGINS, SECRET_KEY
@@ -508,10 +509,15 @@ def delete_item(id):
 # Language Routes
 ################################################################
 
-
 @api_v1.route('/languages', methods=['GET'])
 def get_languages():
-    return jsonify({"error": "Languages are not represented in the current data model."}), HTTPStatus.NOT_IMPLEMENTED
+    try:
+        return jsonify([
+            language.to_dict() for language in LanguageService.get_all()
+        ]), HTTPStatus.OK
+    except Exception as e:
+        logger.exception("Failed to retrieve language proficiencies")
+        return jsonify({"error": str(e)}), HTTPStatus.INTERNAL_SERVER_ERROR
     
 ################################################################
 # Spell Routes

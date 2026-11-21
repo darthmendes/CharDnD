@@ -43,7 +43,12 @@ from .item import (
     WeaponItem,
 )
 from .species import Species, SpeciesSpeed
-from .background import Background, BackgroundEquipment, BackgroundProficiencies
+from .background import (
+    Background,
+    BackgroundDetails,
+    BackgroundEquipment,
+    BackgroundProficiencies,
+)
 from .features import Features
 from .proficiencies import (
     BackgroundProficiency,

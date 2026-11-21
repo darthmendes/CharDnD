@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import styles from '../CharacterCreator.module.css';
+import { fetchLanguages } from '../../../services/api';
+import type { Language } from '../../../types/api';
 
 interface Species {
   id: number;
@@ -23,6 +25,8 @@ interface Species {
   traits: any[];
   languages: any[];
   optional_languages: any[]; // [NOTE] Language choice groups
+  parent?: number | null;
+  language_choices?: number;
 }
 
 interface Props {
@@ -33,8 +37,10 @@ interface Props {
 
 const Step2Species: React.FC<Props> = ({ character, updateField, speciesList = [] }) => {
   const [loading, setLoading] = useState(true);
+  const [languageList, setLanguageList] = useState<Language[]>([]);
+  const [loadingLanguages, setLoadingLanguages] = useState(true);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(
-    character.speciesLanguages || []
+    Array.isArray(character.speciesLanguages) ? character.speciesLanguages : []
   );
 
   useEffect(() => {
@@ -42,6 +48,16 @@ const Step2Species: React.FC<Props> = ({ character, updateField, speciesList = [
       setLoading(false);
     }
   }, [speciesList]);
+
+  useEffect(() => {
+    fetchLanguages().then(languages => {
+      setLanguageList(languages);
+      setLoadingLanguages(false);
+    }).catch(error => {
+      console.error('Failed to fetch languages:', error);
+      setLoadingLanguages(false);
+    });
+  }, []);
 
   const handleSpeciesChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     updateField('species', e.target.value);
@@ -79,58 +95,35 @@ const Step2Species: React.FC<Props> = ({ character, updateField, speciesList = [
 
   const safeArray = (arr: any) => Array.isArray(arr) ? arr : [];
 
-  const selectedSpecies = speciesList.find(s => s.name === character.species);
+  const playableSpecies = speciesList.filter(species => species.parent == null);
+  const selectedSpecies = playableSpecies.find(s => s.name === character.species);
 
-  // [NOTE] Extract language options from traits (e.g., "Extra Language" trait)
-  const getLanguageOptionsFromTraits = () => {
-    if (!selectedSpecies?.traits) return null;
-    
-    const languageTraits = selectedSpecies.traits.filter((trait: any) => 
-      trait.name && (trait.name.includes('Language') || trait.name.includes('language'))
-    );
-    
-    if (languageTraits.length === 0) return null;
-    
-    // Parse description to extract language options
-    const languageTrait = languageTraits[0];
-    const description = languageTrait.description || '';
-    
-    // Try to extract available languages from description
-    // Example: "You can speak, read, and write Common and one extra language of your choice."
-    const parseLanguageCount = (desc: string) => {
-      const matches = desc.match(/(\d+|\w+)\s+extra\s+language/i) || desc.match(/choose\s+(\d+|\w+)\s+language/i);
-      return matches ? (isNaN(Number(matches[1])) ? 1 : Number(matches[1])) : 1;
-    };
-    
-    const count = parseLanguageCount(description);
-    
+  // Species language choice counts are supplied by the species API.
+  const getLanguageOptions = () => {
+    const count = selectedSpecies?.language_choices ?? 0;
+    if (count === 0) return null;
     return {
-      name: languageTrait.name,
-      description: description,
+      name: 'Language Choice',
+      description: `Choose ${count} additional language${count === 1 ? '' : 's'}.`,
       n_choices: count,
-      allLanguages: [
-        "Common",
-        "Dwarvish", "Elvish", "Giant", "Gnomish", "Goblin", "Halfling",
-        "Orc", "Abyssal", "Celestial", "Draconic", "Deep Speech", "Infernal",
-        "Primordial", "Sylvan", "Undercommon"
-      ]
+      allLanguages: getSpeciesAvailableLanguages(),
     };
   };
 
-  // [NOTE] Get available languages for species
+  // Don't let a language already granted by the background or species be chosen again.
   const getSpeciesAvailableLanguages = () => {
-    const allLanguages = [
-      "Dwarvish", "Elvish", "Giant", "Gnomish", "Goblin", "Halfling",
-      "Orc", "Abyssal", "Celestial", "Draconic", "Deep Speech", "Infernal",
-      "Primordial", "Sylvan", "Undercommon"
-    ];
-    
-    // Remove languages already known from species guaranteed languages
-    const guaranteedLangs = selectedSpecies?.languages?.map(l => l.name) || [];
-    return allLanguages.filter(lang => !guaranteedLangs.includes(lang));
+    const alreadyKnown = new Set<string>([
+      ...(Array.isArray(character.backgroundLanguages) ? character.backgroundLanguages : []),
+      ...(selectedSpecies?.languages ?? []).map(language =>
+        typeof language === 'string' ? language : language.name
+      ),
+    ]);
+    return languageList
+      .map(language => language.name)
+      .filter(language => !alreadyKnown.has(language));
   };
 
-  const languageOptions = getLanguageOptionsFromTraits();
+  const languageOptions = getLanguageOptions();
 
   return (
     <div className={styles.formGroup}>
@@ -146,7 +139,7 @@ const Step2Species: React.FC<Props> = ({ character, updateField, speciesList = [
             disabled={loading}
           >
             <option value="">-- Choose a species --</option>
-            {speciesList.map(species => (
+            {playableSpecies.map(species => (
               <option key={species.id} value={species.name}>
                 {species.name}
               </option>
@@ -206,7 +199,9 @@ const Step2Species: React.FC<Props> = ({ character, updateField, speciesList = [
                     ? languageOptions.n_choices 
                     : (selectedSpecies.optional_languages?.reduce((sum: number, group: any) => sum + group.n_choices, 0) || 0);
                   
-                  return allLangs.length > 0 ? (
+                  return loadingLanguages ? (
+                    <p>Loading languages...</p>
+                  ) : allLangs.length > 0 ? (
                     allLangs.map(lang => (
                       <label key={lang} style={{ display: 'block', margin: '0.25rem 0' }}>
                         <input
@@ -246,7 +241,7 @@ const Step2Species: React.FC<Props> = ({ character, updateField, speciesList = [
           {selectedSpecies ? (
             <>
               {/* Ability Bonuses */}
-              {Object.keys(selectedSpecies.ability_bonuses).length > 0 && (
+              {selectedSpecies.ability_bonuses && Object.keys(selectedSpecies.ability_bonuses).length > 0 && (
                 <div style={{ marginBottom: '1rem' }}>
                   <strong>Ability Score Bonuses</strong>
                   <ul style={{ paddingLeft: '1.2rem', margin: '0.5rem 0 0 0' }}>
@@ -259,9 +254,9 @@ const Step2Species: React.FC<Props> = ({ character, updateField, speciesList = [
 
               {/* Size & Physical Traits */}
               <div style={{ marginBottom: '1rem' }}>
-                <strong>Size:</strong> {selectedSpecies.size}<br />
-                <strong>Age of Adulthood:</strong> {selectedSpecies.age_adulthood}<br />
-                <strong>Lifespan:</strong> {selectedSpecies.lifespan} years<br />
+                {selectedSpecies.size && <><strong>Size:</strong> {selectedSpecies.size}<br /></>}
+                {selectedSpecies.age_adulthood && <><strong>Age of Adulthood:</strong> {selectedSpecies.age_adulthood}<br /></>}
+                {selectedSpecies.lifespan && <><strong>Lifespan:</strong> {selectedSpecies.lifespan} years<br /></>}
                 {selectedSpecies.alignment_tendency && (
                   <>
                     <strong>Alignment Tendency:</strong> {selectedSpecies.alignment_tendency}<br />
@@ -292,15 +287,14 @@ const Step2Species: React.FC<Props> = ({ character, updateField, speciesList = [
               {selectedSpecies && (selectedSpecies.languages?.length > 0 || selectedSpecies.optional_languages?.length > 0 || languageOptions) && (
                 <div style={{ marginBottom: '1rem' }}>
                   <strong>Languages</strong>
-                  {(selectedSpecies.languages && selectedSpecies.languages.length > 0) || selectedSpecies.name === 'Human' ? (
+                  {selectedSpecies.languages && selectedSpecies.languages.length > 0 ? (
                     <div style={{ marginTop: '0.5rem' }}>
                       <strong style={{ fontSize: '0.9rem' }}>Known:</strong>
                       <ul style={{ paddingLeft: '1.2rem', margin: '0.25rem 0 0 0', fontSize: '0.9rem' }}>
-                        {selectedSpecies.name === 'Human' && (
-                          <li>Common</li>
-                        )}
                         {selectedSpecies.languages && selectedSpecies.languages.map((lang: any) => (
-                          <li key={lang.id}>{lang.name}</li>
+                          <li key={typeof lang === 'string' ? lang : lang.name}>
+                            {typeof lang === 'string' ? lang : lang.name}
+                          </li>
                         ))}
                       </ul>
                     </div>

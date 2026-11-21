@@ -8,9 +8,42 @@ from .BaseModelService import BaseModelService
 
 logger = logging.getLogger(__name__)
 
+SPECIES_LANGUAGE_RULES = {
+    "Human": (["Common"], 1),
+    "Elf": (["Common", "Elvish"], 0),
+    "Dwarf": (["Common", "Dwarvish"], 0),
+    "Halfling": (["Common", "Halfling"], 0),
+    "Dragonborn": (["Common", "Draconic"], 0),
+    "Gnome": (["Common", "Gnomish"], 0),
+    "Half-Elf": (["Common", "Elvish"], 1),
+    "Half-Orc": (["Common", "Orc"], 0),
+    "Tiefling": (["Common", "Infernal"], 0),
+}
+
 
 class SpeciesService(BaseModelService):
     model = Species
+
+    @classmethod
+    def _serialize(cls, species):
+        data = super()._serialize(species)
+        subspecies = sorted(species.subspecies, key=lambda child: child.name)
+        data["has_subspecies"] = bool(subspecies)
+        data["subspecies"] = [
+            {"id": child.id, "name": child.name}
+            for child in subspecies
+        ]
+
+        rules_species = species
+        if species.parent is not None:
+            rules_species = species.parent_species
+        languages, language_choices = SPECIES_LANGUAGE_RULES.get(
+            rules_species.name,
+            ([], 0),
+        )
+        data["languages"] = [{"name": language} for language in languages]
+        data["language_choices"] = language_choices
+        return data
 
     @classmethod
     def new(cls, data):

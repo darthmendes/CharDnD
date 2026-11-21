@@ -1,8 +1,10 @@
 from typing import Dict, Any, Optional, Tuple
-from ..models.character import Character, CharacterClass
+from ..models.character import Character, CharacterClass, CharacterInventory
 from ..models.species import Species
 from ..models.dndclass import DnDclass, ClassSpell
 from ..models.background import Background  # [IMPORT] Add this import
+from ..models.item import Item
+from ..models.proficiencies import CharacterProficiency, Proficiency
 from ..models import session
 from .BaseModelService import BaseModelService
 
@@ -41,6 +43,40 @@ class CharacterService(BaseModelService):
                 return {"success": False, "error": f"Background '{data['background']}' not found."}
 
         try:
+            background_skills = []
+            background_tools = []
+            background_languages = []
+            if background_obj:
+                for association in background_obj.proficiencies:
+                    proficiency = association.proficiency
+                    if not proficiency or association.isChoice:
+                        continue
+                    if proficiency.type == "skill":
+                        background_skills.append(proficiency.name)
+                    elif proficiency.type == "tool":
+                        background_tools.append(proficiency.name)
+                    elif proficiency.type == "language":
+                        background_languages.append(proficiency.name)
+
+            proficient_skills = cls._merge_proficiency_names(
+                background_skills,
+                data.get('proficientSkills', []),
+                "proficientSkills",
+            )
+            proficient_tools = cls._merge_proficiency_names(
+                background_tools,
+                data.get('proficientTools', []),
+                "proficientTools",
+            )
+            known_language_names = cls._merge_proficiency_names(
+                background_languages,
+                data.get('knownLanguages', []),
+                "knownLanguages",
+            )
+            language_proficiencies = cls._resolve_language_proficiencies(
+                known_language_names
+            )
+
             # Create and add Character
             new_char = Character()
             new_char.name = data['name']
@@ -51,14 +87,19 @@ class CharacterService(BaseModelService):
             
             # [NEW] Added new fields
             new_char.subspecies = data.get('subspecies')
-            new_char.proficient_skills = data.get('proficientSkills', [])
+            new_char.proficient_skills = proficient_skills
             new_char.proficient_weapons = data.get('proficientWeapons', [])
-            new_char.proficient_tools = data.get('proficientTools', [])
-            new_char.known_languages = data.get('knownLanguages', [])
+            new_char.proficient_tools = proficient_tools
+            new_char.known_languages = []
             new_char.hit_points = data.get('hitPoints')
+            new_char.money = data.get('money', 0)
             
             session.add(new_char)
             session.flush()  # Assigns ID without committing
+            new_char.proficiencies.extend(
+                CharacterProficiency(proficiency=proficiency)
+                for proficiency in language_proficiencies
+            )
 
             # [NOTE] Handle multiclass - create CharacterClass associations
             classes_data = data.get('classes', [])
@@ -66,6 +107,7 @@ class CharacterService(BaseModelService):
                 for cls_data in classes_data:
                     dnd_class_obj = session.query(DnDclass).filter_by(name=cls_data['className']).first()
                     if not dnd_class_obj:
+                        session.rollback()
                         return {"success": False, "error": f"Class '{cls_data['className']}' not found."}
                     
                     character_class = CharacterClass(
@@ -79,6 +121,7 @@ class CharacterService(BaseModelService):
                 # Handle single class (backward compatibility)
                 dnd_class_obj = session.query(DnDclass).filter_by(name=data['char_class']).first()
                 if not dnd_class_obj:
+                    session.rollback()
                     return {"success": False, "error": f"Class '{data['char_class']}' not found."}
                 
                 character_class = CharacterClass(
@@ -88,30 +131,35 @@ class CharacterService(BaseModelService):
                 )
                 session.add(character_class)
 
-            session.commit()
-
-            # [NOTE] Add equipment items to character inventory after creation
             equipment = data.get('equipment', [])
-            if equipment:
-                from .ItemService import ItemService
-                for item_data in equipment:
-                    if 'id' in item_data:
-                        # Item from database
-                        ItemService.add_item_to_character(
-                            new_char.id,
-                            item_data['id'],
-                            item_data.get('quantity', 1)
-                        )
-                    elif 'name' in item_data:
-                        # Try to find item by name
-                        from ..models.item import Item
-                        item_obj = session.query(Item).filter_by(name=item_data['name']).first()
-                        if item_obj:
-                            ItemService.add_item_to_character(
-                                new_char.id,
-                                item_obj.id,
-                                item_data.get('quantity', 1)
-                            )
+            if not isinstance(equipment, list):
+                raise ValueError("Equipment must be an array.")
+
+            for item_data in equipment:
+                if not isinstance(item_data, dict):
+                    raise ValueError("Each equipment entry must be an object.")
+                quantity = item_data.get('quantity', 1)
+                if not isinstance(quantity, int) or quantity < 1:
+                    raise ValueError("Equipment quantity must be a positive integer.")
+
+                if item_data.get('id') is not None:
+                    item_obj = session.query(Item).filter_by(id=item_data['id']).first()
+                elif isinstance(item_data.get('name'), str) and item_data['name'].strip():
+                    item_obj = session.query(Item).filter_by(name=item_data['name'].strip()).first()
+                else:
+                    raise ValueError("Each equipment entry must include an item ID or name.")
+                if not item_obj:
+                    raise ValueError(
+                        f"Equipment item '{item_data.get('name', item_data.get('id'))}' not found."
+                    )
+
+                session.add(CharacterInventory(
+                    characterID=new_char.id,
+                    itemID=item_obj.id,
+                    quantity=quantity,
+                ))
+
+            session.commit()
 
             # [NOTE] Auto-add class spells as known but unprepared (user must prepare them manually)
             # Only add spells that character level qualifies for, exclude cantrips
@@ -154,6 +202,8 @@ class CharacterService(BaseModelService):
 
         except Exception as e:
             session.rollback()
+            if isinstance(e, ValueError):
+                return {"success": False, "error": str(e)}
             return {"success": False, "error": f"Database error: {str(e)}"}
 
     @classmethod
@@ -182,15 +232,74 @@ class CharacterService(BaseModelService):
 
         try:
             for key, value in kwargs.items():
-                if hasattr(char, key):
+                if key in ('knownLanguages', 'known_languages'):
+                    language_proficiencies = cls._resolve_language_proficiencies(value)
+                    char.proficiencies = [
+                        association
+                        for association in char.proficiencies
+                        if not association.proficiency
+                        or association.proficiency.type.lower() != "language"
+                    ]
+                    char.proficiencies.extend(
+                        CharacterProficiency(proficiency=proficiency)
+                        for proficiency in language_proficiencies
+                    )
+                    char.known_languages = []
+                elif hasattr(char, key):
                     setattr(char, key, value)
                 else:
+                    session.rollback()
                     return {"success": False, "error": f"Invalid field: {key}"}
             session.commit()
             return {"success": True, "message": "Character updated successfully."}
         except Exception as e:
             session.rollback()
+            if isinstance(e, ValueError):
+                return {"success": False, "error": str(e)}
             return {"success": False, "error": f"Update failed: {str(e)}"}
+
+    @staticmethod
+    def _merge_proficiency_names(fixed_names, chosen_names, field_name):
+        if chosen_names is None:
+            chosen_names = []
+        if not isinstance(chosen_names, list) or any(
+            not isinstance(name, str) or not name.strip()
+            for name in chosen_names
+        ):
+            raise ValueError(f"{field_name} must be an array of non-empty names.")
+        return list(dict.fromkeys(fixed_names + [name.strip() for name in chosen_names]))
+
+    @staticmethod
+    def _resolve_language_proficiencies(language_names):
+        if not isinstance(language_names, list):
+            raise ValueError("Known languages must be an array of language names.")
+
+        requested_names = []
+        seen_names = set()
+        for language_name in language_names:
+            if not isinstance(language_name, str) or not language_name.strip():
+                raise ValueError("Each known language must be a non-empty string.")
+            normalized_name = language_name.strip().casefold()
+            if normalized_name not in seen_names:
+                requested_names.append(normalized_name)
+                seen_names.add(normalized_name)
+
+        if not requested_names:
+            return []
+
+        language_catalog = {
+            proficiency.name.strip().casefold(): proficiency
+            for proficiency in session.query(Proficiency).filter_by(type="language").all()
+        }
+        missing_names = [
+            name for name in requested_names if name not in language_catalog
+        ]
+        if missing_names:
+            raise ValueError(
+                "Unknown language proficiency: " + ", ".join(missing_names)
+            )
+
+        return [language_catalog[name] for name in requested_names]
 
     @classmethod
     def delete(cls, id: int) -> Dict[str, Any]:

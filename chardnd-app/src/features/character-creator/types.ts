@@ -48,6 +48,8 @@ export interface CharacterData {
   speciesLanguages?: string[]; // [NOTE] Languages selected during species choice
   optionalLanguages?: string[]; // [NOTE] Track which optional languages were selected
   backgroundLanguages?: string[]; // [NOTE] Languages selected from background
+  backgroundToolChoices?: Record<string, string[]>;
+  backgroundEquipmentChoices?: Record<string, string[]>;
   classes: CharacterClassLevel[];
   abilityScores: AbilityScores;
   equipment: EquipmentItem[];

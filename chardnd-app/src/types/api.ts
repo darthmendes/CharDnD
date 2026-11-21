@@ -6,10 +6,14 @@
 export interface Species {
     id: number;
     name: string;
+    parent?: number | null;
+    has_subspecies?: boolean;
     size?: string;
     speed?: number;
     traits?: SpeciesTrait[];
     subspecies?: Subspecies[];
+    languages?: Array<string | { name: string }>;
+    language_choices?: number;
 }
 
 export interface Subspecies {
@@ -52,9 +56,33 @@ export interface Background {
     id: number;
     name: string;
     description?: string;
+    feature_name?: string | null;
+    feature_description?: string | null;
+    starting_equipment?: {
+        id: number;
+        name: string;
+        quantity: number;
+    }[];
+    equipment_choices?: {
+        group: string;
+        count: number;
+        options: {
+            id: number;
+            name: string;
+            quantity: number;
+        }[];
+    }[];
+    equipment_tool_choice_groups?: string[];
+    starting_gold?: number | null;
     languages?: string[];
+    language_choices?: number;
     skill_proficiencies?: string[];
     tool_proficiencies?: string[];
+    tool_proficiency_choices?: {
+        group: string;
+        count: number;
+        options: string[];
+    }[];
     starting_gold_bonus?: number;
 }
 
@@ -274,6 +302,17 @@ export interface CreateCharacterRequest {
     abilityScores: AbilityScores;
     classChoices?: ClassChoices;
     selectedItems?: number[];
+    proficientSkills?: string[];
+    proficientWeapons?: string[];
+    proficientTools?: string[];
+    knownLanguages?: string[];
+    equipment?: {
+        id?: number;
+        name: string;
+        quantity: number;
+        isCustom?: boolean;
+    }[];
+    money?: number;
 }
 
 export interface ClassChoices {

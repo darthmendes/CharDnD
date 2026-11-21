@@ -50,7 +50,11 @@ class Character(Base):
     class_associations = relationship("CharacterClass", back_populates="character")
     spells = relationship("CharacterSpell", back_populates="character")
     spell_slot_usage = relationship("CharacterSpellSlot", back_populates="character")
-    proficiencies = relationship("CharacterProficiency", back_populates="character")
+    proficiencies = relationship(
+        "CharacterProficiency",
+        back_populates="character",
+        cascade="all, delete-orphan",
+    )
     traits = relationship("CharacterTraits", back_populates="character")
     user_characters = relationship("UserCharacter", back_populates="character")
     notes = relationship("CharacterNote", back_populates="character")
@@ -65,11 +69,27 @@ class Character(Base):
             "int": self.intelligence,
             "wis": self.wisdom,
         }
+        known_languages = {
+            association.proficiency.name
+            for association in self.proficiencies
+            if association.proficiency
+            and association.proficiency.type.lower() == "language"
+        }
+        if not known_languages:
+            known_languages = set(self.known_languages or [])
+
         return {
             "id": self.id,
             "name": self.name,
+            "species": self.species.name if self.species else None,
+            "background": self.background.to_dict() if self.background else None,
             "speciesID": self.speciesID,
             "backgroundID": self.backgroundID,
+            "subspecies": self.subspecies,
+            "proficientSkills": self.proficient_skills or [],
+            "proficientWeapons": self.proficient_weapons or [],
+            "proficientTools": self.proficient_tools or [],
+            "knownLanguages": sorted(known_languages),
             "age": self.age,
             "alignment": self.alignment,
             "description": self.description,
@@ -91,6 +111,20 @@ class Character(Base):
             "maxhp": self.maxhp,
             "money": self.money,
             "inspiration": self.inspiration,
+            "items": [
+                {
+                    **entry.item.to_dict(),
+                    "inventoryId": entry.id,
+                    "quantity": entry.quantity,
+                    "equipped": entry.isEquipped,
+                    "attuned": entry.isAttuned,
+                    "is_equipped": entry.isEquipped,
+                    "is_attuned": entry.isAttuned,
+                    "currentCharges": entry.current_charges,
+                }
+                for entry in self.inventory
+                if entry.item is not None
+            ],
             "classes": [assoc.to_dict() if hasattr(assoc, "to_dict") else {
                 "classID": getattr(assoc, "classID", None),
                 "classLevel": getattr(assoc, "classLevel", None),

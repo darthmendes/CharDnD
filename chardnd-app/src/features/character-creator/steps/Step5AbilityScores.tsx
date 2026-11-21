@@ -250,6 +250,11 @@ const Step5AbilityScores: React.FC<Props> = ({ character, updateField, speciesLi
             }
           });
         }
+        Object.values(character.backgroundToolChoices ?? {}).forEach(selectedTools => {
+          if (Array.isArray(selectedTools)) {
+            selectedTools.forEach(tool => tools.add(tool));
+          }
+        });
       }
     }
 

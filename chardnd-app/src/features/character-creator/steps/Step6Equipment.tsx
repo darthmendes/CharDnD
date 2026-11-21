@@ -9,9 +9,10 @@ import { PACK_CONTENTS } from '../../../constants';
 interface Props {
   character: any;
   updateField: (field: string, value: any) => void;
+  startingEquipment: { id: number; name: string; quantity: number }[];
 }
 
-const Step6Equipment: React.FC<Props> = ({ character, updateField }) => {
+const Step6Equipment: React.FC<Props> = ({ character, updateField, startingEquipment }) => {
   const [availableItems, setAvailableItems] = useState<any[]>([]);
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -82,8 +83,22 @@ const Step6Equipment: React.FC<Props> = ({ character, updateField }) => {
 
       <div className={styles.formGroup}>
         <label>Equipment</label>
+        {startingEquipment.length > 0 && (
+          <div style={{ marginBottom: '1rem' }}>
+            <strong>Granted by your background</strong>
+            <ul>
+              {startingEquipment.map((item, index) => (
+                <li key={`${item.id}-${index}`}>
+                  {item.name}{item.quantity > 1 ? ` ×${item.quantity}` : ''}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         {character.equipment.length === 0 ? (
-          <p className={styles.noItems}>No equipment added yet.</p>
+          <p className={styles.noItems}>
+            {startingEquipment.length > 0 ? 'You also have the equipment listed above.' : 'No equipment added yet.'}
+          </p>
         ) : (
           character.equipment.map((item: any, i: number) => (
             <div key={i} className={styles.equipmentItem}>

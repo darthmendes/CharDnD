@@ -12,8 +12,8 @@ EXECUTION ORDER (Critical for dependencies):
 6. Spells (no dependencies)
 7. Spell-Class Relationships (needs Spells + Classes)
 8. Items (no dependencies)
-9. Backgrounds (needs Languages, Proficiencies)
-10. Proficiencies (optional, if not in Features)
+9. Proficiencies (needed by Backgrounds)
+10. Backgrounds (needs Languages, Proficiencies, and Items)
 
 Run with: python populate_master.py
 """
@@ -35,7 +35,7 @@ from sqlalchemy import text
 
 # Toggle which sections to run
 CONFIG = {
-    "languages": False,
+    "languages": True,
     "features": True,
     "species": True,
     "species_traits": True,
@@ -238,12 +238,12 @@ def seed_items():
         raise
 
 def seed_backgrounds():
-    """Step 9: Populate Backgrounds."""
+    """Step 10: Populate Backgrounds."""
     if not CONFIG["backgrounds"]:
         print_warning("Skipping: Backgrounds (disabled in config)")
         return
     
-    print_section_header("STEP 9: Populating Backgrounds")
+    print_section_header("STEP 10: Populating Backgrounds")
     try:
         from populate.populate_backgroundsDB import populate_backgrounds
         populate_backgrounds()
@@ -254,15 +254,16 @@ def seed_backgrounds():
         raise
 
 def seed_proficiencies():
-    """Step 10 (Optional): Populate Proficiencies."""
+    """Step 9: Populate Proficiencies."""
     if not CONFIG["proficiencies"]:
         print_warning("Skipping: Proficiencies (disabled in config)")
         return
     
-    print_section_header("STEP 10: Populating Proficiencies")
+    print_section_header("STEP 9: Populating Proficiencies")
     try:
         from populate.populate_proficienciesDB import add_proficiencies
-        add_proficiencies()
+        if not add_proficiencies():
+            raise RuntimeError("The proficiency seeder reported failure.")
         print_success("Proficiencies populated successfully!")
     except Exception as e:
         print_error(f"Failed to populate proficiencies: {e}")
@@ -335,8 +336,8 @@ def main():
             ("Spells", seed_spells),
             ("Spell-Class Mapping", seed_spell_class_mapping),
             ("Items", seed_items),
-            ("Backgrounds", seed_backgrounds),
             ("Proficiencies", seed_proficiencies),
+            ("Backgrounds", seed_backgrounds),
             ("Monsters", seed_monsters),
             ("Subclass", seed_subclasses),
         ]

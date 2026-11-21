@@ -469,10 +469,132 @@ items_to_add = [
          special_abilities=["Grants understanding of Draconic"]),
 ]
 
+background_equipment_data = [
+    ("Holy Symbol", "Adventuring Gear", 1, gp(5), "A symbol used as a divine focus.", "Wondrous Item"),
+    ("Prayer Book", "Adventuring Gear", 1, 0, "A personal book of prayers.", "Wondrous Item"),
+    ("Prayer Wheel", "Adventuring Gear", 1, 0, "A wheel inscribed with prayers.", "Wondrous Item"),
+    ("Incense", "Adventuring Gear", 0, sp(1), "One stick of incense.", "Wondrous Item"),
+    ("Vestments", "Adventuring Gear", 4, 0, "Religious ceremonial clothing.", "Wondrous Item"),
+    ("Common Clothes", "Adventuring Gear", 3, sp(5), "A set of common clothes.", "Wondrous Item"),
+    ("Belt Pouch", "Adventuring Gear", 1, sp(5), "A small belt pouch.", "Wondrous Item"),
+    ("Fine Clothes", "Adventuring Gear", 6, gp(15), "A set of fine clothes.", "Wondrous Item"),
+    ("Charlatan's Colored Bottles", "Adventuring Gear", 1, 0, "Stoppered bottles filled with colored liquid.", "Wondrous Item"),
+    ("Weighted Dice", "Gaming Set", 0, 0, "A set of weighted dice.", "Tool"),
+    ("Marked Cards", "Gaming Set", 0, 0, "A marked deck of cards.", "Tool"),
+    ("Imaginary Duke's Signet Ring", "Adventuring Gear", 0, 0, "A signet ring associated with a fabricated noble identity.", "Wondrous Item"),
+    ("Crowbar", "Adventuring Gear", 5, gp(2), "A metal lever for prying.", "Wondrous Item"),
+    ("Dark Common Clothes with Hood", "Adventuring Gear", 3, sp(5), "Dark common clothes with a hood.", "Wondrous Item"),
+    ("Love Letter", "Adventuring Gear", 0, 0, "A keepsake letter from an admirer.", "Wondrous Item"),
+    ("Lock of Hair", "Adventuring Gear", 0, 0, "A keepsake lock of hair from an admirer.", "Wondrous Item"),
+    ("Admirer's Trinket", "Adventuring Gear", 0, 0, "A small keepsake from an admirer.", "Wondrous Item"),
+    ("Costume", "Adventuring Gear", 4, gp(5), "A performance costume.", "Wondrous Item"),
+    ("Shovel", "Adventuring Gear", 5, gp(2), "A shovel.", "Wondrous Item"),
+    ("Iron Pot", "Adventuring Gear", 10, gp(2), "An iron cooking pot.", "Wondrous Item"),
+    ("Guild Introduction Letter", "Adventuring Gear", 0, 0, "A letter introducing you as a guild member.", "Wondrous Item"),
+    ("Traveler's Clothes", "Adventuring Gear", 4, gp(2), "A set of traveler's clothes.", "Wondrous Item"),
+    ("Scroll Case", "Adventuring Gear", 1, gp(1), "A leather case for papers and scrolls.", "Wondrous Item"),
+    ("Research Notes", "Adventuring Gear", 1, 0, "Personal notes from study or prayer.", "Wondrous Item"),
+    ("Winter Blanket", "Adventuring Gear", 3, sp(5), "A warm blanket.", "Wondrous Item"),
+    ("Signet Ring", "Adventuring Gear", 0, gp(5), "A ring bearing a personal or family seal.", "Wondrous Item"),
+    ("Scroll of Pedigree", "Adventuring Gear", 0, 0, "A document recording a noble lineage.", "Wondrous Item"),
+    ("Purse", "Adventuring Gear", 1, sp(5), "A small purse.", "Wondrous Item"),
+    ("Hunting Trap", "Adventuring Gear", 25, gp(5), "A metal trap intended for hunting.", "Wondrous Item"),
+    ("Animal Trophy", "Adventuring Gear", 1, 0, "A trophy from an animal you hunted.", "Wondrous Item"),
+    ("Bottle of Black Ink", "Adventuring Gear", 0, gp(10), "A bottle of black ink.", "Wondrous Item"),
+    ("Quill", "Adventuring Gear", 0, cp(2), "A writing quill.", "Wondrous Item"),
+    ("Colleague's Letter", "Adventuring Gear", 0, 0, "A letter from a deceased colleague containing an unanswered question.", "Wondrous Item"),
+    ("Silk Rope (50 ft)", "Adventuring Gear", 5, gp(10), "Fifty feet of silk rope.", "Wondrous Item"),
+    ("Lucky Charm", "Adventuring Gear", 0, 0, "A small personal lucky charm.", "Wondrous Item"),
+    ("Rank Insignia", "Adventuring Gear", 0, 0, "An insignia showing military rank.", "Wondrous Item"),
+    ("Fallen Foe Trophy", "Adventuring Gear", 1, 0, "A trophy taken from a fallen enemy.", "Wondrous Item"),
+    ("Bone Dice", "Gaming Set", 0, 0, "A set of bone dice.", "Tool"),
+    ("Playing Cards", "Gaming Set", 0, sp(5), "A deck of playing cards.", "Tool"),
+    ("City Map", "Adventuring Gear", 0, 0, "A map of the city where you grew up.", "Wondrous Item"),
+    ("Pet Mouse", "Adventuring Gear", 0, gp(1), "A pet mouse.", "Wondrous Item"),
+    ("Family Token", "Adventuring Gear", 0, 0, "A token inherited from your parents.", "Wondrous Item"),
+]
+
+for item_name, category, weight, cost, description, item_type in background_equipment_data:
+    items_to_add.append(Item(
+        name=item_name,
+        item_type=item_type,
+        item_category=category,
+        rarity="common",
+        desc=description,
+        weight=weight,
+        cost=cost,
+        properties=[],
+        special_abilities=[],
+    ))
+
+artisan_tool_prices_and_weights = {
+    "Alchemist's Supplies": (gp(50), 8),
+    "Brewer's Supplies": (gp(20), 9),
+    "Calligrapher's Supplies": (gp(10), 5),
+    "Carpenter's Tools": (gp(8), 6),
+    "Cartographer's Tools": (gp(15), 6),
+    "Cobbler's Tools": (gp(5), 5),
+    "Cook's Utensils": (gp(1), 8),
+    "Glassblower's Tools": (gp(30), 5),
+    "Jeweler's Tools": (gp(25), 2),
+    "Leatherworker's Tools": (gp(5), 5),
+    "Mason's Tools": (gp(10), 8),
+    "Painter's Supplies": (gp(10), 5),
+    "Potter's Tools": (gp(10), 3),
+    "Tinker's Tools": (gp(50), 10),
+    "Weaver's Tools": (gp(1), 5),
+    "Woodcarver's Tools": (gp(1), 5),
+}
+
+for tool_name, (tool_cost, tool_weight) in artisan_tool_prices_and_weights.items():
+    items_to_add.append(Item(
+        name=tool_name,
+        item_type="Tool",
+        item_category="Artisan's Tools",
+        rarity="common",
+        desc=f"A set of {tool_name.lower()}.",
+        weight=tool_weight,
+        cost=tool_cost,
+        properties=[],
+        special_abilities=[],
+    ))
+
+for tool_name, tool_cost, tool_weight, category in [
+    ("Dice Set", sp(1), 0, "Gaming Set"),
+    ("Dragonchess Set", gp(1), 1, "Gaming Set"),
+    ("Playing Card Set", sp(5), 0, "Gaming Set"),
+    ("Three-Dragon Ante Set", gp(1), 0, "Gaming Set"),
+    ("Bagpipes", gp(30), 6, "Musical Instrument"),
+    ("Drum", gp(6), 3, "Musical Instrument"),
+    ("Dulcimer", gp(25), 10, "Musical Instrument"),
+    ("Flute", gp(2), 1, "Musical Instrument"),
+    ("Lute", gp(35), 2, "Musical Instrument"),
+    ("Lyre", gp(30), 2, "Musical Instrument"),
+    ("Horn", gp(3), 2, "Musical Instrument"),
+    ("Pan Flute", gp(12), 2, "Musical Instrument"),
+    ("Shawm", gp(2), 1, "Musical Instrument"),
+    ("Viol", gp(30), 1, "Musical Instrument"),
+]:
+    items_to_add.append(Item(
+        name=tool_name,
+        item_type="Tool",
+        item_category=category,
+        rarity="common",
+        desc=f"A {tool_name.lower()} used for gaming or performance.",
+        weight=tool_weight,
+        cost=tool_cost,
+        properties=[],
+        special_abilities=[],
+    ))
+
 def add_items():
     """Add items to DB, avoiding duplicates."""
     existing_names = {item.name for item in session.query(_Item.name).all()}
-    new_items = [item for item in items_to_add if item.name not in existing_names]
+    new_items_by_name = {}
+    for item in items_to_add:
+        if item.name not in existing_names:
+            new_items_by_name.setdefault(item.name, item)
+    new_items = list(new_items_by_name.values())
     
     if new_items:
         session.add_all(new_items)

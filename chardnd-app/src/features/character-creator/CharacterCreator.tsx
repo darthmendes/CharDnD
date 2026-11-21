@@ -16,6 +16,7 @@ import Step6Equipment from './steps/Step6Equipment';
 // Types & API
 import { CharacterData } from './types';
 import { createCharacter, fetchSpecies, fetchClasses, fetchBackgrounds } from '../../services/api';
+import type { Background } from '../../types/api';
 
 // Define types for fetched data
 interface SpeciesOption {
@@ -23,11 +24,6 @@ interface SpeciesOption {
 }
 
 interface ClassOption {
-  [key: string]: any;
-}
-
-// [NOTE] Add Background type
-interface BackgroundOption {
   [key: string]: any;
 }
 
@@ -50,7 +46,7 @@ const CharacterCreator: React.FC = () => {
   // Fetch data once on mount
   const [speciesList, setSpeciesList] = useState<SpeciesOption[]>([]);
   const [classList, setClassList] = useState<ClassOption[]>([]);
-  const [backgroundList, setBackgroundList] = useState<BackgroundOption[]>([]);
+  const [backgroundList, setBackgroundList] = useState<Background[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -75,7 +71,66 @@ const CharacterCreator: React.FC = () => {
 
   const totalSteps = 7;
 
-  const nextStep = () => step < totalSteps && setStep(step + 1);
+  const nextStep = () => {
+    if (step === 2) {
+      const selectedBackground = backgroundList.find(bg => bg.name === character.background);
+      if (!selectedBackground) {
+        alert('Please select a background');
+        return;
+      }
+
+      const toolEquipmentGroups = new Set(selectedBackground.equipment_tool_choice_groups ?? []);
+      const incompleteEquipmentChoice = (selectedBackground.equipment_choices ?? []).find(
+        choice => !toolEquipmentGroups.has(choice.group)
+          && (character.backgroundEquipmentChoices?.[choice.group]?.length ?? 0) !== choice.count
+      );
+      if (incompleteEquipmentChoice) {
+        alert(`Please choose ${incompleteEquipmentChoice.count} ${incompleteEquipmentChoice.group}${incompleteEquipmentChoice.count === 1 ? '' : 's'}`);
+        return;
+      }
+
+      const requiredLanguages = selectedBackground.language_choices ?? 0;
+      const chosenLanguages = character.backgroundLanguages ?? [];
+      if (chosenLanguages.length !== requiredLanguages) {
+        alert(`Please choose ${requiredLanguages} language${requiredLanguages === 1 ? '' : 's'}`);
+        return;
+      }
+
+      const incompleteToolChoice = (selectedBackground.tool_proficiency_choices ?? []).find(
+        choice => (character.backgroundToolChoices?.[choice.group]?.length ?? 0) !== choice.count
+      );
+      if (incompleteToolChoice) {
+        alert(`Please choose ${incompleteToolChoice.count} ${incompleteToolChoice.group}${incompleteToolChoice.count === 1 ? '' : 's'}`);
+        return;
+      }
+    }
+
+    if (step === 3) {
+      const selectedSpecies = speciesList.find(
+        species => species.name === character.species && species.parent == null
+      );
+      if (!selectedSpecies) {
+        alert('Please select a species');
+        return;
+      }
+
+      if (selectedSpecies.has_subspecies && !character.subspecies) {
+        alert('Please select a subspecies');
+        return;
+      }
+
+      const requiredLanguages = selectedSpecies.language_choices ?? 0;
+      const chosenLanguages = character.speciesLanguages ?? [];
+      if (chosenLanguages.length !== requiredLanguages) {
+        alert(`Please choose ${requiredLanguages} additional language${requiredLanguages === 1 ? '' : 's'}`);
+        return;
+      }
+    }
+
+    if (step < totalSteps) {
+      setStep(step + 1);
+    }
+  };
   const prevStep = () => step > 1 && setStep(step - 1);
   const goToMain = () => navigate('/');
   const goToItemCreator = () => navigate('/items/creator');
@@ -86,6 +141,24 @@ const CharacterCreator: React.FC = () => {
 
   const updateClasses = (classes: any[]) => {
     setCharacter(prev => ({ ...prev, classes }));
+  };
+
+  const getBackgroundStartingEquipment = () => {
+    const backgroundData = backgroundList.find(bg => bg.name === character.background);
+    if (!backgroundData) return [];
+
+    const equipment = [...(backgroundData.starting_equipment ?? [])];
+    for (const choice of backgroundData.equipment_choices ?? []) {
+      const selectedNames = backgroundData.equipment_tool_choice_groups?.includes(choice.group)
+        ? character.backgroundToolChoices?.[choice.group] ?? []
+        : character.backgroundEquipmentChoices?.[choice.group] ?? [];
+      for (const selectedName of selectedNames) {
+        const selectedItem = choice.options.find(option => option.name === selectedName);
+        if (selectedItem) equipment.push(selectedItem);
+      }
+    }
+
+    return equipment;
   };
 
   // [NOTE] Helper function to get all proficiencies
@@ -143,12 +216,17 @@ const CharacterCreator: React.FC = () => {
     if (backgroundList.length > 0 && character.background) {
       const backgroundData = backgroundList.find((bg: any) => bg.name === (typeof character.background === 'string' ? character.background : character.background?.name));
       if (backgroundData) {
-        if (backgroundData.skill_proficiencies) {
+        if (Array.isArray(backgroundData.skill_proficiencies)) {
           backgroundData.skill_proficiencies.forEach((skill: string) => skills.push(skill));
         }
-        if (backgroundData.tool_proficiencies) {
+        if (Array.isArray(backgroundData.tool_proficiencies)) {
           backgroundData.tool_proficiencies.forEach((tool: string) => tools.push(tool));
         }
+        Object.values(character.backgroundToolChoices ?? {}).forEach(selectedTools => {
+          if (Array.isArray(selectedTools)) {
+            selectedTools.forEach(tool => tools.push(tool));
+          }
+        });
       }
     }
 
@@ -172,7 +250,22 @@ const CharacterCreator: React.FC = () => {
       });
     }
 
-    return { skills, weapons, tools, allLanguages };
+    const speciesData = speciesList.find(species => species.name === character.species);
+    if (Array.isArray(speciesData?.languages)) {
+      speciesData.languages.forEach((language: any) => {
+        const languageName = typeof language === 'string' ? language : language.name;
+        if (languageName && !allLanguages.includes(languageName)) {
+          allLanguages.push(languageName);
+        }
+      });
+    }
+
+    return {
+      skills: [...new Set(skills)],
+      weapons: [...new Set(weapons)],
+      tools: [...new Set(tools)],
+      allLanguages: [...new Set(allLanguages)],
+    };
   };
 
   const { allLanguages: langList } = getAllProficiencies();
@@ -200,6 +293,7 @@ const CharacterCreator: React.FC = () => {
 
       // [NOTE] Get all proficiencies for submission
       const { skills, weapons, tools } = getAllProficiencies();
+      const selectedBackground = backgroundList.find(bg => bg.name === character.background);
 
       const payload = {
         name: character.name,
@@ -218,12 +312,21 @@ const CharacterCreator: React.FC = () => {
         proficientWeapons: weapons,
         proficientTools: tools,
         knownLanguages: allLanguages,
-        equipment: character.equipment.map((item: any) => ({
-          id: item.id,
-          name: item.name,
-          quantity: item.quantity,
-          isCustom: item.isCustom
-        }))
+        equipment: [
+          ...character.equipment.map((item: any) => ({
+            id: item.id,
+            name: item.name,
+            quantity: item.quantity,
+            isCustom: item.isCustom
+          })),
+          ...getBackgroundStartingEquipment().map(item => ({
+            id: item.id,
+            name: item.name,
+            quantity: item.quantity,
+            isCustom: false,
+          })),
+        ],
+        money: (selectedBackground?.starting_gold ?? 0) + (character.gold ?? 0),
       };
 
       console.log('Submitting payload:', JSON.stringify(payload, null, 2));
@@ -242,6 +345,7 @@ const CharacterCreator: React.FC = () => {
     speciesList,
     dndClasses: classList,
     backgroundList,
+    startingEquipment: getBackgroundStartingEquipment(),
   };
 
   const renderStep = () => {
