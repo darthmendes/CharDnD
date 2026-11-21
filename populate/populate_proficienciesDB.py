@@ -1,51 +1,53 @@
-from Backend.models.proficiencies import Proficiency, ProficiencyChoiceGroup, ProficiencyChoice
-from Backend.models.item import Item
-from Backend.models.species import Species
+"""
+Populate normalized proficiency records.
+"""
+
 from Backend.models import session
+from Backend.models.proficiencies import Proficiency
 
 
-def add_proficiency(name):
-    aux = session.query(Item).filter_by(name=name).first()
-    prof = Proficiency(name=aux.name,
-                       type=aux.item_type,
-                       itemID=aux.id)
-    session.add(prof)
-    session.commit
+PROFICIENCY_DATA = [
+    ("Light Armor", "armor", "Strength"),
+    ("Medium Armor", "armor", "Strength"),
+    ("Shields", "armor", "Strength"),
+    ("Clubs", "weapon", "Strength"),
+    ("Daggers", "weapon", "Dexterity"),
+    ("Darts", "weapon", "Dexterity"),
+    ("Javelins", "weapon", "Strength"),
+    ("Maces", "weapon", "Strength"),
+    ("Quarterstaffs", "weapon", "Strength"),
+    ("Scimitars", "weapon", "Dexterity"),
+    ("Sickles", "weapon", "Strength"),
+    ("Slings", "weapon", "Dexterity"),
+    ("Spears", "weapon", "Strength"),
+    ("Intelligence", "saving-throw", "Intelligence"),
+    ("Wisdom", "saving-throw", "Wisdom"),
+]
+
+
+def add_proficiency(name, proficiency_type="tool", base_ability="None"):
+    if session.query(Proficiency).filter_by(name=name).first():
+        return
+    session.add(Proficiency(
+        name=name,
+        description=f"{name} proficiency",
+        type=proficiency_type,
+        baseAbility=base_ability,
+    ))
+
 
 def add_proficiencies():
-    
-    # Add Proficiencies to Proficiency list
-    add_proficiency("Smith's Tools")
-    add_proficiency("Brewer's Supplies")
-    add_proficiency("Mason's Tools")
-    add_proficiency("Herbalism Kit")
-    add_proficiency("Club")
-    add_proficiency("Dagger")
-    add_proficiency("Dart")
-    add_proficiency("Javelin")
-    add_proficiency("Mace")
-    add_proficiency("Quarterstaff")
-    add_proficiency("Scimitar")
-    add_proficiency("Sickle")
-    add_proficiency("Sling")
-    add_proficiency("Spear") 
-    
-    # Make a category table?!
-    proficiencies = [
-        Proficiency(name='Light Armor', type="category"),
-        Proficiency(name='Medium Armor', type="category"),
-        Proficiency(name='Shields', type="category"),
-        Proficiency(name='Intelligence', type="saving-throw"),
-        Proficiency(name='Wisdom', type="saving-throw"),
-        Proficiency(name='Arcana', type="skill"),
-        Proficiency(name='Animal Handling', type="skill"),
-        Proficiency(name='Insight', type="skill"),
-        Proficiency(name='Medicine', type="skill"),
-        Proficiency(name='Nature', type="skill"),
-        Proficiency(name='Perception', type="skill"),
-        Proficiency(name='Religion', type="skill"),
-        Proficiency(name='Survival', type="skill")
-    ]
+    try:
+        for name, proficiency_type, base_ability in PROFICIENCY_DATA:
+            add_proficiency(name, proficiency_type, base_ability)
+        session.commit()
+        print("[SUCCESS] Proficiencies populated")
+        return True
+    except Exception as exc:
+        session.rollback()
+        print(f"[ERROR] Failed to populate proficiencies: {exc}")
+        return False
 
-    session.add_all(proficiencies)
-    session.commit()
+
+if __name__ == "__main__":
+    add_proficiencies()

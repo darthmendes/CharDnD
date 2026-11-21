@@ -32,19 +32,6 @@ const Step1BasicInfo: React.FC<Props> = ({ character, updateField }) => {
           />
         </div>
 
-        {/* Pronouns */}
-        <div>
-          <label htmlFor="pronouns">Pronouns</label>
-          <input
-            id="pronouns"
-            type="text"
-            value={character.pronouns || ''}
-            onChange={e => updateField('pronouns', e.target.value)}
-            className={styles.input}
-            placeholder="he/him, she/her, they/them"
-          />
-        </div>
-
         {/* Alignment */}
         <div>
           <label htmlFor="alignment">Alignment</label>
@@ -59,71 +46,6 @@ const Step1BasicInfo: React.FC<Props> = ({ character, updateField }) => {
               <option key={align} value={align}>{align}</option>
             ))}
           </select>
-        </div>
-
-        {/* Height */}
-        <div>
-          <label htmlFor="height">Height</label>
-          <input
-            id="height"
-            type="text"
-            value={character.height || ''}
-            onChange={e => updateField('height', e.target.value)}
-            className={styles.input}
-            placeholder="5'6 or 168 cm"
-          />
-        </div>
-
-        {/* Weight */}
-        <div>
-          <label htmlFor="weight">Weight</label>
-          <input
-            id="weight"
-            type="text"
-            value={character.weight || ''}
-            onChange={e => updateField('weight', e.target.value)}
-            className={styles.input}
-            placeholder="150 lbs or 68 kg"
-          />
-        </div>
-
-        {/* Eyes */}
-        <div>
-          <label htmlFor="eyes">Eye Color</label>
-          <input
-            id="eyes"
-            type="text"
-            value={character.eyes || ''}
-            onChange={e => updateField('eyes', e.target.value)}
-            className={styles.input}
-            placeholder="Blue, brown, green, etc."
-          />
-        </div>
-
-        {/* Hair */}
-        <div>
-          <label htmlFor="hair">Hair Color</label>
-          <input
-            id="hair"
-            type="text"
-            value={character.hair || ''}
-            onChange={e => updateField('hair', e.target.value)}
-            className={styles.input}
-            placeholder="Black, blonde, red, etc."
-          />
-        </div>
-
-        {/* Skin */}
-        <div>
-          <label htmlFor="skin">Skin Tone</label>
-          <input
-            id="skin"
-            type="text"
-            value={character.skin || ''}
-            onChange={e => updateField('skin', e.target.value)}
-            className={styles.input}
-            placeholder="Fair, olive, dark, etc."
-          />
         </div>
       </div>
 

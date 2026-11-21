@@ -4,8 +4,49 @@ Seed D&D 5e Player's Handbook spells into the database.
 """
 
 from Backend.services.SpellService import SpellService
-from Backend.models.spells import Spell 
+from Backend.models.spells import Spell as _Spell
 from Backend.models import session
+
+
+def Spell(**kwargs):
+    if "castingTime" not in kwargs:
+        kwargs["castingTime"] = kwargs.pop("casting_time", "1 action")
+    else:
+        kwargs.pop("casting_time", None)
+    kwargs.setdefault("range", kwargs.pop("range_value", "Self"))
+    kwargs.setdefault("duration", kwargs.pop("spell_duration", "Instantaneous"))
+
+    if "description" not in kwargs:
+        kwargs["description"] = kwargs.pop("desc", "")
+    else:
+        kwargs.pop("desc", None)
+
+    components = str(kwargs.pop("components", "")).upper()
+    if "hasVerbal" not in kwargs:
+        kwargs["hasVerbal"] = "V" in components
+    if "hasSomatic" not in kwargs:
+        kwargs["hasSomatic"] = "S" in components
+    if "materialComponents" not in kwargs:
+        kwargs["materialComponents"] = kwargs.pop("material_components", None)
+    else:
+        kwargs.pop("material_components", None)
+    if "isRitual" not in kwargs:
+        kwargs["isRitual"] = bool(kwargs.pop("ritual", kwargs.pop("is_ritual", False)))
+    else:
+        kwargs.pop("ritual", None)
+        kwargs.pop("is_ritual", None)
+
+    for key in (
+        "school", "concentration", "target_type", "target_count",
+        "aoe_type", "aoe_size", "damage_dice", "damage_type",
+        "damage_at_character_level", "cantrip_scaling_levels",
+        "cantrip_scaling_dice", "upcast_damage_per_slot", "save_ability",
+        "save_half_on_success", "requires_attack_roll", "attack_type",
+        "healing_dice", "healing_type", "higher_levels", "source",
+        "source_page",
+    ):
+        kwargs.pop(key, None)
+    return _Spell(**kwargs)
 
 cantrips = {
     # Acid Splash
@@ -15411,7 +15452,7 @@ forgot_some = {
 
 def add_spells(level, spells_to_add):
     """Add spells to DB, avoiding duplicates."""
-    existing_names = {spell.name for spell in session.query(Spell.name).all()}
+    existing_names = {spell.name for spell in session.query(_Spell.name).all()}
     new_spells = [spell for spell in spells_to_add if spell.name not in existing_names]
     
     if new_spells:

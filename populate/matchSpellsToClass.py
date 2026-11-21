@@ -5,6 +5,7 @@ Maps all ~370 seeded spells (PHB+XGtE+TCoE) to their official classes.
 """
 
 from sqlalchemy.orm import Session
+from sqlalchemy import inspect, text
 from Backend.models.dndclass import ClassSpell
 from Backend.models.spells import Spell
 from Backend.models.dndclass import DnDclass
@@ -12,21 +13,6 @@ from Backend.models.dndclass import DnDclass
 # ============================================================================
 # === CONFIGURATION ===
 # ============================================================================
-
-# Map class names to database IDs (UPDATE THESE TO MATCH YOUR DB)
-CLASSIDS = {
-    "Artificer": 4,
-    "Bard": 5,
-    "Cleric": 3,
-    "Druid": 2,
-    "Fighter": 6,
-    "Paladin": 7,
-    "Ranger": 8,
-    "Rogue": 9,
-    "Sorcerer": 10,
-    "Warlock": 11,
-    "Wizard": 12,
-}
 
 # ============================================================================
 # === MIN LEVEL CALCULATION ===
@@ -64,12 +50,9 @@ def get_min_level(spell_level: int, class_name: str) -> int:
 # ============================================================================
 # === SPELL-TO-CLASS MAPPING ===
 # ============================================================================
-# Format: "Spell Name": [{"class": "ClassName", "min_level": X, "subclass": None, "is_always_prepared": False}, ...]
-# 
-# Notes:
-# - min_level is calculated automatically by get_min_level(), so you can omit it or override
-# - subclass: None = available to all subclasses; set to "Life Domain", "Oath of Devotion", etc. for restrictions
-# - is_always_prepared: True for Domain/Oath/Circle spells that are always prepared
+# Format: "Spell Name": [{"class": "ClassName", "min_level": X}, ...]
+# The class-spell table stores class, spell, and minimum class level; it does not
+# support subclass-specific or always-prepared metadata.
 cantrip_mapping = {
     # ==================== CANTRIPS (Level 0) ====================
     "Acid Splash": [
@@ -1175,6 +1158,14 @@ lvl9_mapping = {
 def seed_class_spells_manual(db: Session, SPELL_CLASS_MAPPING):
     """Manually seed class-spell relationships using verified mappings."""
     print("[INFO] Starting manual class-spell relationship seeding...")
+
+    class_spell_columns = {
+        column["name"] for column in inspect(db.get_bind()).get_columns(ClassSpell.__tablename__)
+    }
+    if "min_level" not in class_spell_columns:
+        db.execute(text(
+            "ALTER TABLE classSpell ADD COLUMN min_level INTEGER NOT NULL DEFAULT 1"
+        ))
     
     # Fetch classes and spells from DB
     db_classes = {c.name: c.id for c in db.query(DnDclass).all()}
@@ -1211,10 +1202,10 @@ def seed_class_spells_manual(db: Session, SPELL_CLASS_MAPPING):
             existing = db.query(ClassSpell).filter_by(
                 classID=classID,
                 spellID=spellID,
-                subclass=config.get("subclass")
             ).first()
             
             if existing:
+                existing.min_level = min_level
                 skipped += 1
                 continue
             
@@ -1223,8 +1214,6 @@ def seed_class_spells_manual(db: Session, SPELL_CLASS_MAPPING):
                 classID=classID,
                 spellID=spellID,
                 min_level=min_level,
-                subclass=config.get("subclass"),
-                is_always_prepared=config.get("is_always_prepared", False)
             )
             
             db.add(class_spell)

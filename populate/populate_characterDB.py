@@ -1,15 +1,13 @@
-from ..Backend.services.CharacterService import Character
-char1 = {
-    'name': 'Gwinleth',
-    'level' : 12,
-    'char_class' : 'druid',
-    'species' : 'half-elf',
-    'abilityScores': {'strenght' : 11,
-                      'constitution':12,
-                      'dexterity':13,
-                      'inteligence':14,
-                      'wisdom':15,
-                      'charisma':16}
-}
+"""
+Character seeding is intentionally disabled; characters require a user,
+species, background, and class associations.
+"""
 
-character1 = Character.new(char1)
+
+def populate_characters():
+    print("[INFO] Character seeding is unavailable until required associations are supplied.")
+    return True
+
+
+if __name__ == "__main__":
+    populate_characters()

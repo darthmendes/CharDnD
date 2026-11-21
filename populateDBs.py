@@ -24,11 +24,9 @@ from Backend.models import session, engine
 from Backend.models.item import Item
 from Backend.models.dndclass import DnDclass
 from Backend.models.species import Species
-from Backend.models.languages import Language
 from Backend.models.background import Background
 from Backend.models.features import Features
 from Backend.models.spells import Spell
-from Backend.models.monster import Monster
 from sqlalchemy import text
 
 # ============================================================================
@@ -37,7 +35,7 @@ from sqlalchemy import text
 
 # Toggle which sections to run
 CONFIG = {
-    "languages": True,
+    "languages": False,
     "features": True,
     "species": True,
     "species_traits": True,
@@ -46,8 +44,8 @@ CONFIG = {
     "spell_class_mapping": True,
     "items": True,
     "backgrounds": True,
-    "proficiencies": False,  # Optional - often included in Features
-    "monsters": True,  
+    "proficiencies": True,
+    "monsters": False,
     "subclass": True,  
 }
 
@@ -86,7 +84,6 @@ def verify_database_connection():
 def get_table_counts():
     """Get counts of all major tables for verification."""
     tables = {
-        "Languages": Language,
         "Features": Features,
         "Species": Species,
         "Classes": DnDclass,
@@ -94,7 +91,6 @@ def get_table_counts():
         "Items": Item,
         "Backgrounds": Background,
         #"Proficiencies": Proficiencie,
-        "Monsters": Monster,
     }
     
     print("\n[INFO] Database Contents:")
@@ -176,7 +172,7 @@ def seed_species_traits():
         raise
 
 def seed_classes():
-    """Step 5: Populate Classes (all 12 D&D 5e classes)."""
+    """Step 5: Populate the D&D 5e classes, including Artificer."""
     if not CONFIG["classes"]:
         print_warning("Skipping: Classes (disabled in config)")
         return

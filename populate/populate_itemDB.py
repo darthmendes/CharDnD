@@ -6,8 +6,38 @@ Populate D&D 5e item database with all equipment needed for character creation.
 [NOTE] Attunement requirements properly flagged
 [NOTE] Scalable for any future weapon properties
 """
-from Backend.models.item import Item
+from Backend.models.item import Item as _Item
 from Backend.models import session
+
+
+def Item(**kwargs):
+    kwargs.pop("property_data", None)
+    if "description" not in kwargs and kwargs.get("desc"):
+        kwargs["description"] = kwargs["desc"]
+    properties = kwargs.pop("properties", None)
+    if isinstance(properties, (list, tuple)):
+        kwargs["properties"] = ",".join(str(value) for value in properties)
+    elif properties is not None:
+        kwargs["properties"] = str(properties)
+
+    if "damageDice" not in kwargs and "damage_dice" in kwargs:
+        kwargs["damageDice"] = kwargs["damage_dice"]
+    if "damageType" not in kwargs and "damage_type" in kwargs:
+        kwargs["damageType"] = kwargs["damage_type"]
+    if "specialAbilities" not in kwargs:
+        special = kwargs.pop("special_abilities", None)
+        if special:
+            kwargs["specialAbilities"] = ",".join(str(value) for value in special)
+        else:
+            kwargs.pop("special_abilities", None)
+
+    for key in (
+        "damage_dice", "damage_type", "versatile_damage", "attunement",
+        "range", "magical", "charges", "weapon_category",
+        "armor_category", "stealth_disadvantage",
+    ):
+        kwargs.pop(key, None)
+    return _Item(**kwargs)
 
 # Helper: convert gp/sp/cp to copper pieces (cp)
 def gp(amount): return int(amount * 100)
@@ -441,7 +471,7 @@ items_to_add = [
 
 def add_items():
     """Add items to DB, avoiding duplicates."""
-    existing_names = {item.name for item in session.query(Item.name).all()}
+    existing_names = {item.name for item in session.query(_Item.name).all()}
     new_items = [item for item in items_to_add if item.name not in existing_names]
     
     if new_items:

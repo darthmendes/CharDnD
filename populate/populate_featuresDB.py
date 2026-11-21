@@ -1,5 +1,12 @@
-from Backend.models.features import Features
+from Backend.models.features import Features as _Features
 from Backend.models import session
+
+
+def Features(**kwargs):
+    properties = kwargs.pop("properties", None)
+    if properties is not None and kwargs.get("values") is None:
+        kwargs["values"] = properties
+    return _Features(**kwargs)
 
 # ============================================================================
 # === DWARF FEATURES ===
@@ -228,7 +235,7 @@ all_features = (
 def add_features():
     try:
         # Check for existing features to avoid duplicates
-        existing_features = {f.name: f for f in session.query(Features).all()}
+        existing_features = {f.name: f for f in session.query(_Features).all()}
         
         features_to_add = []
         for feature in all_features:

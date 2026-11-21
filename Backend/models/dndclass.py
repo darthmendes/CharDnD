@@ -76,6 +76,7 @@ class ClassSpell(Base):
     
     classID = Column(Integer, ForeignKey("classes.classID"), primary_key=True, index=True)
     spellID = Column(Integer, ForeignKey("spells.spellID"), primary_key=True, index=True)
+    min_level = Column(Integer, nullable=False, default=1, server_default="1")
     
     # Relationships
     dndclass = relationship("DnDclass", back_populates="class_spells")
